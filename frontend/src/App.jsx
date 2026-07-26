@@ -1,9 +1,11 @@
+import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
-import './App.css'
 
 function App() {
   return (
-    <Dashboard />
+    <Layout>
+      <Dashboard />
+    </Layout>
   )
 }
 

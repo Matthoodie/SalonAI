@@ -1,0 +1,50 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f5f6fa;
+}
+
+
+.sidebar {
+  width: 240px;
+  background: #111827;
+  color: white;
+  padding: 24px;
+}
+
+
+.sidebar h1 {
+  margin-bottom: 40px;
+}
+
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+
+.sidebar li {
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+
+.main {
+  flex: 1;
+}
+
+
+.header {
+  height: 70px;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 32px;
+}
+
+
+.user {
+  font-weight: bold;
+}
