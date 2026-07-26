@@ -1,4 +1,5 @@
 import DashboardCard from '../components/DashboardCard'
+import '../styles/dashboard.css'
 
 function Dashboard() {
   return (
