@@ -1,22 +1,44 @@
+import { Link } from 'react-router-dom'
+
+
 function Sidebar() {
+
   return (
+
     <aside className="sidebar">
 
       <h1>
         SalonAI
       </h1>
 
+
       <nav>
+
         <ul>
-          <li>Dashboard</li>
-          <li>Klijenti</li>
-          <li>Termini</li>
-          <li>AI Asistent</li>
+
+          <li>
+            <Link to="/">
+              Dashboard
+            </Link>
+          </li>
+
+
+          <li>
+            <Link to="/clients">
+              Klijenti
+            </Link>
+          </li>
+
+
         </ul>
+
       </nav>
 
     </aside>
+
   )
+
 }
+
 
 export default Sidebar

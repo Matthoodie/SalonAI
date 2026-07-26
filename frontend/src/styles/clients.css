@@ -1,0 +1,23 @@
+.clients-page {
+  padding: 32px;
+}
+
+.clients-page h1 {
+  margin-bottom: 24px;
+}
+
+.client-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.client-card h3 {
+  margin: 0 0 8px;
+}
+
+.client-card p {
+  margin: 4px 0;
+}

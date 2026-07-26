@@ -1,3 +1,4 @@
+import '../styles/layout.css'
 import Sidebar from './Sidebar'
 import Header from './Header'
 
