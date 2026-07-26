@@ -1,3 +1,5 @@
+import DashboardCard from '../components/DashboardCard'
+
 function Dashboard() {
   return (
     <div className="dashboard">
