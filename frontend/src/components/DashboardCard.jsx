@@ -1,26 +1,10 @@
-import DashboardCard from '../components/DashboardCard'
-
-function Dashboard() {
+function DashboardCard({ title, value }) {
   return (
-    <div className="dashboard">
-
-      <DashboardCard
-        title="Današnji termini"
-        value="3 rezervacije"
-      />
-
-      <DashboardCard
-        title="Današnji prihod"
-        value="126 €"
-      />
-
-      <DashboardCard
-        title="Zaposlenici"
-        value="3 aktivna"
-      />
-
+    <div className="card">
+      <h2>{title}</h2>
+      <p className="value">{value}</p>
     </div>
   )
 }
 
-export default Dashboard
+export default DashboardCard
