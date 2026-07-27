@@ -1,4 +1,6 @@
 import '../styles/clients.css'
+import ClientCard from '../components/ClientCard'
+
 
 function Clients() {
 
@@ -29,22 +31,21 @@ function Clients() {
     },
   ]
 
+
   return (
     <div className="clients-page">
 
-      <h1>Klijenti</h1>
+      <h1>
+        Klijenti
+      </h1>
+
 
       {clients.map((client) => (
 
-        <div className="client-card" key={client.id}>
-
-          <h3>{client.name}</h3>
-
-          <p>{client.phone}</p>
-
-          <p>Posjeta: {client.visits}</p>
-
-        </div>
+        <ClientCard
+          key={client.id}
+          client={client}
+        />
 
       ))}
 
@@ -52,5 +53,6 @@ function Clients() {
   )
 
 }
+
 
 export default Clients
