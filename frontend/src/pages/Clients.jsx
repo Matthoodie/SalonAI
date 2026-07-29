@@ -1,9 +1,18 @@
-import { clients } from '../data/clients'
-import '../styles/clients.css'
+import ClientForm from '../components/ClientForm'
 import ClientCard from '../components/ClientCard'
+import '../styles/clients.css'
+
+function Clients({ clientList, setClientList }) {
 
 
-function Clients() {
+    function addClient(newClient) {
+
+  setClientList([
+    ...clientList,
+    newClient
+  ])
+
+}
 
 
   return (
@@ -12,9 +21,9 @@ function Clients() {
       <h1>
         Klijenti
       </h1>
+<ClientForm onAddClient={addClient} />
 
-
-      {clients.map((client) => (
+      {clientList.map((client) => (
 
         <ClientCard
           key={client.id}

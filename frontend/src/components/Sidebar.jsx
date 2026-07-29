@@ -29,6 +29,10 @@ function Sidebar() {
             </Link>
           </li>
 
+          <Link to="/appointments">
+              Termini
+            </Link>
+
 
         </ul>
 
