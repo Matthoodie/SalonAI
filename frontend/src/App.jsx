@@ -8,7 +8,7 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 
 import Dashboard from './pages/Dashboard'
-import Clients from './pages/Clients'
+import Clients from './pages/Clients/Clients'
 
 
 function App() {

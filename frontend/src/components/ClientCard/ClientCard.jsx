@@ -1,3 +1,5 @@
+import './ClientCard.css'
+
 function ClientCard({ client }) {
 
   return (

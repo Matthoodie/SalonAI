@@ -1,6 +1,7 @@
-import ClientForm from '../components/ClientForm'
-import ClientCard from '../components/ClientCard'
-import '../styles/clients.css'
+import ClientForm from '../../components/ClientForm'
+import ClientCard from '../../components/ClientCard/ClientCard'
+import './Clients.css'
+
 
 function Clients({ clientList, setClientList }) {
 
