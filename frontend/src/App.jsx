@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { clients } from './data/clients'
 
-import Appointments from './pages/Appointments'
+import Appointments from './pages/Appointments/Appointments'
 
 import { Routes, Route } from 'react-router-dom'
 

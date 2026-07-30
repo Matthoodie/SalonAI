@@ -1,3 +1,5 @@
+import './AppointmentCard.css'
+
 function AppointmentCard({
   appointment,
   onComplete,

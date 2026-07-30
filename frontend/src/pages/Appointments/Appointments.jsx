@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { appointments } from '../data/appointments'
-import AppointmentCard from '../components/AppointmentCard'
-import AppointmentForm from '../components/AppointmentForm'
+import { appointments } from '../../data/appointments'
+import AppointmentCard from '../../components/AppointmentCard/AppointmentCard'
+import AppointmentForm from '../../components/AppointmentForm/AppointmentForm'
+import './Appointments.css'
 
 function Appointments({ clientList }) {
 
