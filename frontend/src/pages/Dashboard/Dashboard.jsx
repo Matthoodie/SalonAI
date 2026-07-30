@@ -1,5 +1,5 @@
-import DashboardCard from '../components/DashboardCard'
-import '../styles/dashboard.css'
+import DashboardCard from '../../components/DashboardCard/DashboardCard'
+import './Dashboard.css'
 
 function Dashboard() {
   return (
