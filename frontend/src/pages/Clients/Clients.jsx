@@ -1,4 +1,4 @@
-import ClientForm from '../../components/ClientForm'
+import ClientForm from '../../components/ClientForm/ClientForm'
 import ClientCard from '../../components/ClientCard/ClientCard'
 import './Clients.css'
 
