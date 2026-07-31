@@ -1,21 +1,19 @@
-import Sidebar from '../Sidebar/Sidebar'
 import Header from '../Header/Header'
+import Sidebar from '../Sidebar/Sidebar'
+import './Layout.css'
 
 function Layout({ children }) {
-
   return (
-    <div className="layout">
-
+    <div className="app-layout">
       <Sidebar />
 
-      <main className="main">
-
+      <main className="app-main">
         <Header />
 
-        {children}
-
+        <div className="app-page-content">
+          {children}
+        </div>
       </main>
-
     </div>
   )
 }

@@ -2,26 +2,17 @@ import { Link } from 'react-router-dom'
 import './Sidebar.css'
 
 function Sidebar() {
-
   return (
-
-    <aside className="sidebar">
-
-      <h1>
-        SalonAI
-      </h1>
-
+    <aside className="app-sidebar">
+      <h1>SalonAI</h1>
 
       <nav>
-
         <ul>
-
           <li>
             <Link to="/">
               Dashboard
             </Link>
           </li>
-
 
           <li>
             <Link to="/clients">
@@ -29,20 +20,15 @@ function Sidebar() {
             </Link>
           </li>
 
-          <Link to="/appointments">
+          <li>
+            <Link to="/appointments">
               Termini
             </Link>
-
-
+          </li>
         </ul>
-
       </nav>
-
     </aside>
-
   )
-
 }
-
 
 export default Sidebar

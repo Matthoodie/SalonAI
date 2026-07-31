@@ -1,20 +1,31 @@
-.sidebar {
+.app-sidebar {
+  flex: 0 0 240px;
   width: 240px;
-  background: #111827;
-  color: white;
+  min-height: 100vh;
   padding: 24px;
+  background: #111827;
+  color: #ffffff;
 }
 
-.sidebar h1 {
-  margin-bottom: 40px;
+.app-sidebar h1 {
+  margin: 0 0 40px;
+  color: #ffffff;
 }
 
-.sidebar ul {
-  list-style: none;
+.app-sidebar ul {
+  margin: 0;
   padding: 0;
+  list-style: none;
 }
 
-.sidebar li {
+.app-sidebar li {
+  margin: 0;
   padding: 12px 0;
+}
+
+.app-sidebar a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
 }
