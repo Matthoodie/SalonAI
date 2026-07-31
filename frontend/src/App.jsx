@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 
 import { clients } from './data/clients'
 
-import Layout from './components/Layout'
+import Layout from './components/Layout/Layout'
 
 import Appointments from './pages/Appointments/Appointments'
 import Clients from './pages/Clients/Clients'
