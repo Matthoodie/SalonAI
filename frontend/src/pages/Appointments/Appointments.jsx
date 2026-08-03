@@ -4,16 +4,55 @@ import AppointmentCard from '../../components/AppointmentCard/AppointmentCard'
 import AppointmentForm from '../../components/AppointmentForm/AppointmentForm'
 import './Appointments.css'
 
+function getTodayDate() {
+  const today = new Date()
+  const timezoneOffset = today.getTimezoneOffset() * 60_000
+  const localDate = new Date(today.getTime() - timezoneOffset)
+
+  return localDate.toISOString().split('T')[0]
+}
+
+function migrateAppointments(appointmentsToMigrate) {
+  const fallbackDate = getTodayDate()
+
+  return appointmentsToMigrate.map((appointment) => ({
+    ...appointment,
+    date: appointment.date || fallbackDate,
+  }))
+}
+
 function Appointments({ clientList }) {
 
 const [appointmentList, setAppointmentList] = useState(() => {
-  const savedAppointments = localStorage.getItem('salonai-appointments')
+  const savedAppointments = localStorage.getItem(
+    'salonai-appointments'
+  )
+
+  let migratedAppointments
 
   if (savedAppointments) {
-    return JSON.parse(savedAppointments)
+    try {
+      const parsedAppointments = JSON.parse(savedAppointments)
+
+      migratedAppointments = migrateAppointments(parsedAppointments)
+    } catch (error) {
+      console.error(
+        'Neuspješno učitavanje spremljenih termina:',
+        error
+      )
+
+      migratedAppointments = migrateAppointments(appointments)
+    }
+  } else {
+    migratedAppointments = migrateAppointments(appointments)
   }
 
-  return appointments
+  localStorage.setItem(
+    'salonai-appointments',
+    JSON.stringify(migratedAppointments)
+  )
+
+  return migratedAppointments
 })
 
 const [editingAppointment, setEditingAppointment] = useState(null)
@@ -91,8 +130,19 @@ function cancelEditingAppointment() {
 }
 
 const sortedAppointments = [...appointmentList].sort(
-  (firstAppointment, secondAppointment) =>
-    firstAppointment.time.localeCompare(secondAppointment.time)
+  (firstAppointment, secondAppointment) => {
+    const dateComparison = firstAppointment.date.localeCompare(
+      secondAppointment.date
+    )
+
+    if (dateComparison !== 0) {
+      return dateComparison
+    }
+
+    return firstAppointment.time.localeCompare(
+      secondAppointment.time
+    )
+  }
 )
 
 const scheduledAppointmentsCount = appointmentList.filter(
