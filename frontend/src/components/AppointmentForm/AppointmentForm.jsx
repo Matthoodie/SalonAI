@@ -12,61 +12,87 @@ for (let hour = 7; hour <= 21; hour++) {
   }
 }
 
+function getTodayDate() {
+  const today = new Date()
+  const timezoneOffset = today.getTimezoneOffset() * 60_000
+  const localDate = new Date(today.getTime() - timezoneOffset)
+
+  return localDate.toISOString().split('T')[0]
+}
+
 function AppointmentForm({
-  appointments,
+  appointments = [],
   onAddAppointment,
   onUpdateAppointment,
   onCancelEdit,
   editingAppointment,
+  initialDate = '',
 }) {
+  const [date, setDate] = useState(getTodayDate())
   const [time, setTime] = useState('')
   const [clientName, setClientName] = useState('')
   const [service, setService] = useState('')
 
   const [errors, setErrors] = useState({
+    date: '',
     time: '',
     clientName: '',
     service: '',
   })
 
+  const dateInputRef = useRef(null)
   const timeInputRef = useRef(null)
   const clientNameInputRef = useRef(null)
   const serviceInputRef = useRef(null)
 
   useEffect(() => {
     if (editingAppointment) {
+      setDate(editingAppointment.date || getTodayDate())
       setTime(editingAppointment.time)
       setClientName(editingAppointment.clientName)
       setService(editingAppointment.service)
     } else {
+      setDate(initialDate || getTodayDate())
       setTime('')
       setClientName('')
       setService('')
     }
 
     setErrors({
+      date: '',
       time: '',
       clientName: '',
       service: '',
     })
-  }, [editingAppointment])
+}, [editingAppointment, initialDate])
 
   function handleSubmit() {
-    const isTimeAlreadyTaken = appointments.some((appointment) => {
-      const hasSameTime = appointment.time === time
+    const isAppointmentAlreadyTaken = appointments.some(
+      (appointment) => {
+        const hasSameDate = appointment.date === date
+        const hasSameTime = appointment.time === time
 
-      const isDifferentAppointment =
-        !editingAppointment ||
-        appointment.id !== editingAppointment.id
+        const isDifferentAppointment =
+          !editingAppointment ||
+          appointment.id !== editingAppointment.id
 
-      return hasSameTime && isDifferentAppointment
-    })
+        return (
+          hasSameDate &&
+          hasSameTime &&
+          isDifferentAppointment
+        )
+      }
+    )
 
     const newErrors = {
+      date: date
+        ? ''
+        : 'Odaberite datum termina.',
+
       time: !time
         ? 'Odaberite vrijeme termina.'
-        : isTimeAlreadyTaken
-          ? `Termin u ${time} je već zauzet.`
+        : isAppointmentAlreadyTaken
+          ? `Termin ${date} u ${time} je već zauzet.`
           : '',
 
       clientName: clientName.trim()
@@ -85,7 +111,9 @@ function AppointmentForm({
     )
 
     if (hasErrors) {
-      if (newErrors.time) {
+      if (newErrors.date) {
+        dateInputRef.current?.focus()
+      } else if (newErrors.time) {
         timeInputRef.current?.focus()
       } else if (newErrors.clientName) {
         clientNameInputRef.current?.focus()
@@ -99,6 +127,7 @@ function AppointmentForm({
     if (editingAppointment) {
       onUpdateAppointment({
         ...editingAppointment,
+        date,
         time,
         clientName: clientName.trim(),
         service: service.trim(),
@@ -106,6 +135,7 @@ function AppointmentForm({
     } else {
       onAddAppointment({
         id: Date.now(),
+        date,
         time,
         clientName: clientName.trim(),
         service: service.trim(),
@@ -113,15 +143,29 @@ function AppointmentForm({
       })
     }
 
+    setDate(getTodayDate())
     setTime('')
     setClientName('')
     setService('')
 
     setErrors({
+      date: '',
       time: '',
       clientName: '',
       service: '',
     })
+  }
+
+  function handleDateChange(event) {
+    setDate(event.target.value)
+
+    if (errors.date || errors.time) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        date: '',
+        time: '',
+      }))
+    }
   }
 
   function handleTimeChange(event) {
@@ -162,6 +206,31 @@ function AppointmentForm({
       <h2>
         {editingAppointment ? 'Uredi termin' : 'Novi termin'}
       </h2>
+
+      <div className="form-field">
+        <label htmlFor="appointment-date">
+          Datum
+        </label>
+
+        <input
+          id="appointment-date"
+          ref={dateInputRef}
+          className={errors.date ? 'input-error' : ''}
+          type="date"
+          value={date}
+          onChange={handleDateChange}
+        />
+
+        <p
+          className={
+            errors.date
+              ? 'form-error form-error-visible'
+              : 'form-error'
+          }
+        >
+          {errors.date || '\u00A0'}
+        </p>
+      </div>
 
       <div className="form-field">
         <label htmlFor="appointment-time">

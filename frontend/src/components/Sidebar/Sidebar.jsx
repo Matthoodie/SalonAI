@@ -25,6 +25,12 @@ function Sidebar() {
               Termini
             </Link>
           </li>
+<li>
+  <Link to="/calendar">
+    Kalendar
+  </Link>
+</li>
+
         </ul>
       </nav>
     </aside>

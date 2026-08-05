@@ -1,5 +1,25 @@
 import './AppointmentCard.css'
 
+function formatAppointmentDate(date) {
+  if (!date) {
+    return 'Datum nije naveden'
+  }
+
+  const [year, month, day] = date.split('-')
+
+  const localDate = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  )
+
+  return new Intl.DateTimeFormat('hr-HR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(localDate)
+}
+
 function AppointmentCard({
   appointment,
   onComplete,
@@ -17,12 +37,24 @@ function AppointmentCard({
       }
     >
       <div className="appointment-card-header">
-        <div className="appointment-time">
-          <span className="appointment-time-label">
-            Vrijeme termina
-          </span>
+        <div className="appointment-schedule">
+          <div className="appointment-date">
+            <span className="appointment-date-label">
+              Datum
+            </span>
 
-          <strong>{appointment.time}</strong>
+            <strong>
+              {formatAppointmentDate(appointment.date)}
+            </strong>
+          </div>
+
+          <div className="appointment-time">
+            <span className="appointment-time-label">
+              Vrijeme
+            </span>
+
+            <strong>{appointment.time}</strong>
+          </div>
         </div>
 
         <span

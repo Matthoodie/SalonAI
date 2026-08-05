@@ -714,3 +714,11 @@ Redoslijed Milestonea 3:
 12. Testiranje
 13. Git checkpoint
 14. Blueprint update
+
+
+Milestone 4 — Dashboard 2.0
+Milestone 5 — Cjenik, usluge i filteri
+Milestone 6 — Zaposlenici i smjene
+Milestone 7 — Backend i PostgreSQL
+Milestone 8 — Autentikacija i dopuštenja
+Milestone 9 — AI, WhatsApp i automatizacije

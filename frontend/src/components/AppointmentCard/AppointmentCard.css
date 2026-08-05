@@ -34,18 +34,32 @@
   margin-bottom: 22px;
 }
 
+.appointment-schedule {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.appointment-date,
 .appointment-time {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
+.appointment-date-label,
 .appointment-time-label {
   color: #64748b;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.appointment-date strong {
+  color: #0f172a;
+  font-size: 1.05rem;
+  line-height: 1.25;
 }
 
 .appointment-time strong {
@@ -190,4 +204,9 @@
   .appointment-button {
     width: 100%;
   }
+}
+
+.appointment-schedule {
+  flex-direction: column;
+  gap: 14px;
 }
