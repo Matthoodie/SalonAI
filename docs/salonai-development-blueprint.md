@@ -451,274 +451,499 @@ Planirani novi model termina:
   service,
   status
 }
-13. Status projekta
-Milestone 1                 ✅ Završeno
-Milestone 2                 ✅ Završeno
-Frontend Refactoring v1     ✅ Završeno
-Frontend Audit              ✅ Završeno
-Milestone 3                 ⏳ Sljedeće
+# 13. Službeni roadmap projekta
 
-# FAZA 3 — spremi i provjeri dokument
+Ovaj roadmap predstavlja trenutačni plan razvoja SalonAI platforme.
 
-Spremi datoteku:
+Redoslijed milestoneova može se prilagoditi ako poslovne potrebe ili tehnički zahtjevi pokažu da je drugačiji raspored učinkovitiji. Svaka veća promjena roadmapa mora biti dokumentirana.
+
+---
+
+## Milestone 0 — Project Foundation
+
+**Status:** ✅ Završeno
+
+Cilj milestonea bio je postaviti osnovni razvojni temelj projekta.
+
+Implementirano je:
+
+* React i Vite projekt
+* Git i GitHub repozitorij
+* `main` i `development` branch
+* React Router
+* osnovni Layout
+* Sidebar
+* Header
+* Dashboard
+* početna organizacija projekta
+* production build provjera
+
+---
+
+## Milestone 1 — Clients Engine v1
+
+**Status:** ✅ Završeno
+
+Implementirano je:
+
+* prikaz klijenata
+* dodavanje klijenata
+* spremanje u localStorage
+* ClientForm
+* ClientCard
+* prikaz imena i telefona
+* prikaz broja posjeta
+* modularna organizacija komponenti
+
+Planirane buduće nadogradnje:
+
+* uređivanje klijenta
+* brisanje klijenta
+* validacija telefona
+* povijest termina
+* automatsko povećavanje broja posjeta
+* povezivanje klijenta s terminima
+
+---
+
+## Milestone 2 — Appointment Engine v1
+
+**Status:** ✅ Završeno
+
+Implementirano je:
+
+* dodavanje termina
+* uređivanje termina
+* brisanje termina
+* potvrda prije brisanja
+* označavanje termina završenim
+* localStorage
+* migracija podataka
+* datum i vrijeme termina
+* sortiranje po datumu i vremenu
+* validacija forme
+* fokus na prvo neispravno polje
+* sprječavanje dvostrukih termina
+* statistika zakazanih i završenih termina
+* prikaz datuma na kartici
+* modularna struktura komponenti
+
+Trenutačni model termina:
+
+```js
+{
+  id,
+  date,
+  time,
+  clientName,
+  service,
+  status,
+}
+```
+
+Planirane buduće nadogradnje:
+
+* `clientId`
+* `serviceId`
+* `employeeId`
+* početno i završno vrijeme
+* trajanje termina
+* cijena
+* bilješke
+* izvor rezervacije
+* status potvrde
+
+---
+
+## Milestone 3 — Calendar Engine v1
+
+**Status:** ✅ Završeno
+
+Implementirano je:
+
+* zasebna Calendar stranica
+* Calendar ruta
+* navigacija kroz mjesece
+* gumb Danas
+* hrvatski nazivi mjeseci i dana
+* vlastiti algoritam za generiranje 42 kalendarske ćelije
+* prikaz dana prethodnog i sljedećeg mjeseca
+* označavanje današnjeg datuma
+* odabir datuma
+* automatski prijelaz na mjesec odabranog sivog datuma
+* prikaz broja termina po danu
+* prikaz broja završenih termina
+* dnevni panel termina
+* sortiranje termina po vremenu
+* zajednički `appointmentList`
+* Single Source of Truth u `App.jsx`
+* dodavanje termina iz Calendara
+* unaprijed odabrani datum u AppointmentForm
+* uređivanje termina klikom iz Calendara
+* automatska sinkronizacija Calendara i stranice Termini
+* responsive prikaz
+* production build provjera
+
+Calendar Engine v1 smatra se završenim jer podržava osnovni mjesečni operativni tok.
+
+Planirane buduće Calendar nadogradnje:
+
+* tjedni planner
+* dnevni planner
+* prikaz zaposlenika
+* drag-and-drop termina
+* blokirano vrijeme
+* pauze
+* smjene
+* nedostupnost
+* prikaz trajanja usluge
+* tooltip pregledi
+* filtriranje po zaposleniku
+* filtriranje po statusu i usluzi
+
+---
+
+## Milestone 4 — Service Engine v1
+
+**Status:** ⏳ Sljedeće
+
+Cilj je napraviti strukturirani katalog usluga koji će koristiti termini, zaposlenici, kalendar, analitika i AI Booking Engine.
+
+Planirane funkcionalnosti:
+
+* Services stranica
+* ServiceForm
+* ServiceCard
+* prikaz liste usluga
+* dodavanje usluge
+* uređivanje usluge
+* aktivacija i deaktivacija usluge
+* localStorage
+* cijena
+* trajanje
+* naziv usluge
+* osnovna validacija
+
+Početni model usluge:
+
+```js
+{
+  id,
+  name,
+  price,
+  durationMinutes,
+  active,
+}
+```
+
+Buduće nadogradnje:
+
+* kategorije
+* opis
+* cijena „od”
+* buffer prije i poslije usluge
+* zaposlenici koji izvršavaju uslugu
+* različito trajanje po zaposleniku
+* različita cijena po zaposleniku
+* faze usluge
+* paralelni rad tijekom čekanja
+
+---
+
+## Milestone 5 — Employee Engine v1
+
+**Status:** 📝 Planirano
+
+Planirane funkcionalnosti:
+
+* dodavanje zaposlenika
+* uređivanje zaposlenika
+* deaktivacija zaposlenika
+* dodjela usluga zaposleniku
+* dodjela zaposlenika terminu
+* prikaz zaposlenika
+* osnovni filter kalendara
+* priprema korisničkih uloga
+
+Početni model zaposlenika:
+
+```js
+{
+  id,
+  firstName,
+  lastName,
+  email,
+  phone,
+  role,
+  active,
+}
+```
+
+---
+
+## Milestone 6 — Shifts and Availability Engine
+
+**Status:** 📝 Planirano
+
+Planirane funkcionalnosti:
+
+* raspored smjena
+* početak i završetak smjene
+* pauze
+* slobodni dani
+* godišnji odmor
+* bolovanje
+* odsutnosti
+* blokirano vrijeme
+* sprječavanje rezervacije izvan smjene
+* provjera dostupnosti zaposlenika
+* evidencija radnog vremena
+
+Model smjene:
+
+```js
+{
+  id,
+  employeeId,
+  date,
+  startTime,
+  endTime,
+  breakMinutes,
+  status,
+}
+```
+
+---
+
+## Milestone 7 — Business Hours and Booking Rules
+
+**Status:** 📝 Planirano
+
+Planirane funkcionalnosti:
+
+* radno vrijeme salona
+* neradni dani
+* posebna radna vremena
+* minimalno vrijeme prije rezervacije
+* maksimalno vrijeme unaprijed
+* politika otkazivanja
+* pravila potvrde rezervacija
+* automatska ili ručna potvrda
+* blokiranje vremenskih intervala
+
+---
+
+## Milestone 8 — Backend and PostgreSQL
+
+**Status:** 📝 Planirano
+
+Planirane tehnologije:
+
+* Node.js
+* Express
+* REST API
+* PostgreSQL
+
+Planirane migracije:
+
+* localStorage klijenti → PostgreSQL
+* localStorage termini → PostgreSQL
+* usluge → PostgreSQL
+* zaposlenici → PostgreSQL
+* smjene → PostgreSQL
+
+Cilj je sačuvati postojeći frontend i zamijeniti lokalni izvor podataka API slojem.
+
+---
+
+## Milestone 9 — Authentication, Roles and Multi-Tenant Architecture
+
+**Status:** 📝 Planirano
+
+Planirane funkcionalnosti:
+
+* registracija
+* prijava
+* vlasnik salona
+* voditelj
+* zaposlenik
+* prava pristupa
+* prilagođeni Sidebar
+* prilagođeni Dashboard
+* odvajanje podataka između salona
+* multi-tenant arhitektura
+
+---
+
+## Milestone 10 — AI Booking Engine
+
+**Status:** 📝 Planirano
+
+Planirane funkcionalnosti:
+
+* prepoznavanje upita klijenta
+* prepoznavanje usluge
+* pronalazak dostupnog zaposlenika
+* provjera trajanja
+* provjera smjene
+* provjera blokiranog vremena
+* prijedlog slobodnog termina
+* automatsko ili ručno potvrđivanje
+* obavijest vlasniku ili zaposleniku
+* automatska rezervacija prema pravilima salona
+
+---
+
+## Milestone 11 — WhatsApp and Automation Engine
+
+**Status:** 📝 Planirano
+
+Planirane funkcionalnosti:
+
+* WhatsApp Business API
+* automatski odgovori
+* potvrde termina
+* podsjetnici
+* otkazivanje
+* promjena termina
+* n8n automatizacije
+* obavijesti vlasniku
+* obavijesti zaposleniku
+
+---
+
+## Milestone 12 — AI Price List Import
+
+**Status:** 📝 Planirano
+
+Planirani ulazi:
+
+* PDF
+* PNG
+* JPG
+* fotografija cjenika
+
+Planirani tok:
 
 ```text
-Ctrl + S
+Upload dokumenta
+↓
+Prepoznavanje sadržaja
+↓
+Ekstrakcija usluga i cijena
+↓
+AI prijedlog trajanja
+↓
+Korisnička provjera
+↓
+Uređivanje
+↓
+Spremanje u Service Engine
+```
 
-Zatim provjeri Git:
+AI prijedlozi ne smiju se spremati kao potvrđene činjenice bez korisničke provjere.
 
-git status
+---
 
-Trebao bi vidjeti novu datoteku:
+## Milestone 13 — Salon Setup Wizard
 
-docs/salonai-development-blueprint.md
+**Status:** 📝 Planirano
 
-i možda nove foldere nećeš vidjeti jer Git ne prati prazne foldere.
+Salon Setup Wizard predstavljat će personalizirano početno postavljanje aplikacije.
 
-To je normalno.
+Planirani koraci:
 
-Važno: Git ne sprema prazne foldere
+1. podaci o salonu
+2. logo i izgled
+3. radno vrijeme
+4. usluge i cjenik
+5. zaposlenici
+6. smjene
+7. WhatsApp
+8. AI postavke
+9. pravila rezervacija
+10. završna provjera
 
-Kako bi Git zadržao prazne foldere, u svaki napravi .gitkeep datoteku:
+Wizard se implementira nakon što svi moduli koje konfigurira budu stabilni.
 
-docs/architecture/.gitkeep
-docs/milestones/.gitkeep
-docs/testing/.gitkeep
-docs/screenshots/.gitkeep
+---
 
-.gitkeep može biti potpuno prazan.
+## Milestone 14 — Dashboard 2.0 and Business Intelligence
 
-Nakon toga će Git prepoznati strukturu.
+**Status:** 📝 Planirano
 
-FAZA 4 — dokument Milestonea 2
+Planirane funkcionalnosti:
 
-U folderu:
+* stvarni današnji termini
+* sljedeći termin
+* dnevni prihod
+* tjedni prihod
+* mjesečni prihod
+* popunjenost
+* najtraženije usluge
+* učinak zaposlenika
+* slobodni vremenski intervali
+* otkazivanja
+* AI poslovne preporuke
 
-docs/milestones
+---
 
-napravi:
+## Milestone 15 — Production and Commercial Launch
 
-milestone-2-appointments-and-clients.md
+**Status:** 📝 Planirano
 
-U njega zalijepi:
+Planirane funkcionalnosti:
 
-# Milestone 2 — Clients and Appointment Management
+* deployment frontenda
+* deployment backenda
+* produkcijska baza
+* environment varijable
+* monitoring
+* logging
+* backup
+* sigurnost
+* Stripe
+* paketi pretplate
+* trial period
+* produkcijski onboarding
+* prvi pilot salon
 
-## Status
+---
 
-Completed.
-
-## Cilj
-
-Izgraditi funkcionalni frontend modul za upravljanje klijentima i terminima prije uvođenja backenda.
-
-## Implementirane funkcionalnosti
-
-### Klijenti
-
-- prikaz klijenata
-- dodavanje klijenata
-- localStorage
-- prikaz telefona
-- prikaz broja posjeta
-
-### Termini
-
-- dodavanje
-- uređivanje
-- brisanje
-- potvrda prije brisanja
-- označavanje završenim
-- kronološko sortiranje
-- localStorage
-- sprječavanje duplih termina
-- validacija
-- automatski fokus na grešku
-- prazno stanje
-- statistika termina
-
-## Završni testovi
-
-- dodavanje klijenta
-- refresh i provjera podataka
-- dodavanje termina
-- uređivanje termina
-- brisanje termina
-- odustajanje od brisanja
-- označavanje završenim
-- pokušaj dvostrukog termina
-- provjera sortiranja
-- provjera praznog stanja
-- provjera statistike
-- production build
-
-## Rezultat
-
-Milestone je uspješno završen i spremljen na `development` branch.
-
-
-FAZA 5 — dokument refactoringa
-
-U:
-
-docs/architecture
-
-napravi:
-
-frontend-refactoring-v1.md
-
-Zalijepi:
-
-# Frontend Refactoring v1
-
-## Cilj
-
-Pretvoriti početnu ravnu strukturu React aplikacije u modularnu strukturu spremnu za rast.
-
-## Pravilo organizacije
-
-Svaka veća komponenta:
+# 14. Trenutačni status projekta
 
 ```text
-ComponentName/
-├── ComponentName.jsx
-└── ComponentName.css
+Milestone 0 — Foundation                    ✅ Završeno
+Milestone 1 — Clients Engine               ✅ Završeno
+Milestone 2 — Appointment Engine           ✅ Završeno
+Milestone 3 — Calendar Engine v1           ✅ Završeno
+Milestone 4 — Service Engine v1            ⏳ Sljedeće
+Milestone 5 — Employee Engine              📝 Planirano
+Milestone 6 — Shifts and Availability      📝 Planirano
+Milestone 7 — Booking Rules                📝 Planirano
+Milestone 8 — Backend and PostgreSQL        📝 Planirano
+Milestone 9 — Auth and Multi-Tenant         📝 Planirano
+Milestone 10 — AI Booking Engine           📝 Planirano
+Milestone 11 — WhatsApp Automation         📝 Planirano
+Milestone 12 — AI Price List Import        📝 Planirano
+Milestone 13 — Salon Setup Wizard          📝 Planirano
+Milestone 14 — Business Intelligence       📝 Planirano
+Milestone 15 — Production Launch           📝 Planirano
+```
 
-Svaka stranica:
+---
 
-PageName/
-├── PageName.jsx
-└── PageName.css
-Refaktorirane komponente
-AppointmentCard
-AppointmentForm
-ClientCard
-ClientForm
-DashboardCard
-Header
-Sidebar
-Layout
-Refaktorirane stranice
-Appointments
-Clients
-Dashboard
-Testiranje
+# 15. Pravilo završetka milestonea
 
-Nakon svakog premještanja provedena je provjera:
+Milestone se smatra završenim tek kada su ispunjeni svi uvjeti:
 
-import putanja
-render komponente
-funkcionalnosti
-vizualnog izgleda
-Vite terminala
-production builda
-Završni rezultat
+1. funkcionalnost radi
+2. provedeni su testovi
+3. nema poznatih kritičnih grešaka
+4. `npm run build` prolazi
+5. Git commit je napravljen
+6. GitHub je ažuriran
+7. `working tree clean`
+8. blueprint je ažuriran
 
-Frontend je modularan, build prolazi, a Git working tree je čist.
-
-
-# FAZA 6 — Git checkpoint dokumentacije
-
-Vrati se u glavni folder projekta:
-
-```powershell
-cd C:\Users\matej\OneDrive\Radna površina\PROJECT_____2026\SalonAI
-
-Provjeri:
-
-git status
-
-Zatim:
-
-git add .
-
-Provjeri ponovno:
-
-git status
-
-Commit:
-
-git commit -m "Add SalonAI development blueprint"
-
-Push:
-
-git push
-
-Završna provjera:
-
-git status
-
-Očekujemo:
-
-nothing to commit, working tree clean
-FAZA 7 — kako ćemo održavati blueprint
-
-Od sada poslije svake veće cjeline radimo ovaj postupak:
-
-Implementacija
-↓
-Testiranje
-↓
-Git commit
-↓
-Ažuriranje milestone dokumenta
-↓
-Ažuriranje glavnog blueprinta
-↓
-Nova PDF verzija nakon većeg milestonea
-
-Blueprint neće biti dovršen jednom zauvijek. Bit će verzioniran zajedno s kodom.
-
-Planirane verzije:
-
-Blueprint v0.1
-→ Milestone 1 + Milestone 2 + Refactoring
-
-Blueprint v0.2
-→ Datum i kalendar
-
-Blueprint v0.3
-→ Dashboard 2.0 i cjenik
-
-Blueprint v0.4
-→ Backend i PostgreSQL
-
-Blueprint v0.5
-→ Autentikacija i multi-tenant arhitektura
-
-Blueprint v1.0
-→ Prva produkcijska MVP verzija
-Nakon blueprinta: Milestone 3
-
-Tek nakon uspješnog Git checkpointa dokumentacije počinjemo mijenjati model termina.
-
-Prvi tehnički korak bit će:
-
-Dodavanje date vrijednosti novim i postojećim terminima
-
-Ali nećemo samo dodati input i nadati se najboljem. Prvo ćemo riješiti migraciju postojećih podataka iz localStoragea, kako postojeći termini bez date vrijednosti ne bi srušili kalendar.
-
-Redoslijed Milestonea 3:
-
-1. Analiza postojećeg modela
-2. Migracija starih termina
-3. Date input u formi
-4. Spremanje datuma
-5. Uređivanje datuma
-6. Datum na kartici
-7. Provjera duplikata po datumu i vremenu
-8. Filtriranje po odabranom danu
-9. Dnevni prikaz
-10. Mjesečni kalendar
-11. Dashboard povezivanje
-12. Testiranje
-13. Git checkpoint
-14. Blueprint update
-
-
-Milestone 4 — Dashboard 2.0
-Milestone 5 — Cjenik, usluge i filteri
-Milestone 6 — Zaposlenici i smjene
-Milestone 7 — Backend i PostgreSQL
-Milestone 8 — Autentikacija i dopuštenja
-Milestone 9 — AI, WhatsApp i automatizacije
+Napredne nadogradnje mogu ostati planirane za buduću verziju modula bez blokiranja zatvaranja njegove prve stabilne verzije.
