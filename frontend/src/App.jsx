@@ -34,6 +34,11 @@ function App() {
     setAppointmentFormInitialDate,
   ] = useState('')
 
+const [
+  appointmentFormEditingId,
+  setAppointmentFormEditingId,
+] = useState(null)
+
   const [clientList, setClientList] = useState(() => {
     const savedClients = localStorage.getItem('salonai-clients')
 
@@ -121,27 +126,36 @@ function App() {
   path="/appointments"
   element={
     <Appointments
-      appointmentList={appointmentList}
-      setAppointmentList={setAppointmentList}
-      initialAppointmentDate={
-        appointmentFormInitialDate
-      }
-      clearInitialAppointmentDate={() =>
-        setAppointmentFormInitialDate('')
-      }
-    />
+  appointmentList={appointmentList}
+  setAppointmentList={setAppointmentList}
+  initialAppointmentDate={
+    appointmentFormInitialDate
+  }
+  clearInitialAppointmentDate={() =>
+    setAppointmentFormInitialDate('')
+  }
+  initialEditingAppointmentId={
+    appointmentFormEditingId
+  }
+  clearInitialEditingAppointmentId={() =>
+    setAppointmentFormEditingId(null)
+  }
+/>
   }
 />
 
 <Route
   path="/calendar"
   element={
-    <Calendar
-      appointmentList={appointmentList}
-      onRequestNewAppointment={
-        setAppointmentFormInitialDate
-      }
-    />
+   <Calendar
+  appointmentList={appointmentList}
+  onRequestNewAppointment={
+    setAppointmentFormInitialDate
+  }
+  onRequestEditAppointment={
+    setAppointmentFormEditingId
+  }
+/>
   }
 />
       </Routes>

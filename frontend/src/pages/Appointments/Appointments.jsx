@@ -18,6 +18,8 @@ function Appointments({
   setAppointmentList,
   initialAppointmentDate,
   clearInitialAppointmentDate,
+  initialEditingAppointmentId,
+  clearInitialEditingAppointmentId,
 }) {
 
   const [formInitialDate] = useState(
@@ -34,6 +36,27 @@ function Appointments({
 }, [
   initialAppointmentDate,
   clearInitialAppointmentDate,
+])
+
+useEffect(() => {
+  if (!initialEditingAppointmentId) {
+    return
+  }
+
+  const appointmentToEdit = appointmentList.find(
+    (appointment) =>
+      appointment.id === initialEditingAppointmentId
+  )
+
+  if (appointmentToEdit) {
+    setEditingAppointment(appointmentToEdit)
+  }
+
+  clearInitialEditingAppointmentId()
+}, [
+  initialEditingAppointmentId,
+  appointmentList,
+  clearInitialEditingAppointmentId,
 ])
 
   function completeAppointment(appointmentId) {

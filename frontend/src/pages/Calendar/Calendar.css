@@ -338,6 +338,7 @@
 
 .selected-day-appointment {
   display: grid;
+  width: 100%;
   grid-template-columns: 90px minmax(0, 1fr) auto;
   align-items: center;
   gap: 20px;
@@ -346,6 +347,25 @@
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.selected-day-appointment:hover {
+  border-color: #a5b4fc;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.selected-day-appointment:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.25);
+  outline-offset: 2px;
 }
 
 .selected-day-appointment-completed {

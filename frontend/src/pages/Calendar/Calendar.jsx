@@ -72,6 +72,7 @@ function generateCalendarDays(displayedDate) {
 function Calendar({
   appointmentList = [],
   onRequestNewAppointment,
+  onRequestEditAppointment,
 }) {
 
   const navigate = useNavigate()
@@ -154,6 +155,11 @@ function Calendar({
   
 function createAppointmentForSelectedDate() {
   onRequestNewAppointment(selectedDateKey)
+  navigate('/appointments')
+}
+
+function editAppointmentFromCalendar(appointmentId) {
+  onRequestEditAppointment(appointmentId)
   navigate('/appointments')
 }
 
@@ -379,34 +385,39 @@ function createAppointmentForSelectedDate() {
                   appointment.status === 'Završen'
 
                 return (
-                  <article
-                    key={appointment.id}
-                    className={
-                      isCompleted
-                        ? 'selected-day-appointment selected-day-appointment-completed'
-                        : 'selected-day-appointment'
-                    }
-                  >
-                    <div className="selected-day-appointment-time">
-                      {appointment.time}
-                    </div>
+                  <button
+  key={appointment.id}
+  type="button"
+  className={
+    isCompleted
+      ? 'selected-day-appointment selected-day-appointment-completed'
+      : 'selected-day-appointment'
+  }
+  onClick={() =>
+    editAppointmentFromCalendar(appointment.id)
+  }
+  aria-label={`Uredi termin za ${appointment.clientName} u ${appointment.time}`}
+>
+  <div className="selected-day-appointment-time">
+    {appointment.time}
+  </div>
 
-                    <div className="selected-day-appointment-info">
-                      <h3>{appointment.clientName}</h3>
+  <div className="selected-day-appointment-info">
+    <h3>{appointment.clientName}</h3>
 
-                      <p>{appointment.service}</p>
-                    </div>
+    <p>{appointment.service}</p>
+  </div>
 
-                    <span
-                      className={
-                        isCompleted
-                          ? 'selected-day-appointment-status selected-day-appointment-status-completed'
-                          : 'selected-day-appointment-status'
-                      }
-                    >
-                      {appointment.status}
-                    </span>
-                  </article>
+  <span
+    className={
+      isCompleted
+        ? 'selected-day-appointment-status selected-day-appointment-status-completed'
+        : 'selected-day-appointment-status'
+    }
+  >
+    {appointment.status}
+  </span>
+</button>
                 )
               }
             )}
