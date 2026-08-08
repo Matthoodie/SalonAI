@@ -3,9 +3,11 @@ import { Route, Routes } from 'react-router-dom'
 
 import { appointments } from './data/appointments'
 import { clients } from './data/clients'
+import { services } from './data/services'
 
 import Layout from './components/Layout/Layout'
 
+import Services from './pages/Services/Services'
 import Appointments from './pages/Appointments/Appointments'
 import Calendar from './pages/Calendar/Calendar'
 import Clients from './pages/Clients/Clients'
@@ -38,6 +40,25 @@ const [
   appointmentFormEditingId,
   setAppointmentFormEditingId,
 ] = useState(null)
+
+const [serviceList, setServiceList] = useState(() => {
+  const savedServices = localStorage.getItem(
+    'salonai-services'
+  )
+
+  if (savedServices) {
+    try {
+      return JSON.parse(savedServices)
+    } catch (error) {
+      console.error(
+        'Neuspješno učitavanje spremljenih usluga:',
+        error
+      )
+    }
+  }
+
+  return services
+})
 
   const [clientList, setClientList] = useState(() => {
     const savedClients = localStorage.getItem('salonai-clients')
@@ -104,6 +125,13 @@ const [
     )
   }, [appointmentList])
 
+  useEffect(() => {
+  localStorage.setItem(
+    'salonai-services',
+    JSON.stringify(serviceList)
+  )
+}, [serviceList])
+
   return (
     <Layout>
       <Routes>
@@ -122,6 +150,15 @@ const [
           }
         />
 
+<Route
+  path="/services"
+  element={
+   <Services
+  serviceList={serviceList}
+  setServiceList={setServiceList}
+/>
+  }
+/>
         <Route
   path="/appointments"
   element={
