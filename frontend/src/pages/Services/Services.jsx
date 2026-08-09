@@ -14,8 +14,12 @@ function formatDuration(defaultDurationMinutes) {
     return 'Nije definirano'
   }
 
-  const hours = Math.floor(defaultDurationMinutes / 60)
-  const minutes = defaultDurationMinutes % 60
+  const hours = Math.floor(
+    defaultDurationMinutes / 60
+  )
+
+  const minutes =
+    defaultDurationMinutes % 60
 
   if (hours === 0) {
     return `${minutes} min`
@@ -27,76 +31,126 @@ function formatDuration(defaultDurationMinutes) {
 
   return `${hours} h ${minutes} min`
 }
+
 function Services({
   serviceList = [],
   setServiceList,
 }) {
+  const [isFormOpen, setIsFormOpen] =
+    useState(false)
 
-const [isFormOpen, setIsFormOpen] =
-  useState(false)
+  const [editingService, setEditingService] =
+    useState(null)
 
-const [editingService, setEditingService] =
-  useState(null)
+  const [searchQuery, setSearchQuery] =
+    useState('')
 
-function addService(newService) {
-  setServiceList((currentServices) => [
-    ...currentServices,
-    newService,
-  ])
+  const [
+    selectedCategory,
+    setSelectedCategory,
+  ] = useState('all')
 
-  setIsFormOpen(false)
-  setEditingService(null)
-}
+  const [selectedStatus, setSelectedStatus] =
+  useState('all')
 
-function startEditingService(service) {
-  setEditingService(service)
-  setIsFormOpen(true)
-}
+  function addService(newService) {
+    setServiceList((currentServices) => [
+      ...currentServices,
+      newService,
+    ])
 
-function updateService(updatedService) {
-  setServiceList((currentServices) =>
-    currentServices.map((service) =>
-      service.id === updatedService.id
-        ? updatedService
-        : service
-    )
-  )
-
-  setEditingService(null)
-  setIsFormOpen(false)
-}
-
-function cancelServiceForm() {
-  setEditingService(null)
-  setIsFormOpen(false)
-}
-
-function toggleServiceActive(serviceId) {
-  setServiceList((currentServices) =>
-    currentServices.map((service) =>
-      service.id === serviceId
-        ? {
-            ...service,
-            active: !service.active,
-          }
-        : service
-    )
-  )
-
-  if (editingService?.id === serviceId) {
-    setEditingService((currentService) => ({
-      ...currentService,
-      active: !currentService.active,
-    }))
+    setIsFormOpen(false)
+    setEditingService(null)
   }
-}
 
-  const activeServicesCount = serviceList.filter(
-    (service) => service.active
-  ).length
+  function startEditingService(service) {
+    setEditingService(service)
+    setIsFormOpen(true)
+  }
+
+  function updateService(updatedService) {
+    setServiceList((currentServices) =>
+      currentServices.map((service) =>
+        service.id === updatedService.id
+          ? updatedService
+          : service
+      )
+    )
+
+    setEditingService(null)
+    setIsFormOpen(false)
+  }
+
+  function cancelServiceForm() {
+    setEditingService(null)
+    setIsFormOpen(false)
+  }
+
+  function toggleServiceActive(serviceId) {
+    setServiceList((currentServices) =>
+      currentServices.map((service) =>
+        service.id === serviceId
+          ? {
+              ...service,
+              active: !service.active,
+            }
+          : service
+      )
+    )
+
+    if (editingService?.id === serviceId) {
+      setEditingService((currentService) => ({
+        ...currentService,
+        active: !currentService.active,
+      }))
+    }
+  }
+
+  const activeServicesCount =
+    serviceList.filter(
+      (service) => service.active
+    ).length
 
   const inactiveServicesCount =
-    serviceList.length - activeServicesCount
+    serviceList.length -
+    activeServicesCount
+
+  const categories = [
+    ...new Set(
+      serviceList.map(
+        (service) =>
+          service.category || 'Ostalo'
+      )
+    ),
+  ].sort()
+
+const filteredServices =
+  serviceList.filter((service) => {
+    const matchesSearch =
+      service.name
+        .toLowerCase()
+        .includes(
+          searchQuery.toLowerCase()
+        )
+
+    const matchesCategory =
+      selectedCategory === 'all' ||
+      (service.category || 'Ostalo') ===
+        selectedCategory
+
+    const matchesStatus =
+      selectedStatus === 'all' ||
+      (selectedStatus === 'active' &&
+        service.active) ||
+      (selectedStatus === 'inactive' &&
+        !service.active)
+
+    return (
+      matchesSearch &&
+      matchesCategory &&
+      matchesStatus
+    )
+  })
 
   return (
     <div className="services-page">
@@ -109,47 +163,133 @@ function toggleServiceActive(serviceId) {
           <h1>Usluge</h1>
 
           <p>
-            Upravljajte cijenama, zadanim trajanjem i
-            dostupnošću usluga salona.
+            Upravljajte cijenama, zadanim
+            trajanjem i dostupnošću usluga
+            salona.
           </p>
         </div>
 
-      <button
-  type="button"
-  className="services-add-button"
-  onClick={() => {
-  setEditingService(null)
-  setIsFormOpen(true)
-}}
->
-  + Nova usluga
-</button>
+        <button
+          type="button"
+          className="services-add-button"
+          onClick={() => {
+            setEditingService(null)
+            setIsFormOpen(true)
+          }}
+        >
+          + Nova usluga
+        </button>
       </div>
 
-  {isFormOpen && (
-  <ServiceForm
-    onAddService={addService}
-    onUpdateService={updateService}
-    onCancel={cancelServiceForm}
-    editingService={editingService}
-  />
-)}
+      {isFormOpen && (
+        <ServiceForm
+          onAddService={addService}
+          onUpdateService={updateService}
+          onCancel={cancelServiceForm}
+          editingService={editingService}
+        />
+      )}
 
       <div className="services-summary">
         <div className="services-summary-item">
           <span>Ukupno</span>
-          <strong>{serviceList.length}</strong>
+          <strong>
+            {serviceList.length}
+          </strong>
         </div>
 
         <div className="services-summary-item">
           <span>Aktivne</span>
-          <strong>{activeServicesCount}</strong>
+          <strong>
+            {activeServicesCount}
+          </strong>
         </div>
 
         <div className="services-summary-item">
           <span>Neaktivne</span>
-          <strong>{inactiveServicesCount}</strong>
+          <strong>
+            {inactiveServicesCount}
+          </strong>
         </div>
+      </div>
+
+      <div className="services-toolbar">
+        <div className="services-search">
+          <label htmlFor="services-search">
+            Pretraži usluge
+          </label>
+
+          <input
+            id="services-search"
+            type="search"
+            value={searchQuery}
+            onChange={(event) =>
+              setSearchQuery(
+                event.target.value
+              )
+            }
+            placeholder="Upišite naziv usluge..."
+          />
+        </div>
+
+        <div className="services-filter">
+          <label htmlFor="services-category-filter">
+            Kategorija
+          </label>
+
+          <select
+            id="services-category-filter"
+            value={selectedCategory}
+            onChange={(event) =>
+              setSelectedCategory(
+                event.target.value
+              )
+            }
+          >
+            <option value="all">
+              Sve kategorije
+            </option>
+
+            {categories.map(
+              (category) => (
+                <option
+                  key={category}
+                  value={category}
+                >
+                  {category}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        <div className="services-filter">
+  <label htmlFor="services-status-filter">
+    Status
+  </label>
+
+  <select
+    id="services-status-filter"
+    value={selectedStatus}
+    onChange={(event) =>
+      setSelectedStatus(
+        event.target.value
+      )
+    }
+  >
+    <option value="all">
+      Sve
+    </option>
+
+    <option value="active">
+      Aktivne
+    </option>
+
+    <option value="inactive">
+      Neaktivne
+    </option>
+  </select>
+</div>
       </div>
 
       {serviceList.length === 0 ? (
@@ -161,91 +301,104 @@ function toggleServiceActive(serviceId) {
           <h2>Nema dodanih usluga</h2>
 
           <p>
-            Dodajte prvu uslugu kako biste mogli povezati
-            cijene i trajanje s terminima.
+            Dodajte prvu uslugu kako biste
+            mogli povezati cijene i trajanje
+            s terminima.
           </p>
         </div>
       ) : (
         <div className="services-list">
-          {serviceList.map((service) => (
-            <article
-              key={service.id}
-              className={
-                service.active
-                  ? 'service-card'
-                  : 'service-card service-card-inactive'
-              }
-            >
-              <div className="service-card-header">
-                <div>
-                  <span className="service-card-label">
-                    Usluga
+          {filteredServices.map(
+            (service) => (
+              <article
+                key={service.id}
+                className={
+                  service.active
+                    ? 'service-card'
+                    : 'service-card service-card-inactive'
+                }
+              >
+                <div className="service-card-header">
+                  <div>
+                    <span className="service-card-label">
+                      Usluga
+                    </span>
+
+                    <h2>{service.name}</h2>
+
+                    <p className="service-card-category">
+                      {service.category ||
+                        'Ostalo'}
+                    </p>
+                  </div>
+
+                  <span
+                    className={
+                      service.active
+                        ? 'service-status service-status-active'
+                        : 'service-status service-status-inactive'
+                    }
+                  >
+                    {service.active
+                      ? 'Aktivna'
+                      : 'Neaktivna'}
                   </span>
-
-                  <h2>{service.name}</h2>
-                  <p className="service-card-category">
-  {service.category || 'Ostalo'}
-</p>
                 </div>
 
-                <span
-                  className={
-                    service.active
-                      ? 'service-status service-status-active'
-                      : 'service-status service-status-inactive'
-                  }
-                >
-                  {service.active
-                    ? 'Aktivna'
-                    : 'Neaktivna'}
-                </span>
-              </div>
+                <div className="service-card-details">
+                  <div className="service-card-detail">
+                    <span>Cijena</span>
 
-              <div className="service-card-details">
-                <div className="service-card-detail">
-                  <span>Cijena</span>
+                    <strong>
+                      {formatPrice(
+                        service.price
+                      )}
+                    </strong>
+                  </div>
 
-                  <strong>
-                    {formatPrice(service.price)}
-                  </strong>
+                  <div className="service-card-detail">
+                    <span>
+                      Zadano trajanje
+                    </span>
+
+                    <strong>
+                      {formatDuration(
+                        service.defaultDurationMinutes
+                      )}
+                    </strong>
+                  </div>
                 </div>
 
-                <div className="service-card-detail">
-                  <span>Zadano trajanje</span>
+                <div className="service-card-actions">
+                  <button
+                    type="button"
+                    className="service-action-button"
+                    onClick={() =>
+                      startEditingService(
+                        service
+                      )
+                    }
+                  >
+                    Uredi
+                  </button>
 
-                  <strong>
-                    {formatDuration(
-                      service.defaultDurationMinutes
-                    )}
-                  </strong>
+                  <button
+                    type="button"
+                    className="service-action-button"
+                    onClick={() =>
+                      toggleServiceActive(
+                        service.id
+                      )
+                    }
+                  >
+                    {service.active
+                      ? 'Deaktiviraj'
+                      : 'Aktiviraj'}
+                  </button>
                 </div>
-              </div>
-
-              <div className="service-card-actions">
-                <button
-  type="button"
-  className="service-action-button"
-  onClick={() =>
-    startEditingService(service)
-  }
->
-  Uredi
-</button>
-
-               <button
-  type="button"
-  className="service-action-button"
-  onClick={() =>
-    toggleServiceActive(service.id)
-  }
->
-  {service.active
-    ? 'Deaktiviraj'
-    : 'Aktiviraj'}
-</button>
-              </div>
-            </article>
-          ))}
+              </article>
+            )
+          )}
         </div>
       )}
     </div>
