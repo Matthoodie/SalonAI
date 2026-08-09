@@ -8,26 +8,52 @@ for (let hour = 7; hour <= 21; hour++) {
     const formattedHour = String(hour).padStart(2, '0')
     const formattedMinute = String(minute).padStart(2, '0')
 
-    timeOptions.push(`${formattedHour}:${formattedMinute}`)
+    timeOptions.push(
+      `${formattedHour}:${formattedMinute}`
+    )
   }
 }
 
 function getTodayDate() {
   const today = new Date()
-  const timezoneOffset = today.getTimezoneOffset() * 60_000
-  const localDate = new Date(today.getTime() - timezoneOffset)
+  const timezoneOffset =
+    today.getTimezoneOffset() * 60_000
+
+  const localDate = new Date(
+    today.getTime() - timezoneOffset
+  )
 
   return localDate.toISOString().split('T')[0]
 }
 
 function AppointmentForm({
   appointments = [],
+  serviceList = [],
   onAddAppointment,
   onUpdateAppointment,
   onCancelEdit,
   editingAppointment,
   initialDate = '',
 }) {
+
+  const activeServices = serviceList.filter(
+    (serviceItem) => serviceItem.active
+  )
+  const editingServiceName =
+  editingAppointment?.serviceName ||
+  editingAppointment?.service ||
+  ''
+const isLegacyEditingService =
+  Boolean(
+    editingAppointment &&
+    editingServiceName &&
+    !serviceList.some(
+      (serviceItem) =>
+        serviceItem.name === editingServiceName
+    )
+  )
+
+
   const [date, setDate] = useState(getTodayDate())
   const [time, setTime] = useState('')
   const [clientName, setClientName] = useState('')
@@ -47,10 +73,18 @@ function AppointmentForm({
 
   useEffect(() => {
     if (editingAppointment) {
-      setDate(editingAppointment.date || getTodayDate())
+      setDate(
+        editingAppointment.date || getTodayDate()
+      )
+
       setTime(editingAppointment.time)
       setClientName(editingAppointment.clientName)
-      setService(editingAppointment.service)
+
+      setService(
+        editingAppointment.serviceName ||
+        editingAppointment.service ||
+        ''
+)
     } else {
       setDate(initialDate || getTodayDate())
       setTime('')
@@ -64,27 +98,38 @@ function AppointmentForm({
       clientName: '',
       service: '',
     })
-}, [editingAppointment, initialDate])
+  }, [editingAppointment, initialDate])
 
-  function handleSubmit() {
-    const isAppointmentAlreadyTaken = appointments.some(
-      (appointment) => {
-        const hasSameDate = appointment.date === date
-        const hasSameTime = appointment.time === time
+ function handleSubmit() {
+  const isAppointmentAlreadyTaken =
+    appointments.some((appointment) => {
+      const hasSameDate =
+        appointment.date === date
 
-        const isDifferentAppointment =
-          !editingAppointment ||
-          appointment.id !== editingAppointment.id
+      const hasSameTime =
+        appointment.time === time
 
-        return (
-          hasSameDate &&
-          hasSameTime &&
-          isDifferentAppointment
-        )
-      }
-    )
+      const isDifferentAppointment =
+        !editingAppointment ||
+        appointment.id !== editingAppointment.id
 
-    const newErrors = {
+      return (
+        hasSameDate &&
+        hasSameTime &&
+        isDifferentAppointment
+      )
+    })
+
+  const selectedService = serviceList.find(
+    (serviceItem) =>
+      serviceItem.name === service
+  )
+
+  const isUnchangedLegacyService =
+  isLegacyEditingService &&
+  service === editingServiceName
+
+  const newErrors = {
       date: date
         ? ''
         : 'Odaberite datum termina.',
@@ -99,14 +144,18 @@ function AppointmentForm({
         ? ''
         : 'Upišite ime klijenta.',
 
-      service: service.trim()
-        ? ''
-        : 'Upišite uslugu.',
+      service:
+  selectedService ||
+  isUnchangedLegacyService
+    ? ''
+    : 'Odaberite uslugu.',
     }
 
     setErrors(newErrors)
 
-    const hasErrors = Object.values(newErrors).some(
+    const hasErrors = Object.values(
+      newErrors
+    ).some(
       (errorMessage) => errorMessage !== ''
     )
 
@@ -124,23 +173,58 @@ function AppointmentForm({
       return
     }
 
-    if (editingAppointment) {
-      onUpdateAppointment({
-        ...editingAppointment,
-        date,
-        time,
-        clientName: clientName.trim(),
-        service: service.trim(),
-      })
-    } else {
+ if (editingAppointment) {
+  if (selectedService) {
+    onUpdateAppointment({
+      ...editingAppointment,
+
+      date,
+      time,
+      clientName: clientName.trim(),
+
+      service: selectedService.name,
+
+      serviceId: selectedService.id,
+      serviceName: selectedService.name,
+      servicePrice: selectedService.price,
+      serviceDurationMinutes:
+        selectedService.defaultDurationMinutes,
+    })
+  } else {
+    onUpdateAppointment({
+      ...editingAppointment,
+
+      date,
+      time,
+      clientName: clientName.trim(),
+
+      service: editingServiceName,
+
+      serviceId: null,
+      serviceName: editingServiceName,
+      servicePrice: null,
+      serviceDurationMinutes: null,
+    })
+  }
+}
+    
+    else {
       onAddAppointment({
-        id: Date.now(),
-        date,
-        time,
-        clientName: clientName.trim(),
-        service: service.trim(),
-        status: 'Zakazano',
-      })
+  id: Date.now(),
+  date,
+  time,
+  clientName: clientName.trim(),
+
+  service: selectedService.name,
+
+  serviceId: selectedService.id,
+  serviceName: selectedService.name,
+  servicePrice: selectedService.price,
+  serviceDurationMinutes:
+    selectedService.defaultDurationMinutes,
+
+  status: 'Zakazano',
+})
     }
 
     setDate(getTodayDate())
@@ -204,7 +288,9 @@ function AppointmentForm({
   return (
     <div className="appointment-form">
       <h2>
-        {editingAppointment ? 'Uredi termin' : 'Novi termin'}
+        {editingAppointment
+          ? 'Uredi termin'
+          : 'Novi termin'}
       </h2>
 
       <div className="form-field">
@@ -215,7 +301,9 @@ function AppointmentForm({
         <input
           id="appointment-date"
           ref={dateInputRef}
-          className={errors.date ? 'input-error' : ''}
+          className={
+            errors.date ? 'input-error' : ''
+          }
           type="date"
           value={date}
           onChange={handleDateChange}
@@ -241,7 +329,11 @@ function AppointmentForm({
           <input
             id="appointment-time"
             ref={timeInputRef}
-            className={errors.time ? 'input-error' : ''}
+            className={
+              errors.time
+                ? 'input-error'
+                : ''
+            }
             type="time"
             value={time}
             step="60"
@@ -251,7 +343,11 @@ function AppointmentForm({
           <select
             id="appointment-time"
             ref={timeInputRef}
-            className={errors.time ? 'input-error' : ''}
+            className={
+              errors.time
+                ? 'input-error'
+                : ''
+            }
             value={time}
             onChange={handleTimeChange}
           >
@@ -259,14 +355,16 @@ function AppointmentForm({
               Odaberite vrijeme
             </option>
 
-            {timeOptions.map((timeOption) => (
-              <option
-                key={timeOption}
-                value={timeOption}
-              >
-                {timeOption}
-              </option>
-            ))}
+            {timeOptions.map(
+              (timeOption) => (
+                <option
+                  key={timeOption}
+                  value={timeOption}
+                >
+                  {timeOption}
+                </option>
+              )
+            )}
           </select>
         )}
 
@@ -289,7 +387,11 @@ function AppointmentForm({
         <input
           id="client-name"
           ref={clientNameInputRef}
-          className={errors.clientName ? 'input-error' : ''}
+          className={
+            errors.clientName
+              ? 'input-error'
+              : ''
+          }
           type="text"
           value={clientName}
           onChange={handleClientNameChange}
@@ -311,14 +413,38 @@ function AppointmentForm({
           Usluga
         </label>
 
-        <input
+        <select
           id="appointment-service"
           ref={serviceInputRef}
-          className={errors.service ? 'input-error' : ''}
-          type="text"
+          className={
+            errors.service
+              ? 'input-error'
+              : ''
+          }
           value={service}
           onChange={handleServiceChange}
-        />
+        >
+          <option value="">
+            Odaberite uslugu
+          </option>
+
+   {isLegacyEditingService && (
+  <option value={editingServiceName}>
+    Stara usluga — {editingServiceName}
+  </option>
+   )}
+
+          {activeServices.map(
+            (serviceItem) => (
+              <option
+                key={serviceItem.id}
+                value={serviceItem.name}
+              >
+                {serviceItem.name}
+              </option>
+            )
+          )}
+        </select>
 
         <p
           className={

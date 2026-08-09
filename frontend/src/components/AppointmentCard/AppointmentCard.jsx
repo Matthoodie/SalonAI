@@ -82,7 +82,11 @@ function AppointmentCard({
             Usluga
           </span>
 
-          <p>{appointment.service}</p>
+          <p>
+  {appointment.serviceName ||
+    appointment.service ||
+    'Nepoznata usluga'}
+</p>
         </div>
       </div>
 

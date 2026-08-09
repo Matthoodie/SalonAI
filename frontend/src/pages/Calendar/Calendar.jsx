@@ -405,7 +405,11 @@ function editAppointmentFromCalendar(appointmentId) {
   <div className="selected-day-appointment-info">
     <h3>{appointment.clientName}</h3>
 
-    <p>{appointment.service}</p>
+   <p>
+  {appointment.serviceName ||
+    appointment.service ||
+    'Nepoznata usluga'}
+</p>
   </div>
 
   <span

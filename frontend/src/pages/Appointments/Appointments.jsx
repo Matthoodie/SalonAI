@@ -16,6 +16,7 @@ function getTodayDate() {
 function Appointments({
   appointmentList,
   setAppointmentList,
+  serviceList,
   initialAppointmentDate,
   clearInitialAppointmentDate,
   initialEditingAppointmentId,
@@ -185,6 +186,7 @@ useEffect(() => {
 
       <AppointmentForm
         appointments={appointmentList}
+        serviceList={serviceList}
         onAddAppointment={addAppointment}
         onUpdateAppointment={updateAppointment}
         onCancelEdit={cancelEditingAppointment}

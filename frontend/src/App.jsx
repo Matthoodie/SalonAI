@@ -21,13 +21,50 @@ function getTodayDate() {
   return localDate.toISOString().split('T')[0]
 }
 
-function migrateAppointments(appointmentsToMigrate) {
+function migrateAppointments(
+  appointmentsToMigrate,
+  serviceList
+) {
   const fallbackDate = getTodayDate()
 
-  return appointmentsToMigrate.map((appointment) => ({
-    ...appointment,
-    date: appointment.date || fallbackDate,
-  }))
+  return appointmentsToMigrate.map((appointment) => {
+    const legacyServiceName =
+      appointment.serviceName ||
+      appointment.service ||
+      ''
+
+    const matchingService = serviceList.find(
+      (serviceItem) =>
+        serviceItem.name === legacyServiceName
+    )
+
+    return {
+      ...appointment,
+
+      date:
+        appointment.date ||
+        fallbackDate,
+
+      serviceId:
+        appointment.serviceId ??
+        matchingService?.id ??
+        null,
+
+      serviceName:
+        appointment.serviceName ||
+        legacyServiceName,
+
+      servicePrice:
+        appointment.servicePrice ??
+        matchingService?.price ??
+        null,
+
+      serviceDurationMinutes:
+        appointment.serviceDurationMinutes ??
+        matchingService?.defaultDurationMinutes ??
+        null,
+    }
+  })
 }
 
 function App() {
@@ -89,7 +126,8 @@ const [serviceList, setServiceList] = useState(() => {
         const parsedAppointments = JSON.parse(savedAppointments)
 
         migratedAppointments = migrateAppointments(
-          parsedAppointments
+          parsedAppointments,
+          services
         )
       } catch (error) {
         console.error(
@@ -97,10 +135,16 @@ const [serviceList, setServiceList] = useState(() => {
           error
         )
 
-        migratedAppointments = migrateAppointments(appointments)
+        migratedAppointments = migrateAppointments(
+          appointments,
+          services
+        )
       }
     } else {
-      migratedAppointments = migrateAppointments(appointments)
+      migratedAppointments = migrateAppointments(
+        appointments,
+        services
+      )
     }
 
     localStorage.setItem(
@@ -165,6 +209,7 @@ const [serviceList, setServiceList] = useState(() => {
     <Appointments
   appointmentList={appointmentList}
   setAppointmentList={setAppointmentList}
+  serviceList={serviceList}
   initialAppointmentDate={
     appointmentFormInitialDate
   }
