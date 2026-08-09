@@ -183,6 +183,9 @@ function toggleServiceActive(serviceId) {
                   </span>
 
                   <h2>{service.name}</h2>
+                  <p className="service-card-category">
+  {service.category || 'Ostalo'}
+</p>
                 </div>
 
                 <span

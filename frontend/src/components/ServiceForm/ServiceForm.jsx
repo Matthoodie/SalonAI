@@ -9,6 +9,7 @@ function ServiceForm({
 }) {
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
+  const [category, setCategory] = useState('')
   const [
     defaultDurationMinutes,
     setDefaultDurationMinutes,
@@ -22,6 +23,7 @@ function ServiceForm({
   useEffect(() => {
     if (editingService) {
       setName(editingService.name)
+      setCategory(editingService.category || '')
       setPrice(String(editingService.price))
       setDefaultDurationMinutes(
         editingService.defaultDurationMinutes
@@ -75,6 +77,7 @@ function ServiceForm({
       onUpdateService({
         ...editingService,
         name: name.trim(),
+        category: category.trim() || 'Ostalo',
         price: parsedPrice,
         defaultDurationMinutes:
           parsedDuration &&
@@ -86,6 +89,7 @@ function ServiceForm({
       onAddService({
         id: Date.now(),
         name: name.trim(),
+        category: category.trim() || 'Ostalo',
         price: parsedPrice,
         defaultDurationMinutes:
           parsedDuration &&
@@ -155,6 +159,28 @@ function ServiceForm({
           {errors.name || '\u00A0'}
         </p>
       </div>
+
+
+      <div className="service-form-field">
+  <label htmlFor="service-category">
+    Kategorija
+  </label>
+
+  <input
+    id="service-category"
+    type="text"
+    value={category}
+    onChange={(event) =>
+      setCategory(event.target.value)
+    }
+    placeholder="npr. Šišanje"
+  />
+
+  <p className="service-form-help">
+    Ako kategoriju ne unesete, usluga će biti
+    spremljena pod "Ostalo".
+  </p>
+</div>
 
       <div className="service-form-field">
         <label htmlFor="service-price">

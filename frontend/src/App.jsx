@@ -85,7 +85,12 @@ const [serviceList, setServiceList] = useState(() => {
 
   if (savedServices) {
     try {
-      return JSON.parse(savedServices)
+      const parsedServices = JSON.parse(savedServices)
+
+return parsedServices.map((service) => ({
+  ...service,
+  category: service.category || 'Ostalo',
+}))
     } catch (error) {
       console.error(
         'Neuspješno učitavanje spremljenih usluga:',
