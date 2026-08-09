@@ -34,3 +34,25 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.client-form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.client-form-error {
+  min-height: 18px;
+  margin: 5px 0 0;
+  color: #dc2626;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.client-input-error {
+  border-color: #dc2626 !important;
+}
+
+.client-input-error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px #fee2e2 !important;
+}

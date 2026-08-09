@@ -102,22 +102,65 @@ return parsedServices.map((service) => ({
   return services
 })
 
-  const [clientList, setClientList] = useState(() => {
-    const savedClients = localStorage.getItem('salonai-clients')
+const [clientList, setClientList] = useState(() => {
+  const savedClients = localStorage.getItem(
+    'salonai-clients'
+  )
 
-    if (savedClients) {
-      try {
-        return JSON.parse(savedClients)
-      } catch (error) {
-        console.error(
-          'Neuspješno učitavanje spremljenih klijenata:',
-          error
-        )
-      }
+  if (savedClients) {
+    try {
+      const parsedClients =
+        JSON.parse(savedClients)
+
+      return parsedClients.map((client) => {
+        if (
+          client.phoneCountryCode &&
+          client.phoneNumber &&
+          client.phoneNormalized
+        ) {
+          return client
+        }
+
+        const digitsOnly = String(
+          client.phone || ''
+        ).replace(/\D/g, '')
+
+        let phoneNumber = digitsOnly
+
+        if (phoneNumber.startsWith('0')) {
+          phoneNumber = phoneNumber.slice(1)
+        }
+
+        return {
+          ...client,
+
+          phoneCountryCode:
+            client.phoneCountryCode ||
+            '+385',
+
+          phoneNumber:
+            client.phoneNumber ||
+            phoneNumber,
+
+          phoneNormalized:
+            client.phoneNormalized ||
+            (
+              phoneNumber
+                ? `+385${phoneNumber}`
+                : ''
+            ),
+        }
+      })
+    } catch (error) {
+      console.error(
+        'Neuspješno učitavanje spremljenih klijenata:',
+        error
+      )
     }
+  }
 
-    return clients
-  })
+  return clients
+})
 
   const [appointmentList, setAppointmentList] = useState(() => {
     const savedAppointments = localStorage.getItem(

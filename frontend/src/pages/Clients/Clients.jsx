@@ -41,6 +41,7 @@ function cancelEdit() {
         Klijenti
       </h1>
 <ClientForm
+  clientList={clientList}
   onAddClient={addClient}
   onUpdateClient={updateClient}
   onCancelEdit={cancelEdit}
