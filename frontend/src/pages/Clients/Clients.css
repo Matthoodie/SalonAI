@@ -1,7 +1,128 @@
 .clients-page {
+  width: 100%;
   padding: 32px;
 }
 
-.clients-page h1 {
-  margin-bottom: 24px;
+.clients-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.clients-header h1 {
+  margin: 4px 0 8px;
+  color: #0f172a;
+}
+
+.clients-header p {
+  margin: 0;
+  max-width: 620px;
+  color: #64748b;
+}
+
+.clients-eyebrow {
+  display: inline-block;
+  color: #6366f1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.clients-count {
+  min-width: 150px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.clients-count span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.clients-count strong {
+  color: #0f172a;
+  font-size: 1.7rem;
+}
+
+.clients-list-header {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 2fr)
+    minmax(180px, 1.4fr)
+    minmax(90px, 0.6fr)
+    minmax(90px, 0.6fr);
+  gap: 20px;
+  padding: 12px 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px 14px 0 0;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.clients-list {
+  width: 100%;
+}
+.clients-empty-state {
+  padding: 56px 24px;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.clients-empty-icon {
+  margin-bottom: 14px;
+  font-size: 2rem;
+}
+
+.clients-empty-state h2 {
+  margin: 0 0 8px;
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.clients-empty-state p {
+  max-width: 460px;
+  margin: 0 auto;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+
+@media (max-width: 760px) {
+  .clients-page {
+    padding: 20px;
+  }
+
+  .clients-header {
+    flex-direction: column;
+  }
+
+  .clients-count {
+    width: 100%;
+  }
+
+  .clients-list-header {
+    display: none;
+  }
+
+  .clients-list {
+    display: grid;
+    gap: 12px;
+  }
 }
