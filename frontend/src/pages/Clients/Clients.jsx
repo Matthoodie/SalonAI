@@ -6,6 +6,7 @@ import './Clients.css'
 function Clients({
   clientList,
   setClientList,
+  appointmentList = [],
 }) {
   const [editingClient, setEditingClient] =
     useState(null)
@@ -39,7 +40,24 @@ function Clients({
     setEditingClient(null)
   }
 
-const filteredClients = clientList.filter(
+const clientsWithMetrics = clientList.map(
+  (client) => {
+    const completedAppointments =
+      appointmentList.filter(
+        (appointment) =>
+          appointment.clientId === client.id &&
+          appointment.status === 'Završen'
+      )
+
+    return {
+      ...client,
+      visits: completedAppointments.length,
+    }
+  }
+)
+
+const filteredClients =
+  clientsWithMetrics.filter(
   (client) => {
     const normalizedQuery =
       searchQuery

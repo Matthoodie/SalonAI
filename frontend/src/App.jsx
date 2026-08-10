@@ -263,6 +263,7 @@ const [clientList, setClientList] = useState(() => {
             <Clients
               clientList={clientList}
               setClientList={setClientList}
+              appointmentList={appointmentList}
             />
           }
         />
