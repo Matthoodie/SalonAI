@@ -29,6 +29,7 @@ function getTodayDate() {
 function AppointmentForm({
   appointments = [],
   serviceList = [],
+  clientList = [],
   onAddAppointment,
   onUpdateAppointment,
   onCancelEdit,
@@ -39,6 +40,17 @@ function AppointmentForm({
   const activeServices = serviceList.filter(
     (serviceItem) => serviceItem.active
   )
+
+  const editingClientName =
+  editingAppointment?.clientName || ''
+
+const isLegacyEditingClient =
+  Boolean(
+    editingAppointment &&
+    !editingAppointment.clientId &&
+    editingClientName
+  )
+  
   const editingServiceName =
   editingAppointment?.serviceName ||
   editingAppointment?.service ||
@@ -57,6 +69,7 @@ const isLegacyEditingService =
   const [date, setDate] = useState(getTodayDate())
   const [time, setTime] = useState('')
   const [clientName, setClientName] = useState('')
+  const [clientId, setClientId] = useState('')
   const [service, setService] = useState('')
 
   const [errors, setErrors] = useState({
@@ -80,6 +93,18 @@ const isLegacyEditingService =
       setTime(editingAppointment.time)
       setClientName(editingAppointment.clientName)
 
+  const matchingClient = clientList.find(
+     (client) =>
+      client.id === editingAppointment.clientId ||
+      client.name === editingAppointment.clientName
+)
+
+setClientId(
+  matchingClient
+    ? String(matchingClient.id)
+    : ''
+)
+
       setService(
         editingAppointment.serviceName ||
         editingAppointment.service ||
@@ -89,6 +114,7 @@ const isLegacyEditingService =
       setDate(initialDate || getTodayDate())
       setTime('')
       setClientName('')
+      setClientId('')
       setService('')
     }
 
@@ -125,6 +151,16 @@ const isLegacyEditingService =
       serviceItem.name === service
   )
 
+  const selectedClient = clientList.find(
+  (client) =>
+    String(client.id) === clientId
+)
+
+  const isUnchangedLegacyClient =
+  isLegacyEditingClient &&
+  !selectedClient &&
+  clientName === editingClientName
+
   const isUnchangedLegacyService =
   isLegacyEditingService &&
   service === editingServiceName
@@ -140,9 +176,11 @@ const isLegacyEditingService =
           ? `Termin ${date} u ${time} je već zauzet.`
           : '',
 
-      clientName: clientName.trim()
-        ? ''
-        : 'Upišite ime klijenta.',
+     clientName:
+  selectedClient ||
+  isUnchangedLegacyClient
+    ? ''
+    : 'Odaberite klijenta.',
 
       service:
   selectedService ||
@@ -180,7 +218,14 @@ const isLegacyEditingService =
 
       date,
       time,
-      clientName: clientName.trim(),
+
+      clientId: selectedClient
+        ? selectedClient.id
+        : null,
+
+      clientName: selectedClient
+        ? selectedClient.name
+        : clientName.trim(),
 
       service: selectedService.name,
 
@@ -196,7 +241,14 @@ const isLegacyEditingService =
 
       date,
       time,
-      clientName: clientName.trim(),
+
+      clientId: selectedClient
+        ? selectedClient.id
+        : null,
+
+      clientName: selectedClient
+        ? selectedClient.name
+        : clientName.trim(),
 
       service: editingServiceName,
 
@@ -206,31 +258,34 @@ const isLegacyEditingService =
       serviceDurationMinutes: null,
     })
   }
+} else {
+  onAddAppointment({
+    id: Date.now(),
+
+    date,
+    time,
+
+    clientId: selectedClient.id,
+    clientName: selectedClient.name,
+
+    service: selectedService.name,
+
+    serviceId: selectedService.id,
+    serviceName: selectedService.name,
+    servicePrice: selectedService.price,
+    serviceDurationMinutes:
+      selectedService.defaultDurationMinutes,
+
+    status: 'Zakazano',
+  })
 }
-    
-    else {
-      onAddAppointment({
-  id: Date.now(),
-  date,
-  time,
-  clientName: clientName.trim(),
 
-  service: selectedService.name,
 
-  serviceId: selectedService.id,
-  serviceName: selectedService.name,
-  servicePrice: selectedService.price,
-  serviceDurationMinutes:
-    selectedService.defaultDurationMinutes,
-
-  status: 'Zakazano',
-})
-    }
-
-    setDate(getTodayDate())
-    setTime('')
-    setClientName('')
-    setService('')
+setDate(getTodayDate())
+setTime('')
+setClientName('')
+setClientId('')
+setService('')
 
     setErrors({
       date: '',
@@ -263,18 +318,7 @@ const isLegacyEditingService =
     }
   }
 
-  function handleClientNameChange(event) {
-    setClientName(event.target.value)
-
-    if (errors.clientName) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        clientName: '',
-      }))
-    }
-  }
-
-  function handleServiceChange(event) {
+ function handleServiceChange(event) {
     setService(event.target.value)
 
     if (errors.service) {
@@ -293,32 +337,34 @@ const isLegacyEditingService =
           : 'Novi termin'}
       </h2>
 
-      <div className="form-field">
-        <label htmlFor="appointment-date">
-          Datum
-        </label>
+    <div className="form-field">
+  <label htmlFor="appointment-date">
+    Datum
+  </label>
 
-        <input
-          id="appointment-date"
-          ref={dateInputRef}
-          className={
-            errors.date ? 'input-error' : ''
-          }
-          type="date"
-          value={date}
-          onChange={handleDateChange}
-        />
+  <input
+    id="appointment-date"
+    ref={dateInputRef}
+    className={
+      errors.date
+        ? 'input-error'
+        : ''
+    }
+    type="date"
+    value={date}
+    onChange={handleDateChange}
+  />
 
-        <p
-          className={
-            errors.date
-              ? 'form-error form-error-visible'
-              : 'form-error'
-          }
-        >
-          {errors.date || '\u00A0'}
-        </p>
-      </div>
+  <p
+    className={
+      errors.date
+        ? 'form-error form-error-visible'
+        : 'form-error'
+    }
+  >
+    {errors.date || '\u00A0'}
+  </p>
+</div>
 
       <div className="form-field">
         <label htmlFor="appointment-time">
@@ -380,33 +426,74 @@ const isLegacyEditingService =
       </div>
 
       <div className="form-field">
-        <label htmlFor="client-name">
-          Ime klijenta
-        </label>
+  <label htmlFor="appointment-client">
+    Klijent
+  </label>
 
-        <input
-          id="client-name"
-          ref={clientNameInputRef}
-          className={
-            errors.clientName
-              ? 'input-error'
-              : ''
-          }
-          type="text"
-          value={clientName}
-          onChange={handleClientNameChange}
-        />
+  <select
+    id="appointment-client"
+    ref={clientNameInputRef}
+    className={
+      errors.clientName
+        ? 'input-error'
+        : ''
+    }
+    value={clientId}
+    onChange={(event) => {
+      const newClientId = event.target.value
 
-        <p
-          className={
-            errors.clientName
-              ? 'form-error form-error-visible'
-              : 'form-error'
-          }
-        >
-          {errors.clientName || '\u00A0'}
-        </p>
-      </div>
+      setClientId(newClientId)
+
+      const newSelectedClient =
+        clientList.find(
+          (client) =>
+            String(client.id) ===
+            newClientId
+        )
+
+      setClientName(
+        newSelectedClient?.name || ''
+      )
+
+      if (errors.clientName) {
+        setErrors((currentErrors) => ({
+          ...currentErrors,
+          clientName: '',
+        }))
+      }
+    }}
+  >
+    <option value="">
+      Odaberite klijenta
+    </option>
+
+    {isLegacyEditingClient &&
+      !clientId && (
+        <option value="">
+          Stari klijent — {editingClientName}
+        </option>
+      )}
+
+    {clientList.map((client) => (
+      <option
+        key={client.id}
+        value={String(client.id)}
+      >
+        {client.name}
+      </option>
+    ))}
+  </select>
+
+  <p
+    className={
+      errors.clientName
+        ? 'form-error form-error-visible'
+        : 'form-error'
+    }
+  >
+    {errors.clientName || '\u00A0'}
+  </p>
+</div>
 
       <div className="form-field">
         <label htmlFor="appointment-service">

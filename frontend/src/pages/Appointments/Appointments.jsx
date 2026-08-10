@@ -17,6 +17,7 @@ function Appointments({
   appointmentList,
   setAppointmentList,
   serviceList,
+  clientList,
   initialAppointmentDate,
   clearInitialAppointmentDate,
   initialEditingAppointmentId,
@@ -187,6 +188,7 @@ useEffect(() => {
       <AppointmentForm
         appointments={appointmentList}
         serviceList={serviceList}
+        clientList={clientList}
         onAddAppointment={addAppointment}
         onUpdateAppointment={updateAppointment}
         onCancelEdit={cancelEditingAppointment}

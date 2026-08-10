@@ -23,7 +23,8 @@ function getTodayDate() {
 
 function migrateAppointments(
   appointmentsToMigrate,
-  serviceList
+  serviceList,
+  clientList
 ) {
   const fallbackDate = getTodayDate()
 
@@ -38,8 +39,28 @@ function migrateAppointments(
         serviceItem.name === legacyServiceName
     )
 
+
+    const matchingClient = clientList.find(
+  (client) =>
+    client.name.trim().toLowerCase() ===
+    String(appointment.clientName || '')
+      .trim()
+      .toLowerCase()
+)
+
     return {
       ...appointment,
+
+
+       clientId:
+       appointment.clientId ??
+       matchingClient?.id ??
+       null,
+
+      clientName:
+        appointment.clientName ||
+        matchingClient?.name ||
+        '',
 
       date:
         appointment.date ||
@@ -174,9 +195,11 @@ const [clientList, setClientList] = useState(() => {
         const parsedAppointments = JSON.parse(savedAppointments)
 
         migratedAppointments = migrateAppointments(
-          parsedAppointments,
-          services
-        )
+  parsedAppointments,
+  serviceList,
+  clientList
+)
+
       } catch (error) {
         console.error(
           'Neuspješno učitavanje spremljenih termina:',
@@ -184,15 +207,17 @@ const [clientList, setClientList] = useState(() => {
         )
 
         migratedAppointments = migrateAppointments(
-          appointments,
-          services
-        )
+  appointments,
+  serviceList,
+  clientList
+)
       }
     } else {
       migratedAppointments = migrateAppointments(
-        appointments,
-        services
-      )
+  appointments,
+  serviceList,
+  clientList
+)
     }
 
     localStorage.setItem(
@@ -258,6 +283,7 @@ const [clientList, setClientList] = useState(() => {
   appointmentList={appointmentList}
   setAppointmentList={setAppointmentList}
   serviceList={serviceList}
+  clientList={clientList}
   initialAppointmentDate={
     appointmentFormInitialDate
   }
