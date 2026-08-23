@@ -441,9 +441,14 @@ function App() {
 
       <Routes>
         <Route
-          path="/"
-          element={<Dashboard />}
-        />
+  path="/"
+  element={
+    <Dashboard
+      appointmentList={appointmentList}
+      clientList={clientList}
+    />
+  }
+/>
 
         <Route
           path="/clients"
