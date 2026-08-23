@@ -96,6 +96,29 @@
   display: none;
 }
 
+.client-details-button {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.client-details-button:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  color: #4338ca;
+}
+
 @media (max-width: 760px) {
   .client-card {
     grid-template-columns: 1fr;

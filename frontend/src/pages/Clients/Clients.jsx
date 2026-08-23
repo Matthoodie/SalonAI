@@ -1,7 +1,35 @@
-import { useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import ClientForm from '../../components/ClientForm/ClientForm'
 import ClientCard from '../../components/ClientCard/ClientCard'
 import './Clients.css'
+
+function formatClientAppointmentDate(date) {
+  if (!date) {
+    return ''
+  }
+
+  const [year, month, day] =
+    date.split('-')
+
+  const localDate = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  )
+
+  return new Intl.DateTimeFormat(
+    'hr-HR',
+    {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+    }
+  ).format(localDate)
+}
 
 function Clients({
   clientList,
@@ -16,6 +44,45 @@ function Clients({
 
   const [sortOption, setSortOption] =
   useState('name-asc')
+
+  const [selectedClientId, setSelectedClientId] =
+  useState(null)
+
+  const clientFormRef = useRef(null)
+
+  useEffect(() => {
+  if (selectedClientId) {
+    document.body.style.overflow = 'hidden'
+  } else {
+    document.body.style.overflow = ''
+  }
+
+  return () => {
+    document.body.style.overflow = ''
+  }
+}, [selectedClientId])
+
+useEffect(() => {
+  function handleKeyDown(event) {
+    if (event.key === 'Escape') {
+      setSelectedClientId(null)
+    }
+  }
+
+  if (selectedClientId) {
+    window.addEventListener(
+      'keydown',
+      handleKeyDown
+    )
+  }
+
+  return () => {
+    window.removeEventListener(
+      'keydown',
+      handleKeyDown
+    )
+  }
+}, [selectedClientId])
 
   function addClient(newClient) {
     setClientList([
@@ -39,6 +106,17 @@ function Clients({
   function cancelEdit() {
     setEditingClient(null)
   }
+
+  function startEditingClient(client) {
+  setEditingClient(client)
+
+  requestAnimationFrame(() => {
+    clientFormRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  })
+}
 
 const clientsWithMetrics = clientList.map(
   (client) => {
@@ -252,6 +330,82 @@ const filteredAndSortedClients = [
   return 0
 })
 
+const selectedClient =
+  clientsWithMetrics.find(
+    (client) =>
+      client.id === selectedClientId
+  ) || null
+
+const selectedClientHistory =
+  selectedClient
+    ? appointmentList
+        .filter(
+          (appointment) =>
+            appointment.clientId ===
+              selectedClient.id &&
+            appointment.status ===
+              'Završen'
+        )
+        .sort(
+          (
+            firstAppointment,
+            secondAppointment
+          ) => {
+            const firstDateTime =
+              `${firstAppointment.date} ${firstAppointment.time}`
+
+            const secondDateTime =
+              `${secondAppointment.date} ${secondAppointment.time}`
+
+            return secondDateTime.localeCompare(
+              firstDateTime
+            )
+          }
+        )
+    : []
+
+const selectedClientUpcomingAppointments =
+  selectedClient
+    ? appointmentList
+        .filter((appointment) => {
+          if (
+            appointment.clientId !==
+              selectedClient.id ||
+            appointment.status === 'Završen'
+          ) {
+            return false
+          }
+
+          const appointmentDateTime =
+            new Date(
+              `${appointment.date}T${appointment.time}`
+            )
+
+          return appointmentDateTime >= new Date()
+        })
+        .sort(
+          (
+            firstAppointment,
+            secondAppointment
+          ) => {
+            const firstDateTime =
+              new Date(
+                `${firstAppointment.date}T${firstAppointment.time}`
+              )
+
+            const secondDateTime =
+              new Date(
+                `${secondAppointment.date}T${secondAppointment.time}`
+              )
+
+            return (
+              firstDateTime -
+              secondDateTime
+            )
+          }
+        )
+    : []
+
   return (
     <div className="clients-page">
       <div className="clients-header">
@@ -277,13 +431,262 @@ const filteredAndSortedClients = [
         </div>
       </div>
 
-      <ClientForm
-        clientList={clientList}
-        onAddClient={addClient}
-        onUpdateClient={updateClient}
-        onCancelEdit={cancelEdit}
-        editingClient={editingClient}
-      />
+     <div ref={clientFormRef}>
+  <ClientForm
+    clientList={clientList}
+    onAddClient={addClient}
+    onUpdateClient={updateClient}
+    onCancelEdit={cancelEdit}
+    editingClient={editingClient}
+  />
+</div>
+
+   {selectedClient && (
+<div
+  className="client-detail-overlay"
+  onClick={() =>
+    setSelectedClientId(null)
+  }
+>
+  <section
+  className="client-detail-panel"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="client-detail-title"
+  onClick={(event) =>
+    event.stopPropagation()
+  }
+>
+     <div className="client-detail-header">
+       <div>
+        <span className="client-detail-eyebrow">
+          Profil klijenta
+        </span>
+
+        <h2 id="client-detail-title">
+  {selectedClient.name}
+</h2>
+
+        <p>{selectedClient.phone}</p>
+       </div>
+
+       <button
+  type="button"
+  className="client-detail-close-button"
+  onClick={() =>
+    setSelectedClientId(null)
+  }
+  aria-label="Zatvori profil klijenta"
+>
+  Zatvori
+</button>
+    </div>
+
+    <div className="client-detail-metrics">
+      <div className="client-detail-metric">
+        <span>Ukupno posjeta</span>
+        <strong>
+          {selectedClient.visits}
+        </strong>
+      </div>
+
+      <div className="client-detail-metric">
+        <span>Ukupno potrošeno</span>
+        <strong>
+          {selectedClient.totalSpent.toFixed(2)} €
+        </strong>
+      </div>
+
+      <div className="client-detail-metric">
+        <span>Prosječna vrijednost</span>
+        <strong>
+          {selectedClient.averageAppointmentValue.toFixed(2)} €
+        </strong>
+      </div>
+
+      <div className="client-detail-metric">
+        <span>Najčešća usluga</span>
+        <strong>
+          {selectedClient.favoriteService ||
+            'Nema podataka'}
+        </strong>
+      </div>
+  
+      <div className="client-detail-metric">
+        <span>Zadnji posjet</span>
+
+  <strong>
+    {selectedClient.lastVisit
+      ? `${formatClientAppointmentDate(
+          selectedClient.lastVisit.date
+        )} u ${
+          selectedClient.lastVisit.time
+        }`
+      : 'Nema posjeta'}
+  </strong>
+</div>
+
+<div className="client-detail-metric">
+  <span>Sljedeći termin</span>
+
+  <strong>
+    {selectedClient.nextAppointment
+      ? `${formatClientAppointmentDate(
+          selectedClient.nextAppointment.date
+        )} u ${
+          selectedClient.nextAppointment.time
+        }`
+      : 'Nema termina'}
+  </strong>
+ </div>
+
+
+</div>
+
+<div className="client-history">
+  <div className="client-history-header">
+    <div>
+      <span className="client-detail-eyebrow">
+        Povijest
+      </span>
+
+      <h3>Povijest termina</h3>
+    </div>
+
+    <strong>
+      {selectedClientHistory.length}
+      {' '}
+      {selectedClientHistory.length === 1
+        ? 'posjet'
+        : 'posjeta'}
+    </strong>
+  </div>
+
+  {selectedClientHistory.length === 0 ? (
+    <div className="client-history-empty">
+      Ovaj klijent još nema završenih termina.
+    </div>
+  ) : (
+    <div className="client-history-list">
+      {selectedClientHistory.map(
+        (appointment) => (
+          <div
+            key={appointment.id}
+            className="client-history-item"
+          >
+            <div className="client-history-date">
+              <strong>
+                {formatClientAppointmentDate(
+                  appointment.date
+                )}
+              </strong>
+
+              <span>
+                {appointment.time}
+              </span>
+            </div>
+
+            <div className="client-history-service">
+              <strong>
+                {appointment.serviceName ||
+                  appointment.service ||
+                  'Nepoznata usluga'}
+              </strong>
+
+              <span>
+                Završen termin
+              </span>
+            </div>
+
+            <div className="client-history-price">
+              {Number(
+                appointment.servicePrice
+              ).toFixed(2)} €
+            </div>
+          </div>
+        )
+      )}
+     </div>
+   )}
+</div>
+
+<div className="client-upcoming">
+  <div className="client-history-header">
+    <div>
+      <span className="client-detail-eyebrow">
+        Nadolazeće
+      </span>
+
+      <h3>Nadolazeći termini</h3>
+    </div>
+
+    <strong>
+      {selectedClientUpcomingAppointments.length}
+      {' '}
+      {selectedClientUpcomingAppointments.length === 1
+        ? 'termin'
+        : 'termina'}
+    </strong>
+  </div>
+
+  {selectedClientUpcomingAppointments.length === 0 ? (
+    <div className="client-history-empty">
+      Ovaj klijent nema nadolazećih termina.
+    </div>
+  ) : (
+    <div className="client-history-list">
+      {selectedClientUpcomingAppointments.map(
+        (appointment) => (
+          <div
+            key={appointment.id}
+            className="client-history-item"
+          >
+            <div className="client-history-date">
+              <strong>
+                {formatClientAppointmentDate(
+                  appointment.date
+                )}
+              </strong>
+
+              <span>
+                {appointment.time}
+              </span>
+            </div>
+
+            <div className="client-history-service">
+              <strong>
+                {appointment.serviceName ||
+                  appointment.service ||
+                  'Nepoznata usluga'}
+              </strong>
+
+              <span>
+                {appointment.status}
+              </span>
+            </div>
+
+            <div className="client-history-price">
+              {appointment.servicePrice != null
+                ? `${Number(
+                    appointment.servicePrice
+                  ).toFixed(2)} €`
+                : '—'}
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  )}
+</div>
+
+
+    </section>
+  </div>
+)}
+
+
+
+
 
   <div className="clients-toolbar">
   <div className="clients-search">
@@ -363,7 +766,8 @@ const filteredAndSortedClients = [
               <ClientCard
                 key={client.id}
                 client={client}
-                onEdit={setEditingClient}
+                onEdit={startEditingClient}
+                onSelect={setSelectedClientId}
               />
             ))}
           </div>

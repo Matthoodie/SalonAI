@@ -14,6 +14,7 @@ function getInitials(name) {
 function ClientCard({
   client,
   onEdit,
+  onSelect,
 }) {
   return (
     <div className="client-card">
@@ -52,6 +53,15 @@ function ClientCard({
       </div>
 
       <div className="client-card-actions">
+
+      <button
+  type="button"
+  className="client-details-button"
+  onClick={() => onSelect(client.id)}
+>
+  Detalji
+</button>
+
         <button
           type="button"
           className="client-edit-button"
