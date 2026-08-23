@@ -4,10 +4,35 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
   padding: 0 32px;
-  background: white;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.header h2 {
+  margin: 0;
+  color: #0f172a;
 }
 
 .user {
-  font-weight: bold;
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .header {
+    height: auto;
+    min-height: 52px;
+    padding: 10px 18px;
+  }
+
+  .header h2 {
+    font-size: 1rem;
+  }
+
+  .user {
+    font-size: 0.82rem;
+  }
 }

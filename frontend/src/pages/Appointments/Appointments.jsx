@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import AppointmentCard from '../../components/AppointmentCard/AppointmentCard'
 import AppointmentForm from '../../components/AppointmentForm/AppointmentForm'
@@ -30,6 +34,14 @@ function Appointments({
 
   const [editingAppointment, setEditingAppointment] =
     useState(null)
+
+  const appointmentFormRef = useRef(null)
+
+  const [appointmentView, setAppointmentView] =
+  useState('upcoming')
+
+  const [searchQuery, setSearchQuery] =
+  useState('')
 
   useEffect(() => {
   if (initialAppointmentDate) {
@@ -95,8 +107,15 @@ useEffect(() => {
   }
 
   function startEditingAppointment(appointment) {
-    setEditingAppointment(appointment)
-  }
+  setEditingAppointment(appointment)
+
+  requestAnimationFrame(() => {
+    appointmentFormRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  })
+}
 
   function addAppointment(newAppointment) {
     const appointmentWithDate = {
@@ -152,6 +171,91 @@ useEffect(() => {
     }
   )
 
+  const todayDate = getTodayDate()
+
+const todayAppointments =
+  sortedAppointments.filter(
+    (appointment) =>
+      appointment.date === todayDate
+  )
+
+const upcomingAppointments =
+  sortedAppointments.filter(
+    (appointment) =>
+      appointment.date >= todayDate &&
+      appointment.status !== 'Završen'
+  )
+
+const historyAppointments =
+  sortedAppointments
+    .filter(
+      (appointment) =>
+        appointment.date < todayDate ||
+        appointment.status === 'Završen'
+    )
+    .sort(
+      (
+        firstAppointment,
+        secondAppointment
+      ) => {
+        const firstDateTime =
+          `${firstAppointment.date} ${firstAppointment.time}`
+
+        const secondDateTime =
+          `${secondAppointment.date} ${secondAppointment.time}`
+
+        return secondDateTime.localeCompare(
+          firstDateTime
+        )
+      }
+    )
+
+
+  let visibleAppointments =
+  upcomingAppointments
+
+if (appointmentView === 'today') {
+  visibleAppointments =
+    todayAppointments
+}
+
+if (appointmentView === 'history') {
+  visibleAppointments =
+    historyAppointments
+}
+
+if (appointmentView === 'all') {
+  visibleAppointments =
+    sortedAppointments
+}
+
+const normalizedSearchQuery =
+  searchQuery.trim().toLowerCase()
+
+const searchedAppointments =
+  visibleAppointments.filter(
+    (appointment) => {
+      if (!normalizedSearchQuery) {
+        return true
+      }
+
+      const searchableText = [
+        appointment.clientName,
+        appointment.serviceName,
+        appointment.service,
+        appointment.date,
+        appointment.time,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return searchableText.includes(
+        normalizedSearchQuery
+      )
+    }
+  )
+
   const scheduledAppointmentsCount =
     appointmentList.filter(
       (appointment) =>
@@ -185,32 +289,138 @@ useEffect(() => {
         </div>
       </div>
 
-      <AppointmentForm
-        appointments={appointmentList}
-        serviceList={serviceList}
-        clientList={clientList}
-        onAddAppointment={addAppointment}
-        onUpdateAppointment={updateAppointment}
-        onCancelEdit={cancelEditingAppointment}
-        editingAppointment={editingAppointment}
-        initialDate={formInitialDate}
-      />
+      <div className="appointments-view-tabs">
+  <button
+    type="button"
+    className={
+      appointmentView === 'upcoming'
+        ? 'appointments-view-tab appointments-view-tab-active'
+        : 'appointments-view-tab'
+    }
+    onClick={() =>
+      setAppointmentView('upcoming')
+    }
+  >
+    Nadolazeći
+    <span>
+      {upcomingAppointments.length}
+    </span>
+  </button>
+
+  <button
+    type="button"
+    className={
+      appointmentView === 'today'
+        ? 'appointments-view-tab appointments-view-tab-active'
+        : 'appointments-view-tab'
+    }
+    onClick={() =>
+      setAppointmentView('today')
+    }
+  >
+    Danas
+    <span>
+      {todayAppointments.length}
+    </span>
+  </button>
+
+  <button
+    type="button"
+    className={
+      appointmentView === 'history'
+        ? 'appointments-view-tab appointments-view-tab-active'
+        : 'appointments-view-tab'
+    }
+    onClick={() =>
+      setAppointmentView('history')
+    }
+  >
+    Povijest
+    <span>
+      {historyAppointments.length}
+    </span>
+  </button>
+
+  <button
+    type="button"
+    className={
+      appointmentView === 'all'
+        ? 'appointments-view-tab appointments-view-tab-active'
+        : 'appointments-view-tab'
+    }
+    onClick={() =>
+      setAppointmentView('all')
+    }
+  >
+    Svi
+    <span>
+      {appointmentList.length}
+    </span>
+  </button>
+</div>
+
+<div className="appointments-search">
+  <span
+    className="appointments-search-icon"
+    aria-hidden="true"
+  >
+    🔍
+  </span>
+
+  <input
+    type="search"
+    value={searchQuery}
+    onChange={(event) =>
+      setSearchQuery(event.target.value)
+    }
+    placeholder="Pretraži termine..."
+    aria-label="Pretraži termine"
+  />
+
+  {searchQuery && (
+    <button
+      type="button"
+      className="appointments-search-clear"
+      onClick={() =>
+        setSearchQuery('')
+      }
+      aria-label="Očisti pretragu"
+    >
+      ×
+    </button>
+  )}
+</div>
+
+      <div ref={appointmentFormRef}>
+  <AppointmentForm
+    appointments={appointmentList}
+    serviceList={serviceList}
+    clientList={clientList}
+    onAddAppointment={addAppointment}
+    onUpdateAppointment={updateAppointment}
+    onCancelEdit={cancelEditingAppointment}
+    editingAppointment={editingAppointment}
+    initialDate={formInitialDate}
+  />
+</div>
 
       <div className="appointments-list">
-        {sortedAppointments.length === 0 ? (
+        {searchedAppointments.length === 0 ? (
           <div className="appointments-empty-state">
             <span className="appointments-empty-icon">
               📅
             </span>
 
-            <h3>Nema zakazanih termina</h3>
+            <h3>
+  Nema termina u ovom prikazu
+</h3>
 
-            <p>
-              Dodajte prvi termin pomoću obrasca iznad.
-            </p>
+<p>
+  Odaberite drugi prikaz ili dodajte novi termin.
+</p>
           </div>
         ) : (
-          sortedAppointments.map((appointment) => (
+          searchedAppointments.map((appointment) => (
             <AppointmentCard
               key={appointment.id}
               appointment={appointment}

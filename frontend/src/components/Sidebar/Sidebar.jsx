@@ -1,9 +1,27 @@
 import { Link } from 'react-router-dom'
 import './Sidebar.css'
 
-function Sidebar() {
+function Sidebar({
+  isMobileMenuOpen,
+  onCloseMobileMenu,
+}) {
   return (
-    <aside className="app-sidebar">
+     <aside
+  className={
+    isMobileMenuOpen
+      ? 'app-sidebar app-sidebar-mobile-open'
+      : 'app-sidebar'
+  }
+>
+
+  <button
+  type="button"
+  className="sidebar-mobile-close"
+  aria-label="Zatvori navigaciju"
+  onClick={onCloseMobileMenu}
+>
+  ×
+</button>
       <h1>SalonAI</h1>
 
       <nav>
@@ -14,25 +32,33 @@ function Sidebar() {
             </Link>
           </li>
 
-          <li>
-            <Link to="/clients">
-              Klijenti
-            </Link>
-          </li>
+<li>
+<Link
+  to="/clients"
+  onClick={onCloseMobileMenu}
+>
+  Klijenti
+</Link>
+</li>
 
-          <li>
-  <Link to="/services">
+<li>
+  <Link 
+  to="/services"
+  onClick={onCloseMobileMenu}
+  >
     Usluge
   </Link>
 </li>
 
           <li>
-            <Link to="/appointments">
+            <Link to="/appointments"
+            onClick={onCloseMobileMenu}>
               Termini
             </Link>
           </li>
 <li>
-  <Link to="/calendar">
+  <Link to="/calendar"
+  onClick={onCloseMobileMenu}>
     Kalendar
   </Link>
 </li>

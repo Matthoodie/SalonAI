@@ -77,11 +77,161 @@
 }
 
 /* =========================
+   APPOINTMENTS VIEW TABS
+========================= */
+
+.appointments-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 5px;
+  overflow-x: auto;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.appointments-view-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.appointments-view-tab:hover {
+  background: #ffffff;
+  color: #334155;
+}
+
+.appointments-view-tab span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.appointments-view-tab-active {
+  background: #ffffff;
+  border-color: #c7d2fe;
+  color: #4f46e5;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.appointments-view-tab-active span {
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+/* =========================
+   APPOINTMENTS SEARCH
+========================= */
+
+.appointments-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: 24px;
+}
+
+.appointments-search-icon {
+  position: absolute;
+  left: 12px;
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.appointments-search input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 42px 10px 38px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  outline: none;
+}
+
+.appointments-search input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #eef2ff;
+}
+
+.appointments-search-clear {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+/* =========================
    RESPONSIVE
 ========================= */
 
 @media (max-width: 650px) {
+  .appointments-search {
+  max-width: none;
+}
   .appointments-summary {
     grid-template-columns: 1fr;
+  }
+
+  .appointments-view-tabs {
+    gap: 6px;
+    padding: 5px;
+    scrollbar-width: none;
+  }
+
+  .appointments-view-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .appointments-view-tab {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 7px 11px;
+    font-size: 0.78rem;
+  }
+
+  .appointments-view-tab span {
+    min-width: 22px;
+    min-height: 22px;
+    padding: 0 6px;
+    font-size: 0.68rem;
   }
 }
