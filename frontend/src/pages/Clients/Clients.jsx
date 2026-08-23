@@ -49,9 +49,136 @@ const clientsWithMetrics = clientList.map(
           appointment.status === 'Završen'
       )
 
+    const scheduledAppointments =
+      appointmentList.filter(
+        (appointment) =>
+          appointment.clientId === client.id &&
+          appointment.status !== 'Završen'
+      )
+
+    const sortedCompletedAppointments = [
+      ...completedAppointments,
+    ].sort(
+      (
+        firstAppointment,
+        secondAppointment
+      ) => {
+        const firstDateTime =
+          `${firstAppointment.date} ${firstAppointment.time}`
+
+        const secondDateTime =
+          `${secondAppointment.date} ${secondAppointment.time}`
+
+        return secondDateTime.localeCompare(
+          firstDateTime
+        )
+      }
+    )
+
+    const lastVisit =
+      sortedCompletedAppointments[0] ||
+      null
+
+    const now = new Date()
+
+    const futureScheduledAppointments =
+      scheduledAppointments.filter(
+        (appointment) => {
+          const appointmentDateTime =
+            new Date(
+              `${appointment.date}T${appointment.time}`
+            )
+
+          return appointmentDateTime >= now
+        }
+      )
+
+    const sortedFutureAppointments = [
+      ...futureScheduledAppointments,
+    ].sort(
+      (
+        firstAppointment,
+        secondAppointment
+      ) => {
+        const firstDateTime = new Date(
+          `${firstAppointment.date}T${firstAppointment.time}`
+        )
+
+        const secondDateTime = new Date(
+          `${secondAppointment.date}T${secondAppointment.time}`
+        )
+
+        return (
+          firstDateTime -
+          secondDateTime
+        )
+      }
+    )
+
+    const nextAppointment =
+      sortedFutureAppointments[0] ||
+      null
+
+    const totalSpent =
+      completedAppointments.reduce(
+        (total, appointment) =>
+          total +
+          (
+            Number(
+              appointment.servicePrice
+            ) || 0
+          ),
+        0
+      )
+
+    const visits =
+      completedAppointments.length
+
+    const averageAppointmentValue =
+      visits > 0
+        ? totalSpent / visits
+        : 0
+
+    const serviceUsage =
+      completedAppointments.reduce(
+        (usage, appointment) => {
+          const serviceName =
+            appointment.serviceName ||
+            appointment.service ||
+            'Nepoznata usluga'
+
+          usage[serviceName] =
+            (usage[serviceName] || 0) +
+            1
+
+          return usage
+        },
+        {}
+      )
+
+    const favoriteServiceEntry =
+      Object.entries(serviceUsage).sort(
+        (
+          firstEntry,
+          secondEntry
+        ) =>
+          secondEntry[1] -
+          firstEntry[1]
+      )[0]
+
+    const favoriteService =
+      favoriteServiceEntry
+        ? favoriteServiceEntry[0]
+        : ''
+
     return {
       ...client,
-      visits: completedAppointments.length,
+      visits,
+      totalSpent,
+      averageAppointmentValue,
+      lastVisit,
+      nextAppointment,
+      favoriteService,
     }
   }
 )
