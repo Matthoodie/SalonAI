@@ -22,6 +22,37 @@
   color: #64748b;
 }
 
+.employees-header-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.employees-add-button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #111827;
+  border-radius: 10px;
+  background: #111827;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.employees-add-button:hover {
+  background: #1f2937;
+}
+
+.employees-add-button:active {
+  transform: translateY(1px);
+}
+
 .employees-eyebrow {
   display: inline-block;
   color: #6366f1;
@@ -73,6 +104,10 @@
   color: #64748b;
 }
 
+.employees-form-section {
+  margin-bottom: 24px;
+  scroll-margin-top: 20px;
+}
 .employees-list {
   display: grid;
   gap: 10px;
@@ -85,6 +120,16 @@
 
   .employees-header {
     flex-direction: column;
+  }
+
+  .employees-header-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .employees-add-button {
+    width: 100%;
   }
 
   .employees-count {

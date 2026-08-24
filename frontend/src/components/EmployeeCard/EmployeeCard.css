@@ -44,6 +44,14 @@
   font-size: 0.98rem;
 }
 
+.employee-schedule-summary {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .employee-status {
   display: inline-flex;
   padding: 4px 8px;

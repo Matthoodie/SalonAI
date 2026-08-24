@@ -130,6 +130,13 @@ const isLegacyEditingService =
       )
     : []
 
+const selectedEmployeeForAvailability =
+  employeeList.find(
+    (employee) =>
+      String(employee.id) ===
+      String(employeeId)
+  ) || null
+
 const availableTimeOptions =
   date &&
   employeeId &&
@@ -137,6 +144,9 @@ const availableTimeOptions =
     ? timeOptions.filter((timeOption) =>
         isEmployeeAvailable({
           employeeId,
+          workingHours:
+           selectedEmployeeForAvailability
+            ?.workingHours ?? null,
           date,
           startTime: timeOption,
           durationMinutes:
@@ -237,11 +247,13 @@ const selectedEmployee =
     editingAppointment?.serviceDurationMinutes
   ) || 0
 
-const isSelectedEmployeeAvailable =
+ const isSelectedEmployeeAvailable =
   selectedEmployee &&
   candidateDuration > 0
     ? isEmployeeAvailable({
         employeeId: selectedEmployee.id,
+        workingHours:
+        selectedEmployee.workingHours ?? null,
         date,
         startTime: time,
         durationMinutes: candidateDuration,
@@ -251,7 +263,7 @@ const isSelectedEmployeeAvailable =
       })
     : true
 
-const hasEmployeeCollision =
+ const hasEmployeeCollision =
   !isSelectedEmployeeAvailable
 
   const isUnchangedLegacyClient =

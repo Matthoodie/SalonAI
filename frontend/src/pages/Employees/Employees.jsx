@@ -1,6 +1,12 @@
-import { useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+
 import EmployeeCard from '../../components/EmployeeCard/EmployeeCard'
 import EmployeeForm from '../../components/EmployeeForm/EmployeeForm'
+
 import './Employees.css'
 
 function Employees({
@@ -8,8 +14,14 @@ function Employees({
   setEmployeeList,
   serviceList = [],
 }) {
-const [editingEmployee, setEditingEmployee] =
-  useState(null)
+  const [editingEmployee, setEditingEmployee] =
+    useState(null)
+
+  const [isFormOpen, setIsFormOpen] =
+    useState(false)
+
+  const employeeFormSectionRef =
+    useRef(null)
 
   const activeEmployees =
     employeeList.filter(
@@ -17,45 +29,82 @@ const [editingEmployee, setEditingEmployee] =
         employee.active !== false
     )
 
-    function addEmployee(newEmployee) {
-  setEmployeeList((currentEmployees) => [
-    ...currentEmployees,
-    newEmployee,
-  ])
-}
+  useEffect(() => {
+    if (!isFormOpen) {
+      return
+    }
 
-function updateEmployee(updatedEmployee) {
-  setEmployeeList((currentEmployees) =>
-    currentEmployees.map((employee) =>
-      employee.id === updatedEmployee.id
-        ? updatedEmployee
-        : employee
+    const scrollTimeout =
+      window.setTimeout(() => {
+        employeeFormSectionRef.current
+          ?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          })
+      }, 50)
+
+    return () => {
+      window.clearTimeout(scrollTimeout)
+    }
+  }, [isFormOpen, editingEmployee])
+
+  function openAddEmployeeForm() {
+    setEditingEmployee(null)
+    setIsFormOpen(true)
+  }
+
+  function startEditingEmployee(employee) {
+    setEditingEmployee(employee)
+    setIsFormOpen(true)
+  }
+
+  function addEmployee(newEmployee) {
+    setEmployeeList((currentEmployees) => [
+      ...currentEmployees,
+      newEmployee,
+    ])
+
+    setEditingEmployee(null)
+    setIsFormOpen(false)
+  }
+
+  function updateEmployee(updatedEmployee) {
+    setEmployeeList((currentEmployees) =>
+      currentEmployees.map((employee) =>
+        employee.id === updatedEmployee.id
+          ? updatedEmployee
+          : employee
+      )
     )
-  )
 
-  setEditingEmployee(null)
-}
+    setEditingEmployee(null)
+    setIsFormOpen(false)
+  }
 
-function cancelEdit() {
-  setEditingEmployee(null)
-}
+  function cancelEmployeeForm() {
+    setEditingEmployee(null)
+    setIsFormOpen(false)
+  }
 
-function toggleEmployeeActive(employeeId) {
-  setEmployeeList((currentEmployees) =>
-    currentEmployees.map((employee) =>
-      employee.id === employeeId
-        ? {
-            ...employee,
-            active: !employee.active,
-          }
-        : employee
+  function toggleEmployeeActive(employeeId) {
+    setEmployeeList((currentEmployees) =>
+      currentEmployees.map((employee) =>
+        employee.id === employeeId
+          ? {
+              ...employee,
+              active: !employee.active,
+            }
+          : employee
+      )
     )
-  )
 
-  if (editingEmployee?.id === employeeId) {
-  setEditingEmployee(null)
-}
-}
+    if (
+      editingEmployee?.id === employeeId
+    ) {
+      setEditingEmployee(null)
+      setIsFormOpen(false)
+    }
+  }
 
   return (
     <div className="employees-page">
@@ -73,45 +122,78 @@ function toggleEmployeeActive(employeeId) {
           </p>
         </div>
 
-        <div className="employees-count">
-          <span>Aktivni zaposlenici</span>
+        <div className="employees-header-actions">
+          <button
+            type="button"
+            className="employees-add-button"
+            onClick={openAddEmployeeForm}
+          >
+            + Novi zaposlenik
+          </button>
 
-          <strong>
-            {activeEmployees.length}
-          </strong>
+          <div className="employees-count">
+            <span>
+              Aktivni zaposlenici
+            </span>
+
+            <strong>
+              {activeEmployees.length}
+            </strong>
+          </div>
         </div>
       </div>
 
-      <EmployeeForm
-  serviceList={serviceList}
-  onAddEmployee={addEmployee}
-  onUpdateEmployee={updateEmployee}
-  onCancelEdit={cancelEdit}
-  editingEmployee={editingEmployee}
-/>
+      {isFormOpen && (
+        <div
+          ref={employeeFormSectionRef}
+          className="employees-form-section"
+        >
+          <EmployeeForm
+            serviceList={serviceList}
+            onAddEmployee={addEmployee}
+            onUpdateEmployee={updateEmployee}
+            onCancelEdit={cancelEmployeeForm}
+            editingEmployee={
+              editingEmployee
+            }
+          />
+        </div>
+      )}
 
       {employeeList.length === 0 ? (
-     <div className="employees-placeholder">
-     <h2>Još nema zaposlenika</h2>
+        <div className="employees-placeholder">
+          <h2>Još nema zaposlenika</h2>
 
-     <p>
-      Dodajte prvog zaposlenika kako biste
-      počeli graditi tim salona.
-      </p>
-  </div>
-) : (
-  <div className="employees-list">
-    {employeeList.map((employee) => (
-      <EmployeeCard
-  key={employee.id}
-  employee={employee}
-  serviceList={serviceList}
-  onEdit={setEditingEmployee}
-  onToggleActive={toggleEmployeeActive}
-/>
-    ))}
-  </div>
-)}
+          <p>
+            Dodajte prvog zaposlenika kako
+            biste počeli graditi tim salona.
+          </p>
+
+          <button
+            type="button"
+            className="employees-add-button"
+            onClick={openAddEmployeeForm}
+          >
+            + Dodaj prvog zaposlenika
+          </button>
+        </div>
+      ) : (
+        <div className="employees-list">
+          {employeeList.map((employee) => (
+            <EmployeeCard
+              key={employee.id}
+              employee={employee}
+              serviceList={serviceList}
+              onEdit={
+                startEditingEmployee
+              }
+              onToggleActive={
+                toggleEmployeeActive
+              }
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

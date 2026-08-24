@@ -11,6 +11,102 @@ function getEmployeeInitials(name) {
     .join('')
 }
 
+const weekDays = [
+  {
+    key: 'monday',
+    shortLabel: 'Pon',
+  },
+  {
+    key: 'tuesday',
+    shortLabel: 'Uto',
+  },
+  {
+    key: 'wednesday',
+    shortLabel: 'Sri',
+  },
+  {
+    key: 'thursday',
+    shortLabel: 'Čet',
+  },
+  {
+    key: 'friday',
+    shortLabel: 'Pet',
+  },
+  {
+    key: 'saturday',
+    shortLabel: 'Sub',
+  },
+  {
+    key: 'sunday',
+    shortLabel: 'Ned',
+  },
+]
+
+function getEmployeeScheduleSummary(
+  workingHours
+) {
+  if (!workingHours) {
+    return 'Radno vrijeme nije definirano'
+  }
+
+  const enabledDays =
+    weekDays.filter(
+      (day) =>
+        workingHours[day.key]?.enabled
+    )
+
+  if (enabledDays.length === 0) {
+    return 'Nema radnih dana'
+  }
+
+  const groupedSchedules = []
+
+  enabledDays.forEach((day) => {
+    const schedule =
+      workingHours[day.key]
+
+    const scheduleKey =
+      `${schedule.startTime}-${schedule.endTime}`
+
+    const existingGroup =
+      groupedSchedules.find(
+        (group) =>
+          group.scheduleKey ===
+          scheduleKey
+      )
+
+    if (existingGroup) {
+      existingGroup.days.push(
+        day.shortLabel
+      )
+    } else {
+      groupedSchedules.push({
+        scheduleKey,
+        days: [day.shortLabel],
+        startTime:
+          schedule.startTime,
+        endTime:
+          schedule.endTime,
+      })
+    }
+  })
+
+  return groupedSchedules
+    .map((group) => {
+      const dayText =
+        group.days.length === 1
+          ? group.days[0]
+          : `${group.days[0]}–${
+              group.days[
+                group.days.length - 1
+              ]
+            }`
+
+      return `${dayText} ${group.startTime}–${group.endTime}`
+    })
+    .join(' · ')
+}
+
 function EmployeeCard({
   employee,
   serviceList = [],
@@ -23,6 +119,11 @@ function EmployeeCard({
         service.id
       )
     )
+
+   const scheduleSummary =
+  getEmployeeScheduleSummary(
+    employee.workingHours
+  )
 
   return (
     <article className="employee-card">
@@ -47,6 +148,10 @@ function EmployeeCard({
               ? 'Aktivan'
               : 'Neaktivan'}
           </span>
+
+          <p className="employee-schedule-summary">
+             {scheduleSummary}
+          </p>
         </div>
       </div>
 

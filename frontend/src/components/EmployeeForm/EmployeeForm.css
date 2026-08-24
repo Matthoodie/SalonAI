@@ -1,27 +1,31 @@
 .employee-form {
   margin-bottom: 24px;
-  padding: 22px;
+  padding: 24px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
 .employee-form-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .employee-form-header h2 {
   margin: 4px 0 6px;
   color: #0f172a;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
 }
 
 .employee-form-header p {
   margin: 0;
+  max-width: 620px;
   color: #64748b;
   font-size: 0.86rem;
+  line-height: 1.55;
 }
 
 .employee-form-eyebrow {
@@ -32,8 +36,12 @@
   text-transform: uppercase;
 }
 
+/* =========================
+   NAME
+========================= */
+
 .employee-form-field {
-  margin-bottom: 20px;
+  margin-bottom: 22px;
 }
 
 .employee-form-field label {
@@ -49,11 +57,14 @@
   min-height: 42px;
   padding: 10px 12px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 9px;
   background: #ffffff;
   color: #0f172a;
   font: inherit;
   outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .employee-form-field input:focus {
@@ -61,8 +72,12 @@
   box-shadow: 0 0 0 3px #eef2ff;
 }
 
+/* =========================
+   SERVICES
+========================= */
+
 .employee-services-fieldset {
-  margin: 0 0 20px;
+  margin: 0 0 24px;
   padding: 0;
   border: 0;
 }
@@ -87,11 +102,14 @@
   padding: 8px 11px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 9px;
   color: #334155;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .employee-service-option:hover {
@@ -109,17 +127,206 @@
   font-size: 0.82rem;
 }
 
-.employee-form-submit {
+/* =========================
+   WORKING HOURS
+========================= */
+
+.employee-working-hours-fieldset {
+  margin: 0 0 24px;
+  padding: 18px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.employee-working-hours-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.employee-working-hours-header > div {
+  min-width: 0;
+}
+
+.employee-working-hours-fieldset legend {
+  margin: 0 0 4px;
+  padding: 0;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.employee-working-hours-description {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+}
+
+.employee-working-hours-toggle-button {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #4338ca;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.employee-working-hours-toggle-button:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+.employee-working-hours-summary {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* =========================
+   EXPANDED SCHEDULE
+========================= */
+
+.employee-working-hours-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.employee-working-hours-row {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 0.9fr)
+    minmax(90px, 0.6fr)
+    minmax(260px, 1.5fr);
+  align-items: center;
+  gap: 16px;
+  min-height: 54px;
+  padding: 9px 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.employee-working-hours-day {
+  min-width: 0;
+}
+
+.employee-working-hours-day strong {
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.employee-working-hours-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.employee-working-hours-toggle input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #6366f1;
+  cursor: pointer;
+}
+
+.employee-working-hours-times {
+  display: grid;
+  grid-template-columns:
+    minmax(95px, 1fr)
+    auto
+    minmax(95px, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.employee-working-hours-times select {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.employee-working-hours-times select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #eef2ff;
+}
+
+.employee-working-hours-separator {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.employee-working-hours-off {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* =========================
+   ACTIONS
+========================= */
+
+.employee-form-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.employee-form-submit,
+.employee-form-cancel {
   min-height: 42px;
   padding: 10px 16px;
-  border: 1px solid #4f46e5;
   border-radius: 8px;
-  background: #4f46e5;
-  color: #ffffff;
   font: inherit;
   font-size: 0.85rem;
   font-weight: 800;
   cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.employee-form-submit {
+  border: 1px solid #4f46e5;
+  background: #4f46e5;
+  color: #ffffff;
 }
 
 .employee-form-submit:hover {
@@ -127,31 +334,46 @@
   border-color: #4338ca;
 }
 
-.employee-form-actions {
-  display: flex;
-  gap: 10px;
-}
-
 .employee-form-cancel {
-  min-height: 42px;
-  padding: 10px 16px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
   background: #ffffff;
   color: #334155;
-  font: inherit;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 .employee-form-cancel:hover {
   background: #f8fafc;
 }
 
+.employee-form-submit:active,
+.employee-form-cancel:active {
+  transform: translateY(1px);
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 850px) {
+  .employee-working-hours-row {
+    grid-template-columns:
+      minmax(110px, 0.8fr)
+      minmax(80px, 0.5fr)
+      minmax(220px, 1.4fr);
+    gap: 12px;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
 @media (max-width: 650px) {
   .employee-form {
     padding: 16px;
+  }
+
+  .employee-form-header {
+    margin-bottom: 20px;
   }
 
   .employee-service-options {
@@ -163,15 +385,48 @@
     width: 100%;
   }
 
-  .employee-form-submit {
+  .employee-working-hours-fieldset {
+    padding: 14px;
+  }
+
+  .employee-working-hours-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .employee-working-hours-toggle-button {
     width: 100%;
   }
 
-  .employee-form-actions {
-  flex-direction: column;
-}
+  .employee-working-hours-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
 
-.employee-form-cancel {
-  width: 100%;
-}
+  .employee-working-hours-times {
+    grid-template-columns:
+      minmax(0, 1fr)
+      auto
+      minmax(0, 1fr);
+  }
+
+  .employee-working-hours-times select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .employee-working-hours-off {
+    padding-top: 2px;
+  }
+
+  .employee-form-actions {
+    flex-direction: column;
+  }
+
+  .employee-form-submit,
+  .employee-form-cancel {
+    width: 100%;
+  }
 }

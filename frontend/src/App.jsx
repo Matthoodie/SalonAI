@@ -103,6 +103,46 @@ function migrateAppointments(
   )
 }
 
+function createDefaultWorkingHours() {
+  return {
+    monday: {
+      enabled: true,
+      startTime: '08:00',
+      endTime: '16:00',
+    },
+    tuesday: {
+      enabled: true,
+      startTime: '08:00',
+      endTime: '16:00',
+    },
+    wednesday: {
+      enabled: true,
+      startTime: '08:00',
+      endTime: '16:00',
+    },
+    thursday: {
+      enabled: true,
+      startTime: '08:00',
+      endTime: '16:00',
+    },
+    friday: {
+      enabled: true,
+      startTime: '08:00',
+      endTime: '16:00',
+    },
+    saturday: {
+      enabled: false,
+      startTime: '',
+      endTime: '',
+    },
+    sunday: {
+      enabled: false,
+      startTime: '',
+      endTime: '',
+    },
+  }
+}
+
 function App() {
   const [
     appointmentFormInitialDate,
@@ -154,8 +194,17 @@ const [employeeList, setEmployeeList] =
 
     if (savedEmployees) {
       try {
-        return JSON.parse(
-          savedEmployees
+        const parsedEmployees =
+          JSON.parse(savedEmployees)
+
+        return parsedEmployees.map(
+          (employee) => ({
+            ...employee,
+
+            workingHours:
+              employee.workingHours ||
+              createDefaultWorkingHours(),
+          })
         )
       } catch (error) {
         console.error(
@@ -167,6 +216,7 @@ const [employeeList, setEmployeeList] =
 
     return employees
   })
+
 useEffect(() => {
   localStorage.setItem(
     'salonai-employees',
@@ -539,7 +589,7 @@ useEffect(() => {
                 clientList
               }
               employeeList={employeeList}
-              
+
               initialAppointmentDate={
                 appointmentFormInitialDate
               }
