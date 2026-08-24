@@ -104,3 +104,30 @@
   background: var(--bg);
   color: var(--text-h);
 }
+
+.appointment-duration-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.appointment-duration-preview span {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.appointment-duration-preview strong {
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.appointment-duration-preview small {
+  color: #94a3b8;
+  font-size: 0.72rem;
+}

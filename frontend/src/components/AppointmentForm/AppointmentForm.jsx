@@ -1,5 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
+import { isEmployeeAvailable } from '../../utils/availability'
 import './AppointmentForm.css'
+
+function addMinutesToTime(time, minutesToAdd) {
+  if (!time || !minutesToAdd) {
+    return ''
+  }
+
+  const [hours, minutes] =
+    time.split(':').map(Number)
+
+  const totalMinutes =
+    hours * 60 +
+    minutes +
+    Number(minutesToAdd)
+
+  const endHours =
+    Math.floor(totalMinutes / 60)
+
+  const endMinutes =
+    totalMinutes % 60
+
+  return `${String(endHours).padStart(2, '0')}:${String(
+    endMinutes
+  ).padStart(2, '0')}`
+}
 
 const timeOptions = []
 
@@ -82,6 +107,18 @@ const isLegacyEditingService =
       serviceItem.name === service
   ) || null
 
+  const selectedServiceDuration =
+  selectedServiceForEmployee
+    ?.defaultDurationMinutes || 0
+
+  const appointmentEndTime =
+  time && selectedServiceDuration
+    ? addMinutesToTime(
+        time,
+        selectedServiceDuration
+      )
+    : ''
+
   const availableEmployees =
   selectedServiceForEmployee
     ? employeeList.filter(
@@ -90,6 +127,24 @@ const isLegacyEditingService =
           employee.serviceIds?.includes(
             selectedServiceForEmployee.id
           )
+      )
+    : []
+
+const availableTimeOptions =
+  date &&
+  employeeId &&
+  selectedServiceDuration > 0
+    ? timeOptions.filter((timeOption) =>
+        isEmployeeAvailable({
+          employeeId,
+          date,
+          startTime: timeOption,
+          durationMinutes:
+            selectedServiceDuration,
+          appointments,
+          excludeAppointmentId:
+            editingAppointment?.id ?? null,
+        })
       )
     : []
 
@@ -159,24 +214,6 @@ setEmployeeId(
   }, [editingAppointment, initialDate])
 
  function handleSubmit() {
-  const isAppointmentAlreadyTaken =
-    appointments.some((appointment) => {
-      const hasSameDate =
-        appointment.date === date
-
-      const hasSameTime =
-        appointment.time === time
-
-      const isDifferentAppointment =
-        !editingAppointment ||
-        appointment.id !== editingAppointment.id
-
-      return (
-        hasSameDate &&
-        hasSameTime &&
-        isDifferentAppointment
-      )
-    })
 
   const selectedService = serviceList.find(
     (serviceItem) =>
@@ -194,6 +231,29 @@ const selectedEmployee =
       String(employee.id) === employeeId
   )
 
+  const candidateDuration =
+  Number(
+    selectedService?.defaultDurationMinutes ??
+    editingAppointment?.serviceDurationMinutes
+  ) || 0
+
+const isSelectedEmployeeAvailable =
+  selectedEmployee &&
+  candidateDuration > 0
+    ? isEmployeeAvailable({
+        employeeId: selectedEmployee.id,
+        date,
+        startTime: time,
+        durationMinutes: candidateDuration,
+        appointments,
+        excludeAppointmentId:
+          editingAppointment?.id ?? null,
+      })
+    : true
+
+const hasEmployeeCollision =
+  !isSelectedEmployeeAvailable
+
   const isUnchangedLegacyClient =
   isLegacyEditingClient &&
   !selectedClient &&
@@ -209,10 +269,10 @@ const selectedEmployee =
     : 'Odaberite datum termina.',
 
   time: !time
-    ? 'Odaberite vrijeme termina.'
-    : isAppointmentAlreadyTaken
-      ? `Termin ${date} u ${time} je već zauzet.`
-      : '',
+  ? 'Odaberite vrijeme termina.'
+  : hasEmployeeCollision
+    ? `${selectedEmployee.name} već ima termin koji se preklapa s ovim vremenom.`
+    : '',
 
   clientName:
     selectedClient ||
@@ -230,6 +290,8 @@ const selectedEmployee =
     ? ''
     : 'Odaberite zaposlenika.',
 }
+
+
 
 setErrors(newErrors)
 
@@ -376,6 +438,7 @@ setEmployeeId('')
  function handleServiceChange(event) {
   setService(event.target.value)
   setEmployeeId('')
+  setTime('')
 
   if (errors.service) {
       setErrors((currentErrors) => ({
@@ -422,64 +485,6 @@ setEmployeeId('')
   </p>
 </div>
 
-      <div className="form-field">
-        <label htmlFor="appointment-time">
-          Vrijeme
-        </label>
-
-        {editingAppointment ? (
-          <input
-            id="appointment-time"
-            ref={timeInputRef}
-            className={
-              errors.time
-                ? 'input-error'
-                : ''
-            }
-            type="time"
-            value={time}
-            step="60"
-            onChange={handleTimeChange}
-          />
-        ) : (
-          <select
-            id="appointment-time"
-            ref={timeInputRef}
-            className={
-              errors.time
-                ? 'input-error'
-                : ''
-            }
-            value={time}
-            onChange={handleTimeChange}
-          >
-            <option value="">
-              Odaberite vrijeme
-            </option>
-
-            {timeOptions.map(
-              (timeOption) => (
-                <option
-                  key={timeOption}
-                  value={timeOption}
-                >
-                  {timeOption}
-                </option>
-              )
-            )}
-          </select>
-        )}
-
-        <p
-          className={
-            errors.time
-              ? 'form-error form-error-visible'
-              : 'form-error'
-          }
-        >
-          {errors.time || '\u00A0'}
-        </p>
-      </div>
 
       <div className="form-field">
   <label htmlFor="appointment-client">
@@ -616,6 +621,7 @@ setEmployeeId('')
   value={employeeId}
     onChange={(event) => {
   setEmployeeId(event.target.value)
+  setTime('')
 
   if (errors.employee) {
     setErrors((currentErrors) => ({
@@ -656,6 +662,93 @@ setEmployeeId('')
   {errors.employee || '\u00A0'}
 </p>
 </div>
+
+
+<div className="form-field">
+        <label htmlFor="appointment-time">
+          Vrijeme
+        </label>
+
+        {editingAppointment ? (
+          <input
+            id="appointment-time"
+            ref={timeInputRef}
+            className={
+              errors.time
+                ? 'input-error'
+                : ''
+            }
+            type="time"
+            value={time}
+            step="60"
+            onChange={handleTimeChange}
+          />
+        ) : (
+          <select
+            id="appointment-time"
+            ref={timeInputRef}
+            className={
+              errors.time
+                ? 'input-error'
+                : ''
+            }
+            value={time}
+            onChange={handleTimeChange}
+            disabled={
+            !selectedServiceForEmployee ||
+            !employeeId
+           }
+          >
+
+           <option value="">
+            {!selectedServiceForEmployee
+              ? 'Prvo odaberite uslugu'
+              : !employeeId
+              ? 'Prvo odaberite zaposlenika'
+              : availableTimeOptions.length === 0
+              ? 'Nema slobodnih termina'
+              : 'Odaberite vrijeme'}
+           </option>
+
+            {availableTimeOptions.map(
+              (timeOption) => (
+                <option
+                  key={timeOption}
+                  value={timeOption}
+                >
+                  {timeOption}
+                </option>
+              )
+            )}
+          </select>
+        )}
+
+        <p
+          className={
+            errors.time
+              ? 'form-error form-error-visible'
+              : 'form-error'
+          }
+        >
+          {errors.time || '\u00A0'}
+        </p>
+      </div>
+
+      {appointmentEndTime && (
+  <div className="appointment-duration-preview">
+    <span>
+      Predviđeni završetak
+    </span>
+
+    <strong>
+      {appointmentEndTime}
+    </strong>
+
+    <small>
+      Trajanje: {selectedServiceDuration} min
+    </small>
+  </div>
+)}
 
       <div className="form-actions">
         <button
