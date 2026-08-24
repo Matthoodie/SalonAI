@@ -403,14 +403,19 @@ function editAppointmentFromCalendar(appointmentId) {
   </div>
 
   <div className="selected-day-appointment-info">
-    <h3>{appointment.clientName}</h3>
+  <h3>{appointment.clientName}</h3>
 
-   <p>
-  {appointment.serviceName ||
-    appointment.service ||
-    'Nepoznata usluga'}
-</p>
-  </div>
+  <p>
+    {appointment.serviceName ||
+      appointment.service ||
+      'Nepoznata usluga'}
+  </p>
+
+  <span className="selected-day-appointment-employee">
+    {appointment.employeeName ||
+      'Zaposlenik nije dodijeljen'}
+  </span>
+</div>
 
   <span
     className={

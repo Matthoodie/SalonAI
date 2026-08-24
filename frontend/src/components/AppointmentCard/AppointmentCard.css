@@ -87,8 +87,7 @@
 .appointment-info {
   display: grid;
   grid-template-columns:
-    minmax(180px, 1fr)
-    minmax(180px, 1fr);
+    repeat(3, minmax(160px, 1fr));
   gap: 18px;
   padding: 14px 0;
   border-top: 1px solid #f1f5f9;

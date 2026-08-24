@@ -50,6 +50,14 @@ function Sidebar({
   </Link>
 </li>
 
+<li>
+  <Link
+    to="/employees"
+    onClick={onCloseMobileMenu}
+  >
+    Zaposlenici
+  </Link>
+</li>
           <li>
             <Link to="/appointments"
             onClick={onCloseMobileMenu}>

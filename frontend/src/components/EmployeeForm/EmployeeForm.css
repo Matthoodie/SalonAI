@@ -1,0 +1,177 @@
+.employee-form {
+  margin-bottom: 24px;
+  padding: 22px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.employee-form-header {
+  margin-bottom: 20px;
+}
+
+.employee-form-header h2 {
+  margin: 4px 0 6px;
+  color: #0f172a;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.employee-form-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.employee-form-eyebrow {
+  color: #6366f1;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.employee-form-field {
+  margin-bottom: 20px;
+}
+
+.employee-form-field label {
+  display: block;
+  margin-bottom: 7px;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.employee-form-field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  outline: none;
+}
+
+.employee-form-field input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #eef2ff;
+}
+
+.employee-services-fieldset {
+  margin: 0 0 20px;
+  padding: 0;
+  border: 0;
+}
+
+.employee-services-fieldset legend {
+  margin-bottom: 10px;
+  color: #0f172a;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.employee-service-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.employee-service-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.employee-service-option:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.employee-service-option input {
+  margin: 0;
+  accent-color: #6366f1;
+}
+
+.employee-services-empty {
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.employee-form-submit {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid #4f46e5;
+  border-radius: 8px;
+  background: #4f46e5;
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.employee-form-submit:hover {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+.employee-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.employee-form-cancel {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.employee-form-cancel:hover {
+  background: #f8fafc;
+}
+
+@media (max-width: 650px) {
+  .employee-form {
+    padding: 16px;
+  }
+
+  .employee-service-options {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .employee-service-option {
+    width: 100%;
+  }
+
+  .employee-form-submit {
+    width: 100%;
+  }
+
+  .employee-form-actions {
+  flex-direction: column;
+}
+
+.employee-form-cancel {
+  width: 100%;
+}
+}

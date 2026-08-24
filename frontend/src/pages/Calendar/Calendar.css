@@ -393,6 +393,14 @@
   color: #64748b;
 }
 
+.selected-day-appointment-employee {
+  display: inline-block;
+  margin-top: 4px;
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .selected-day-appointment-status {
   display: inline-flex;
   align-items: center;

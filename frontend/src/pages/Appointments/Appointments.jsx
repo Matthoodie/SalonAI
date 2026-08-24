@@ -25,6 +25,7 @@ function Appointments({
   initialAppointmentDate,
   clearInitialAppointmentDate,
   initialEditingAppointmentId,
+  employeeList,
   clearInitialEditingAppointmentId,
 }) {
 
@@ -396,6 +397,7 @@ const searchedAppointments =
     appointments={appointmentList}
     serviceList={serviceList}
     clientList={clientList}
+    employeeList={employeeList}
     onAddAppointment={addAppointment}
     onUpdateAppointment={updateAppointment}
     onCancelEdit={cancelEditingAppointment}

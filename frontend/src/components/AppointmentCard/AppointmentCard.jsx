@@ -88,9 +88,18 @@ function AppointmentCard({
     'Nepoznata usluga'}
 </p>
         </div>
-      </div>
+  <div className="appointment-detail">
+  <span className="appointment-detail-label">
+    Zaposlenik
+  </span>
 
-      <div className="appointment-actions">
+  <p>
+    {appointment.employeeName ||
+      'Nije dodijeljen'}
+  </p>
+</div>
+  </div>
+   <div className="appointment-actions">
         {!isCompleted && (
           <button
             type="button"

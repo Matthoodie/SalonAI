@@ -4,6 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import { appointments } from './data/appointments'
 import { clients } from './data/clients'
 import { services } from './data/services'
+import { employees } from './data/employees'
 
 import Layout from './components/Layout/Layout'
 
@@ -12,6 +13,7 @@ import Appointments from './pages/Appointments/Appointments'
 import Calendar from './pages/Calendar/Calendar'
 import Clients from './pages/Clients/Clients'
 import Dashboard from './pages/Dashboard/Dashboard'
+import Employees from './pages/Employees/Employees'
 
 function getTodayDate() {
   const today = new Date()
@@ -142,6 +144,36 @@ function App() {
 
       return services
     })
+
+const [employeeList, setEmployeeList] =
+  useState(() => {
+    const savedEmployees =
+      localStorage.getItem(
+        'salonai-employees'
+      )
+
+    if (savedEmployees) {
+      try {
+        return JSON.parse(
+          savedEmployees
+        )
+      } catch (error) {
+        console.error(
+          'Neuspješno učitavanje spremljenih zaposlenika:',
+          error
+        )
+      }
+    }
+
+    return employees
+  })
+useEffect(() => {
+  localStorage.setItem(
+    'salonai-employees',
+    JSON.stringify(employeeList)
+  )
+}, [employeeList])
+
 
   const [clientList, setClientList] =
     useState(() => {
@@ -289,6 +321,7 @@ function App() {
     const salonData = {
       clients: clientList,
       services: serviceList,
+      employees: employeeList,
       appointments: appointmentList,
       exportedAt:
         new Date().toISOString(),
@@ -347,16 +380,11 @@ function App() {
             event.target.result
           )
 
-        const hasValidStructure =
-          Array.isArray(
-            importedData.clients
-          ) &&
-          Array.isArray(
-            importedData.services
-          ) &&
-          Array.isArray(
-            importedData.appointments
-          )
+       const hasValidStructure =
+  Array.isArray(importedData.clients) &&
+  Array.isArray(importedData.services) &&
+  Array.isArray(importedData.employees) &&
+  Array.isArray(importedData.appointments)
 
         if (!hasValidStructure) {
           window.alert(
@@ -381,6 +409,10 @@ function App() {
         setServiceList(
           importedData.services
         )
+
+        setEmployeeList(
+          importedData.employees
+       )  
 
         const migratedAppointments =
           migrateAppointments(
@@ -480,6 +512,17 @@ function App() {
         />
 
         <Route
+  path="/employees"
+  element={
+    <Employees
+      employeeList={employeeList}
+      setEmployeeList={setEmployeeList}
+       serviceList={serviceList}
+    />
+  }
+/>
+
+        <Route
           path="/appointments"
           element={
             <Appointments
@@ -495,6 +538,8 @@ function App() {
               clientList={
                 clientList
               }
+              employeeList={employeeList}
+              
               initialAppointmentDate={
                 appointmentFormInitialDate
               }

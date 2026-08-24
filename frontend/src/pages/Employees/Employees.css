@@ -1,0 +1,93 @@
+.employees-page {
+  width: 100%;
+  padding: 32px;
+}
+
+.employees-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.employees-header h1 {
+  margin: 4px 0 8px;
+  color: #0f172a;
+}
+
+.employees-header p {
+  margin: 0;
+  max-width: 620px;
+  color: #64748b;
+}
+
+.employees-eyebrow {
+  display: inline-block;
+  color: #6366f1;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.employees-count {
+  min-width: 170px;
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.employees-count span {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.employees-count strong {
+  color: #0f172a;
+  font-size: 1.7rem;
+}
+
+.employees-placeholder {
+  padding: 48px 24px;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  text-align: center;
+}
+
+.employees-placeholder h2 {
+  margin: 0 0 8px;
+  color: #0f172a;
+}
+
+.employees-placeholder p {
+  margin: 0;
+  color: #64748b;
+}
+
+.employees-list {
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 760px) {
+  .employees-page {
+    padding: 20px;
+  }
+
+  .employees-header {
+    flex-direction: column;
+  }
+
+  .employees-count {
+    width: 100%;
+  }
+}

@@ -8,6 +8,7 @@ function Header() {
     '/': 'Dashboard',
     '/clients': 'Klijenti',
     '/services': 'Usluge',
+    '/employees': 'Zaposlenici',
     '/appointments': 'Termini',
     '/calendar': 'Kalendar',
   }

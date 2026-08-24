@@ -30,6 +30,7 @@ function AppointmentForm({
   appointments = [],
   serviceList = [],
   clientList = [],
+  employeeList = [],
   onAddAppointment,
   onUpdateAppointment,
   onCancelEdit,
@@ -72,17 +73,40 @@ const isLegacyEditingService =
   const [clientId, setClientId] = useState('')
   const [service, setService] = useState('')
 
+  const [employeeId, setEmployeeId] =
+  useState('')
+
+  const selectedServiceForEmployee =
+  serviceList.find(
+    (serviceItem) =>
+      serviceItem.name === service
+  ) || null
+
+  const availableEmployees =
+  selectedServiceForEmployee
+    ? employeeList.filter(
+        (employee) =>
+          employee.active !== false &&
+          employee.serviceIds?.includes(
+            selectedServiceForEmployee.id
+          )
+      )
+    : []
+
   const [errors, setErrors] = useState({
     date: '',
     time: '',
     clientName: '',
     service: '',
+    employee: '',
   })
+
 
   const dateInputRef = useRef(null)
   const timeInputRef = useRef(null)
   const clientNameInputRef = useRef(null)
   const serviceInputRef = useRef(null)
+  const employeeInputRef = useRef(null)
 
   useEffect(() => {
     if (editingAppointment) {
@@ -110,12 +134,19 @@ setClientId(
         editingAppointment.service ||
         ''
 )
+
+setEmployeeId(
+  editingAppointment.employeeId
+    ? String(editingAppointment.employeeId)
+    : ''
+)
     } else {
       setDate(initialDate || getTodayDate())
       setTime('')
       setClientName('')
       setClientId('')
       setService('')
+      setEmployeeId('')
     }
 
     setErrors({
@@ -123,6 +154,7 @@ setClientId(
       time: '',
       clientName: '',
       service: '',
+      employee: '',
     })
   }, [editingAppointment, initialDate])
 
@@ -156,6 +188,12 @@ setClientId(
     String(client.id) === clientId
 )
 
+const selectedEmployee =
+  employeeList.find(
+    (employee) =>
+      String(employee.id) === employeeId
+  )
+
   const isUnchangedLegacyClient =
   isLegacyEditingClient &&
   !selectedClient &&
@@ -166,30 +204,34 @@ setClientId(
   service === editingServiceName
 
   const newErrors = {
-      date: date
-        ? ''
-        : 'Odaberite datum termina.',
-
-      time: !time
-        ? 'Odaberite vrijeme termina.'
-        : isAppointmentAlreadyTaken
-          ? `Termin ${date} u ${time} je već zauzet.`
-          : '',
-
-     clientName:
-  selectedClient ||
-  isUnchangedLegacyClient
+  date: date
     ? ''
-    : 'Odaberite klijenta.',
+    : 'Odaberite datum termina.',
 
-      service:
-  selectedService ||
-  isUnchangedLegacyService
+  time: !time
+    ? 'Odaberite vrijeme termina.'
+    : isAppointmentAlreadyTaken
+      ? `Termin ${date} u ${time} je već zauzet.`
+      : '',
+
+  clientName:
+    selectedClient ||
+    isUnchangedLegacyClient
+      ? ''
+      : 'Odaberite klijenta.',
+
+  service:
+    selectedService ||
+    isUnchangedLegacyService
+      ? ''
+      : 'Odaberite uslugu.',
+
+  employee: selectedEmployee
     ? ''
-    : 'Odaberite uslugu.',
-    }
+    : 'Odaberite zaposlenika.',
+}
 
-    setErrors(newErrors)
+setErrors(newErrors)
 
     const hasErrors = Object.values(
       newErrors
@@ -206,6 +248,8 @@ setClientId(
         clientNameInputRef.current?.focus()
       } else if (newErrors.service) {
         serviceInputRef.current?.focus()
+      } else if (newErrors.employee) {
+        employeeInputRef.current?.focus()
       }
 
       return
@@ -226,6 +270,9 @@ setClientId(
       clientName: selectedClient
         ? selectedClient.name
         : clientName.trim(),
+
+      employeeId: selectedEmployee.id,
+      employeeName: selectedEmployee.name,
 
       service: selectedService.name,
 
@@ -250,6 +297,9 @@ setClientId(
         ? selectedClient.name
         : clientName.trim(),
 
+      employeeId: selectedEmployee.id,
+      employeeName: selectedEmployee.name,
+
       service: editingServiceName,
 
       serviceId: null,
@@ -267,6 +317,9 @@ setClientId(
 
     clientId: selectedClient.id,
     clientName: selectedClient.name,
+
+    employeeId: selectedEmployee.id,
+    employeeName: selectedEmployee.name,
 
     service: selectedService.name,
 
@@ -286,12 +339,14 @@ setTime('')
 setClientName('')
 setClientId('')
 setService('')
+setEmployeeId('')
 
     setErrors({
       date: '',
       time: '',
       clientName: '',
       service: '',
+      employee: '',
     })
   }
 
@@ -319,9 +374,10 @@ setService('')
   }
 
  function handleServiceChange(event) {
-    setService(event.target.value)
+  setService(event.target.value)
+  setEmployeeId('')
 
-    if (errors.service) {
+  if (errors.service) {
       setErrors((currentErrors) => ({
         ...currentErrors,
         service: '',
@@ -543,6 +599,63 @@ setService('')
           {errors.service || '\u00A0'}
         </p>
       </div>
+
+      <div className="form-field">
+  <label htmlFor="appointment-employee">
+    Zaposlenik
+  </label>
+
+  <select
+  id="appointment-employee"
+  ref={employeeInputRef}
+  className={
+    errors.employee
+      ? 'input-error'
+      : ''
+  }
+  value={employeeId}
+    onChange={(event) => {
+  setEmployeeId(event.target.value)
+
+  if (errors.employee) {
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      employee: '',
+    }))
+  }
+}}
+    disabled={!selectedServiceForEmployee}
+  >
+    <option value="">
+      {!selectedServiceForEmployee
+        ? 'Prvo odaberite uslugu'
+        : availableEmployees.length === 0
+          ? 'Nema dostupnih zaposlenika'
+          : 'Odaberite zaposlenika'}
+    </option>
+
+    {availableEmployees.map(
+      (employee) => (
+        <option
+          key={employee.id}
+          value={String(employee.id)}
+        >
+          {employee.name}
+        </option>
+      )
+    )}
+  </select>
+
+  <p
+  className={
+    errors.employee
+      ? 'form-error form-error-visible'
+      : 'form-error'
+  }
+>
+  {errors.employee || '\u00A0'}
+</p>
+</div>
 
       <div className="form-actions">
         <button
