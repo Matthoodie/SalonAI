@@ -372,7 +372,7 @@ function handleSubmit(event) {
   setWorkingHours(
     createDefaultWorkingHours()
   )
-}
+ }
 
   return (
     <form
@@ -385,9 +385,9 @@ function handleSubmit(event) {
   {editingEmployee
     ? 'Uređivanje zaposlenika'
     : 'Novi član tima'}
-</span>
+ </span>
 
-<h2>
+ <h2>
   {editingEmployee
     ? 'Uredi zaposlenika'
     : 'Dodaj zaposlenika'}

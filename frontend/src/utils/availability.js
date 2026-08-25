@@ -16,6 +16,12 @@ function timeToMinutes(time) {
   return hours * 60 + minutes
 }
 
+export const AVAILABILITY_REASONS = {
+  INVALID_INPUT: 'INVALID_INPUT',
+  DAY_OFF: 'DAY_OFF',
+  OUTSIDE_WORKING_HOURS: 'OUTSIDE_WORKING_HOURS',
+  APPOINTMENT_COLLISION: 'APPOINTMENT_COLLISION',
+}
 
 function getWeekDayKey(date) {
   if (!date) {
@@ -114,7 +120,7 @@ function isWithinWorkingHours({
   )
 }
 
-export function isEmployeeAvailable({
+export function checkEmployeeAvailability({
   employeeId,
   date,
   startTime,
@@ -129,26 +135,57 @@ export function isEmployeeAvailable({
     !startTime ||
     !durationMinutes
   ) {
-    return false
+    return {
+      available: false,
+      reason:
+        AVAILABILITY_REASONS.INVALID_INPUT,
+    }
+  }
+
+  const weekDayKey =
+    getWeekDayKey(date)
+
+  if (
+    workingHours &&
+    weekDayKey &&
+    (
+      !workingHours[weekDayKey] ||
+      !workingHours[weekDayKey].enabled
+    )
+  ) {
+    return {
+      available: false,
+      reason:
+        AVAILABILITY_REASONS.DAY_OFF,
+    }
   }
 
   const isInsideWorkingHours =
-  isWithinWorkingHours({
-    date,
-    startTime,
-    durationMinutes,
-    workingHours,
-  })
+    isWithinWorkingHours({
+      date,
+      startTime,
+      durationMinutes,
+      workingHours,
+    })
 
-if (!isInsideWorkingHours) {
-  return false
-}
+  if (!isInsideWorkingHours) {
+    return {
+      available: false,
+      reason:
+        AVAILABILITY_REASONS
+          .OUTSIDE_WORKING_HOURS,
+    }
+  }
 
   const candidateStartMinutes =
     timeToMinutes(startTime)
 
   if (candidateStartMinutes === null) {
-    return false
+    return {
+      available: false,
+      reason:
+        AVAILABILITY_REASONS.INVALID_INPUT,
+    }
   }
 
   const candidateEndMinutes =
@@ -209,5 +246,40 @@ if (!isInsideWorkingHours) {
       )
     })
 
-  return !hasCollision
+  if (hasCollision) {
+    return {
+      available: false,
+      reason:
+        AVAILABILITY_REASONS
+          .APPOINTMENT_COLLISION,
+    }
+  }
+
+  return {
+    available: true,
+    reason: null,
+  }
+}
+
+export function isEmployeeAvailable({
+  employeeId,
+  date,
+  startTime,
+  durationMinutes,
+  appointments = [],
+  excludeAppointmentId = null,
+  workingHours = null,
+}) {
+  const result =
+    checkEmployeeAvailability({
+      employeeId,
+      date,
+      startTime,
+      durationMinutes,
+      appointments,
+      excludeAppointmentId,
+      workingHours,
+    })
+
+  return result.available
 }

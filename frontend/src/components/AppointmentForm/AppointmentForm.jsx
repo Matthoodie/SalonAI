@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { isEmployeeAvailable } from '../../utils/availability'
+import {
+  AVAILABILITY_REASONS,
+  checkEmployeeAvailability,
+  isEmployeeAvailable,
+} from '../../utils/availability'
 import './AppointmentForm.css'
 
 function addMinutesToTime(time, minutesToAdd) {
@@ -158,6 +162,60 @@ const availableTimeOptions =
       )
     : []
 
+
+  const unavailableTimeReasons =
+  date &&
+  employeeId &&
+  selectedServiceDuration > 0 &&
+  selectedEmployeeForAvailability
+    ? timeOptions
+        .map((timeOption) =>
+          checkEmployeeAvailability({
+            employeeId,
+
+            workingHours:
+              selectedEmployeeForAvailability
+                .workingHours ?? null,
+
+            date,
+            startTime: timeOption,
+
+            durationMinutes:
+              selectedServiceDuration,
+
+            appointments,
+
+            excludeAppointmentId:
+              editingAppointment?.id ?? null,
+          })
+        )
+        .filter(
+          (result) =>
+            !result.available &&
+            result.reason
+        )
+        .map(
+          (result) => result.reason
+        )
+    : []
+
+  const hasDayOffReason =
+  unavailableTimeReasons.includes(
+    AVAILABILITY_REASONS.DAY_OFF
+  )
+
+const hasCollisionReason =
+  unavailableTimeReasons.includes(
+    AVAILABILITY_REASONS
+      .APPOINTMENT_COLLISION
+  )
+
+const hasOutsideWorkingHoursReason =
+  unavailableTimeReasons.includes(
+    AVAILABILITY_REASONS
+      .OUTSIDE_WORKING_HOURS
+  )
+
   const [errors, setErrors] = useState({
     date: '',
     time: '',
@@ -165,6 +223,35 @@ const availableTimeOptions =
     service: '',
     employee: '',
   })
+
+  let timeOptionsMessage =
+  'Odaberite vrijeme'
+
+if (!selectedServiceForEmployee) {
+  timeOptionsMessage =
+    'Prvo odaberite uslugu'
+} else if (!employeeId) {
+  timeOptionsMessage =
+    'Prvo odaberite zaposlenika'
+} else if (
+  availableTimeOptions.length === 0
+) {
+  if (hasDayOffReason) {
+    timeOptionsMessage =
+      `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} ne radi odabranog dana`
+  } else if (hasCollisionReason) {
+    timeOptionsMessage =
+      'Nema slobodnih termina za odabrani dan'
+  } else if (
+    hasOutsideWorkingHoursReason
+  ) {
+    timeOptionsMessage =
+      'Usluga ne stane u radno vrijeme zaposlenika'
+  } else {
+    timeOptionsMessage =
+      'Nema slobodnih termina'
+  }
+}
 
 
   const dateInputRef = useRef(null)
@@ -233,7 +320,7 @@ setEmployeeId(
   const selectedClient = clientList.find(
   (client) =>
     String(client.id) === clientId
-)
+ )
 
 const selectedEmployee =
   employeeList.find(
@@ -247,24 +334,64 @@ const selectedEmployee =
     editingAppointment?.serviceDurationMinutes
   ) || 0
 
- const isSelectedEmployeeAvailable =
+const availabilityResult =
   selectedEmployee &&
-  candidateDuration > 0
-    ? isEmployeeAvailable({
-        employeeId: selectedEmployee.id,
+  candidateDuration > 0 &&
+  date &&
+  time
+    ? checkEmployeeAvailability({
+        employeeId:
+          selectedEmployee.id,
+
         workingHours:
-        selectedEmployee.workingHours ?? null,
+          selectedEmployee
+            .workingHours ?? null,
+
         date,
         startTime: time,
-        durationMinutes: candidateDuration,
+
+        durationMinutes:
+          candidateDuration,
+
         appointments,
+
         excludeAppointmentId:
           editingAppointment?.id ?? null,
       })
-    : true
+    : {
+        available: true,
+        reason: null,
+      }
 
- const hasEmployeeCollision =
-  !isSelectedEmployeeAvailable
+  let availabilityErrorMessage = ''
+
+if (!availabilityResult.available) {
+  switch (availabilityResult.reason) {
+    case AVAILABILITY_REASONS.DAY_OFF:
+      availabilityErrorMessage =
+        `${selectedEmployee.name} ne radi odabranog dana.`
+      break
+
+    case AVAILABILITY_REASONS.OUTSIDE_WORKING_HOURS:
+      availabilityErrorMessage =
+        `Odabrano vrijeme je izvan radnog vremena zaposlenika ${selectedEmployee.name}.`
+      break
+
+    case AVAILABILITY_REASONS.APPOINTMENT_COLLISION:
+      availabilityErrorMessage =
+        `${selectedEmployee.name} već ima termin koji se preklapa s ovim vremenom.`
+      break
+
+    case AVAILABILITY_REASONS.INVALID_INPUT:
+      availabilityErrorMessage =
+        'Podaci termina nisu ispravni.'
+      break
+
+    default:
+      availabilityErrorMessage =
+        'Odabrani termin nije dostupan.'
+  }
+}
 
   const isUnchangedLegacyClient =
   isLegacyEditingClient &&
@@ -282,9 +409,7 @@ const selectedEmployee =
 
   time: !time
   ? 'Odaberite vrijeme termina.'
-  : hasEmployeeCollision
-    ? `${selectedEmployee.name} već ima termin koji se preklapa s ovim vremenom.`
-    : '',
+  : availabilityErrorMessage,
 
   clientName:
     selectedClient ||
@@ -713,13 +838,7 @@ setEmployeeId('')
           >
 
            <option value="">
-            {!selectedServiceForEmployee
-              ? 'Prvo odaberite uslugu'
-              : !employeeId
-              ? 'Prvo odaberite zaposlenika'
-              : availableTimeOptions.length === 0
-              ? 'Nema slobodnih termina'
-              : 'Odaberite vrijeme'}
+             {timeOptionsMessage}
            </option>
 
             {availableTimeOptions.map(
