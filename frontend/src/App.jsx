@@ -143,6 +143,27 @@ function createDefaultWorkingHours() {
   }
 }
 
+function migrateEmployees(
+  employeesToMigrate
+) {
+  return employeesToMigrate.map(
+    (employee) => ({
+      ...employee,
+
+      workingHours:
+        employee.workingHours ||
+        createDefaultWorkingHours(),
+
+      dateOverrides:
+        Array.isArray(
+          employee.dateOverrides
+        )
+          ? employee.dateOverrides
+          : [],
+    })
+  )
+}
+
 function App() {
   const [
     appointmentFormInitialDate,
@@ -197,15 +218,10 @@ const [employeeList, setEmployeeList] =
         const parsedEmployees =
           JSON.parse(savedEmployees)
 
-        return parsedEmployees.map(
-          (employee) => ({
-            ...employee,
+        return migrateEmployees(
+         parsedEmployees
+       )
 
-            workingHours:
-              employee.workingHours ||
-              createDefaultWorkingHours(),
-          })
-        )
       } catch (error) {
         console.error(
           'Neuspješno učitavanje spremljenih zaposlenika:',
@@ -214,7 +230,9 @@ const [employeeList, setEmployeeList] =
       }
     }
 
-    return employees
+    return migrateEmployees(
+  employees
+)
   })
 
 useEffect(() => {
@@ -461,8 +479,10 @@ useEffect(() => {
         )
 
         setEmployeeList(
-          importedData.employees
-       )  
+        migrateEmployees(
+         importedData.employees
+        )
+      )
 
         const migratedAppointments =
           migrateAppointments(

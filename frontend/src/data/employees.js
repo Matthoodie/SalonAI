@@ -42,6 +42,7 @@ export const employees = [
         endTime: '',
       },
     },
+    dateOverrides: [],
   },
 
   {
@@ -87,6 +88,8 @@ export const employees = [
         endTime: '',
       },
     },
+
+    dateOverrides: [],
   },
 
   {
@@ -132,5 +135,6 @@ export const employees = [
         endTime: '',
       },
     },
+    dateOverrides: [],
   },
 ]

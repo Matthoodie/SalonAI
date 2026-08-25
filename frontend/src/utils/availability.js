@@ -60,25 +60,64 @@ function getWeekDayKey(date) {
   ]
 }
 
+function getDateOverride({
+  date,
+  dateOverrides,
+}) {
+  if (
+    !date ||
+    !Array.isArray(dateOverrides)
+  ) {
+    return null
+  }
+
+  return (
+    dateOverrides.find(
+      (override) =>
+        override.date === date
+    ) ?? null
+  )
+}
+
 function isWithinWorkingHours({
   date,
   startTime,
   durationMinutes,
   workingHours,
+  dateOverrides = [],
 }) {
-  if (!workingHours) {
-    return true
-  }
+  const dateOverride =
+    getDateOverride({
+      date,
+      dateOverrides,
+    })
 
-  const weekDayKey =
-    getWeekDayKey(date)
-
-  if (!weekDayKey) {
+  if (
+    dateOverride &&
+    !dateOverride.enabled
+  ) {
     return false
   }
 
-  const daySchedule =
-    workingHours[weekDayKey]
+  let daySchedule = null
+
+  if (dateOverride) {
+    daySchedule = dateOverride
+  } else {
+    if (!workingHours) {
+      return true
+    }
+
+    const weekDayKey =
+      getWeekDayKey(date)
+
+    if (!weekDayKey) {
+      return false
+    }
+
+    daySchedule =
+      workingHours[weekDayKey]
+  }
 
   if (
     !daySchedule ||
@@ -128,6 +167,7 @@ export function checkEmployeeAvailability({
   appointments = [],
   excludeAppointmentId = null,
   workingHours = null,
+  dateOverrides = [],
 }) {
   if (
     !employeeId ||
@@ -142,23 +182,41 @@ export function checkEmployeeAvailability({
     }
   }
 
-  const weekDayKey =
-    getWeekDayKey(date)
+  const dateOverride =
+  getDateOverride({
+    date,
+    dateOverrides,
+  })
 
-  if (
-    workingHours &&
-    weekDayKey &&
-    (
-      !workingHours[weekDayKey] ||
-      !workingHours[weekDayKey].enabled
-    )
-  ) {
-    return {
-      available: false,
-      reason:
-        AVAILABILITY_REASONS.DAY_OFF,
-    }
+if (
+  dateOverride &&
+  !dateOverride.enabled
+) {
+  return {
+    available: false,
+    reason:
+      AVAILABILITY_REASONS.DAY_OFF,
   }
+}
+
+const weekDayKey =
+  getWeekDayKey(date)
+
+if (
+  !dateOverride &&
+  workingHours &&
+  weekDayKey &&
+  (
+    !workingHours[weekDayKey] ||
+    !workingHours[weekDayKey].enabled
+  )
+) {
+  return {
+    available: false,
+    reason:
+      AVAILABILITY_REASONS.DAY_OFF,
+  }
+}
 
   const isInsideWorkingHours =
     isWithinWorkingHours({
@@ -166,6 +224,7 @@ export function checkEmployeeAvailability({
       startTime,
       durationMinutes,
       workingHours,
+      dateOverrides,
     })
 
   if (!isInsideWorkingHours) {
@@ -269,6 +328,7 @@ export function isEmployeeAvailable({
   appointments = [],
   excludeAppointmentId = null,
   workingHours = null,
+  dateOverrides = [],
 }) {
   const result =
     checkEmployeeAvailability({
@@ -279,6 +339,7 @@ export function isEmployeeAvailable({
       appointments,
       excludeAppointmentId,
       workingHours,
+      dateOverrides,
     })
 
   return result.available

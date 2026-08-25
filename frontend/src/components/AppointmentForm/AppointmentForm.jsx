@@ -151,6 +151,9 @@ const availableTimeOptions =
           workingHours:
            selectedEmployeeForAvailability
             ?.workingHours ?? null,
+            dateOverrides:
+           selectedEmployeeForAvailability
+           ?.dateOverrides ?? [],
           date,
           startTime: timeOption,
           durationMinutes:
@@ -176,6 +179,10 @@ const availableTimeOptions =
             workingHours:
               selectedEmployeeForAvailability
                 .workingHours ?? null,
+
+            dateOverrides:
+              selectedEmployeeForAvailability
+              .dateOverrides ?? [],
 
             date,
             startTime: timeOption,
@@ -346,6 +353,10 @@ const availabilityResult =
         workingHours:
           selectedEmployee
             .workingHours ?? null,
+
+            dateOverrides:
+            selectedEmployee
+           .dateOverrides ?? [],
 
         date,
         startTime: time,

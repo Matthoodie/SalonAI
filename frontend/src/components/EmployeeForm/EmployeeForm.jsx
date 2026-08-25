@@ -172,6 +172,32 @@ function timeToMinutes(time) {
   return hours * 60 + minutes
 }
 
+function formatDate(date) {
+  if (!date) {
+    return ''
+  }
+
+  const [year, month, day] =
+    date.split('-')
+
+  return `${day}.${month}.${year}.`
+}
+
+function getTodayDate() {
+  const today = new Date()
+
+  const timezoneOffset =
+    today.getTimezoneOffset() * 60_000
+
+  const localDate = new Date(
+    today.getTime() - timezoneOffset
+  )
+
+  return localDate
+    .toISOString()
+    .split('T')[0]
+}
+
 function validateWorkingHours(workingHours) {
   for (const day of weekDays) {
     const schedule =
@@ -213,6 +239,57 @@ function validateWorkingHours(workingHours) {
   return ''
 }
 
+function validateDateOverrides(
+  dateOverrides
+) {
+  const seenDates = new Set()
+
+  for (const override of dateOverrides) {
+    if (!override.date) {
+      return 'Posebni datum nije ispravan.'
+    }
+
+    if (seenDates.has(override.date)) {
+      return `Za datum ${formatDate(
+        override.date
+      )} postoji više posebnih rasporeda.`
+    }
+
+    seenDates.add(override.date)
+
+    if (!override.enabled) {
+      continue
+    }
+
+    const startMinutes =
+      timeToMinutes(
+        override.startTime
+      )
+
+    const endMinutes =
+      timeToMinutes(
+        override.endTime
+      )
+
+    if (
+      startMinutes === null ||
+      endMinutes === null
+    ) {
+      return `${formatDate(
+        override.date
+      )}: posebno radno vrijeme nije ispravno.`
+    }
+
+    if (startMinutes >= endMinutes) {
+      return `${formatDate(
+        override.date
+      )}: početak posebnog radnog vremena mora biti prije kraja.`
+    }
+  }
+
+  return ''
+}
+
 function EmployeeForm({
   serviceList = [],
   onAddEmployee,
@@ -228,8 +305,26 @@ function EmployeeForm({
   useState(
     createDefaultWorkingHours
   )
+ 
+  const [dateOverrides, setDateOverrides] =
+  useState([])
+
+  const [overrideDate, setOverrideDate] =
+  useState('')
+
+const [overrideEnabled, setOverrideEnabled] =
+  useState(true)
+
+const [overrideStartTime, setOverrideStartTime] =
+  useState('08:00')
+
+const [overrideEndTime, setOverrideEndTime] =
+  useState('16:00')
 
   const [isWorkingHoursOpen, setIsWorkingHoursOpen] =
+  useState(false)
+
+const [isDateOverridesOpen, setIsDateOverridesOpen] =
   useState(false)
 
     useEffect(() => {
@@ -247,7 +342,16 @@ function EmployeeForm({
         createDefaultWorkingHours()
     )
 
+   setDateOverrides(
+  Array.isArray(
+    editingEmployee.dateOverrides
+  )
+    ? editingEmployee.dateOverrides
+    : []
+)
+
     setIsWorkingHoursOpen(false)
+    setIsDateOverridesOpen(false)
 
   } else {
     setName('')
@@ -257,9 +361,102 @@ function EmployeeForm({
     setWorkingHours(
       createDefaultWorkingHours()
     )
+    setDateOverrides([])
+
     setIsWorkingHoursOpen(false)
+    setIsDateOverridesOpen(false)
   }
 }, [editingEmployee])
+
+function addDateOverride() {
+  if (!overrideDate) {
+    window.alert(
+      'Odaberite datum posebnog rasporeda.'
+    )
+
+    return
+  }
+
+  if (overrideDate < getTodayDate()) {
+  window.alert(
+    'Posebni raspored nije moguće dodati za datum u prošlosti.'
+  )
+
+  return
+}
+
+  const alreadyExists =
+    dateOverrides.some(
+      (override) =>
+        override.date === overrideDate
+    )
+
+  if (alreadyExists) {
+    window.alert(
+      'Za odabrani datum već postoji poseban raspored.'
+    )
+
+    return
+  }
+
+  if (overrideEnabled) {
+    const startMinutes =
+      timeToMinutes(overrideStartTime)
+
+    const endMinutes =
+      timeToMinutes(overrideEndTime)
+
+    if (
+      startMinutes === null ||
+      endMinutes === null ||
+      startMinutes >= endMinutes
+    ) {
+      window.alert(
+        'Početak posebnog radnog vremena mora biti prije kraja.'
+      )
+
+      return
+    }
+  }
+
+  const newOverride = {
+    id: Date.now(),
+    date: overrideDate,
+    enabled: overrideEnabled,
+
+    startTime: overrideEnabled
+      ? overrideStartTime
+      : '',
+
+    endTime: overrideEnabled
+      ? overrideEndTime
+      : '',
+  }
+
+  setDateOverrides(
+    (currentOverrides) => [
+      ...currentOverrides,
+      newOverride,
+    ]
+  )
+
+  setOverrideDate('')
+  setOverrideEnabled(true)
+  setOverrideStartTime('08:00')
+  setOverrideEndTime('16:00')
+}
+
+function removeDateOverride(
+  overrideId
+) {
+  setDateOverrides(
+    (currentOverrides) =>
+      currentOverrides.filter(
+        (override) =>
+          override.id !== overrideId
+      )
+  )
+}
 
   function toggleService(serviceId) {
     setSelectedServiceIds((currentIds) =>
@@ -346,6 +543,21 @@ function handleSubmit(event) {
     return
   }
 
+  const dateOverridesError =
+  validateDateOverrides(
+    dateOverrides
+  )
+
+if (dateOverridesError) {
+  setIsDateOverridesOpen(true)
+
+  window.alert(
+    dateOverridesError
+  )
+
+  return
+}
+
   if (editingEmployee) {
     onUpdateEmployee({
       ...editingEmployee,
@@ -353,6 +565,7 @@ function handleSubmit(event) {
       serviceIds:
         selectedServiceIds,
       workingHours,
+      dateOverrides,
     })
   } else {
     const newEmployee = {
@@ -362,6 +575,7 @@ function handleSubmit(event) {
       serviceIds:
         selectedServiceIds,
       workingHours,
+      dateOverrides,
     }
 
     onAddEmployee(newEmployee)
@@ -370,8 +584,9 @@ function handleSubmit(event) {
   setName('')
   setSelectedServiceIds([])
   setWorkingHours(
-    createDefaultWorkingHours()
+  createDefaultWorkingHours()
   )
+  setDateOverrides([])
  }
 
   return (
@@ -582,6 +797,194 @@ function handleSubmit(event) {
           </div>
         )
       })}
+    </div>
+  )}
+</fieldset>
+
+<fieldset className="employee-date-overrides-fieldset">
+  <div className="employee-date-overrides-header">
+    <div>
+      <div className="employee-date-overrides-title-row">
+        <legend>
+          Posebni datumi
+        </legend>
+
+        {dateOverrides.length > 0 && (
+          <span className="employee-date-overrides-count">
+            {dateOverrides.length}
+          </span>
+        )}
+      </div>
+
+      <p className="employee-date-overrides-description">
+        Posebni rasporedi koji odstupaju od
+        standardnog radnog vremena.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      className="employee-date-overrides-toggle-button"
+      onClick={() =>
+        setIsDateOverridesOpen(
+          (currentValue) => !currentValue
+        )
+      }
+      aria-expanded={isDateOverridesOpen}
+    >
+      {isDateOverridesOpen
+        ? 'Sakrij posebne datume'
+        : 'Uredi posebne datume'}
+    </button>
+  </div>
+
+  {!isDateOverridesOpen && (
+    <div className="employee-date-overrides-summary">
+      {dateOverrides.length === 0
+        ? 'Nema posebnih datuma'
+        : `${dateOverrides.length} ${
+            dateOverrides.length === 1
+              ? 'poseban datum'
+              : 'posebna datuma'
+          }`}
+    </div>
+  )}
+
+  {isDateOverridesOpen && (
+    <div className="employee-date-overrides-content">
+      {dateOverrides.length > 0 && (
+        <div className="employee-date-overrides-list">
+          {[...dateOverrides]
+            .sort(
+              (
+                firstOverride,
+                secondOverride
+              ) =>
+                firstOverride.date.localeCompare(
+                  secondOverride.date
+                )
+            )
+            .map((override) => (
+              <div
+                key={override.id}
+                className="employee-date-override-item"
+              >
+                <div className="employee-date-override-info">
+                  <strong>
+                    {formatDate(
+                      override.date
+                    )}
+                  </strong>
+
+                  <span>
+                    {override.enabled
+                      ? `${override.startTime}–${override.endTime}`
+                      : 'Ne radi'}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="employee-date-override-remove"
+                  onClick={() =>
+                    removeDateOverride(
+                      override.id
+                    )
+                  }
+                >
+                  Obriši
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
+
+      <div className="employee-date-override-form">
+        <input
+          type="date"
+          value={overrideDate}
+          onChange={(event) =>
+            setOverrideDate(
+              event.target.value
+            )
+          }
+          aria-label="Datum posebnog rasporeda"
+        />
+
+        <label className="employee-date-override-toggle">
+          <input
+            type="checkbox"
+            checked={overrideEnabled}
+            onChange={(event) =>
+              setOverrideEnabled(
+                event.target.checked
+              )
+            }
+          />
+
+          <span>
+            {overrideEnabled
+              ? 'Radi'
+              : 'Ne radi'}
+          </span>
+        </label>
+
+        {overrideEnabled && (
+          <div className="employee-date-override-times">
+            <select
+              value={overrideStartTime}
+              onChange={(event) =>
+                setOverrideStartTime(
+                  event.target.value
+                )
+              }
+              aria-label="Početak posebnog radnog vremena"
+            >
+              {workingTimeOptions.map(
+                (timeOption) => (
+                  <option
+                    key={timeOption}
+                    value={timeOption}
+                  >
+                    {timeOption}
+                  </option>
+                )
+              )}
+            </select>
+
+            <span>—</span>
+
+            <select
+              value={overrideEndTime}
+              onChange={(event) =>
+                setOverrideEndTime(
+                  event.target.value
+                )
+              }
+              aria-label="Kraj posebnog radnog vremena"
+            >
+              {workingTimeOptions.map(
+                (timeOption) => (
+                  <option
+                    key={timeOption}
+                    value={timeOption}
+                  >
+                    {timeOption}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={addDateOverride}
+          className="employee-date-override-add"
+        >
+          + Dodaj posebni datum
+        </button>
+      </div>
     </div>
   )}
 </fieldset>
