@@ -32,7 +32,7 @@ function addMinutesToTime(time, minutesToAdd) {
 
 const timeOptions = []
 
-for (let hour = 7; hour <= 21; hour++) {
+for (let hour = 0; hour <= 23; hour++) {
   for (let minute = 0; minute < 60; minute += 15) {
     const formattedHour = String(hour).padStart(2, '0')
     const formattedMinute = String(minute).padStart(2, '0')

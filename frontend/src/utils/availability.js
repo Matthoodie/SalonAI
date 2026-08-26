@@ -1,14 +1,38 @@
 function timeToMinutes(time) {
-  if (!time) {
+  if (
+    typeof time !== 'string'
+  ) {
     return null
   }
 
-  const [hours, minutes] =
-    time.split(':').map(Number)
+  const timeParts =
+    time.split(':')
+
+  if (timeParts.length !== 2) {
+    return null
+  }
+
+  const [hoursText, minutesText] =
+    timeParts
 
   if (
-    Number.isNaN(hours) ||
-    Number.isNaN(minutes)
+    !/^\d{2}$/.test(hoursText) ||
+    !/^\d{2}$/.test(minutesText)
+  ) {
+    return null
+  }
+
+  const hours =
+    Number(hoursText)
+
+  const minutes =
+    Number(minutesText)
+
+  if (
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
   ) {
     return null
   }
@@ -16,7 +40,7 @@ function timeToMinutes(time) {
   return hours * 60 + minutes
 }
 
-export const AVAILABILITY_REASONS = {
+ export const AVAILABILITY_REASONS = {
   INVALID_INPUT: 'INVALID_INPUT',
   DAY_OFF: 'DAY_OFF',
   OUTSIDE_WORKING_HOURS: 'OUTSIDE_WORKING_HOURS',
@@ -206,6 +230,32 @@ export function checkEmployeeAvailability({
     }
   }
 
+  const normalizedDuration =
+  Number(durationMinutes)
+
+if (
+  !Number.isFinite(
+    normalizedDuration
+  ) ||
+  normalizedDuration <= 0
+) {
+  return {
+    available: false,
+    reason:
+      AVAILABILITY_REASONS.INVALID_INPUT,
+  }
+}
+
+const safeAppointments =
+  Array.isArray(appointments)
+    ? appointments
+    : []
+
+const safeBlockedTimes =
+  Array.isArray(blockedTimes)
+    ? blockedTimes
+    : []
+
   const activeTimeOff =
   getTimeOffForDate({
     date,
@@ -287,10 +337,10 @@ if (
 
   const candidateEndMinutes =
     candidateStartMinutes +
-    Number(durationMinutes)
+    normalizedDuration
 
   const hasBlockedTimeCollision =
-  blockedTimes.some(
+  safeBlockedTimes.some(
     (blockedTime) => {
       if (
         blockedTime.date !== date
@@ -334,7 +384,7 @@ if (hasBlockedTimeCollision) {
 }
 
   const hasCollision =
-    appointments.some((appointment) => {
+    safeAppointments.some((appointment) => {
       const isSameEmployee =
         String(appointment.employeeId) ===
         String(employeeId)
@@ -343,9 +393,9 @@ if (hasBlockedTimeCollision) {
         appointment.date === date
 
       const isExcludedAppointment =
-        excludeAppointmentId !== null &&
-        appointment.id ===
-          excludeAppointmentId
+  excludeAppointmentId !== null &&
+  String(appointment.id) ===
+    String(excludeAppointmentId)
 
       if (
         !isSameEmployee ||
