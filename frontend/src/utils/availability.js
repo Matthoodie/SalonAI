@@ -19,8 +19,9 @@ function timeToMinutes(time) {
 export const AVAILABILITY_REASONS = {
   INVALID_INPUT: 'INVALID_INPUT',
   DAY_OFF: 'DAY_OFF',
-  TIME_OFF: 'TIME_OFF',
   OUTSIDE_WORKING_HOURS: 'OUTSIDE_WORKING_HOURS',
+  TIME_OFF: 'TIME_OFF',
+  BLOCKED_TIME: 'BLOCKED_TIME',
   APPOINTMENT_COLLISION: 'APPOINTMENT_COLLISION',
 }
 
@@ -190,6 +191,7 @@ export function checkEmployeeAvailability({
   workingHours = null,
   dateOverrides = [],
   timeOff = [],
+  blockedTimes = [],
 }) {
   if (
     !employeeId ||
@@ -287,6 +289,50 @@ if (
     candidateStartMinutes +
     Number(durationMinutes)
 
+  const hasBlockedTimeCollision =
+  blockedTimes.some(
+    (blockedTime) => {
+      if (
+        blockedTime.date !== date
+      ) {
+        return false
+      }
+
+      const blockedStartMinutes =
+        timeToMinutes(
+          blockedTime.startTime
+        )
+
+      const blockedEndMinutes =
+        timeToMinutes(
+          blockedTime.endTime
+        )
+
+      if (
+        blockedStartMinutes === null ||
+        blockedEndMinutes === null
+      ) {
+        return false
+      }
+
+      return (
+        candidateStartMinutes <
+          blockedEndMinutes &&
+        candidateEndMinutes >
+          blockedStartMinutes
+      )
+    }
+  )
+
+if (hasBlockedTimeCollision) {
+  return {
+    available: false,
+    reason:
+      AVAILABILITY_REASONS
+        .BLOCKED_TIME,
+  }
+}
+
   const hasCollision =
     appointments.some((appointment) => {
       const isSameEmployee =
@@ -366,6 +412,7 @@ export function isEmployeeAvailable({
   workingHours = null,
   dateOverrides = [],
   timeOff = [],
+  blockedTimes = [],
 }) {
   const result =
     checkEmployeeAvailability({
@@ -378,6 +425,7 @@ export function isEmployeeAvailable({
       workingHours,
       dateOverrides,
       timeOff,
+      blockedTimes,
     })
 
   return result.available

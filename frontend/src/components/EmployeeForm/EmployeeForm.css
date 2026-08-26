@@ -699,6 +699,190 @@
 
 
 /* =========================
+   BLOCKED TIMES
+========================= */
+
+.employee-blocked-times-fieldset {
+  margin: 0;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.employee-blocked-times-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.employee-blocked-times-header legend {
+  padding: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.employee-blocked-times-description {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.employee-blocked-times-toggle-button {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.employee-blocked-times-toggle-button:hover {
+  background: #f8fafc;
+}
+
+.employee-blocked-times-summary {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.employee-blocked-time-form {
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 1fr)
+    minmax(90px, 0.7fr)
+    minmax(90px, 0.7fr)
+    minmax(140px, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.employee-blocked-time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.employee-blocked-time-field label {
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.employee-blocked-time-field input,
+.employee-blocked-time-field select {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.employee-blocked-time-field input:focus,
+.employee-blocked-time-field select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px #eef2ff;
+}
+
+.employee-blocked-time-note-field {
+  grid-column: 1 / -1;
+}
+
+.employee-blocked-time-add {
+  grid-column: 1 / -1;
+  justify-self: flex-start;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid #4f46e5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #4f46e5;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.employee-blocked-time-add:hover {
+  background: #eef2ff;
+}
+
+.employee-blocked-times-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.employee-blocked-time-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.employee-blocked-time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.employee-blocked-time-info strong {
+  color: #0f172a;
+  font-size: 0.8rem;
+}
+
+.employee-blocked-time-info span {
+  color: #475569;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.employee-blocked-time-info small {
+  color: #64748b;
+  font-size: 0.73rem;
+}
+
+.employee-blocked-time-remove {
+  flex-shrink: 0;
+  padding: 6px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #475569;
+  font: inherit;
+  font-size: 0.73rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.employee-blocked-time-remove:hover {
+  background: #f1f5f9;
+}
+
+/* =========================
    ACTIONS
 ========================= */
 

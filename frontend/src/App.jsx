@@ -167,6 +167,13 @@ function migrateEmployees(
   )
     ? employee.timeOff
     : [],
+
+  blockedTimes:
+  Array.isArray(
+    employee.blockedTimes
+  )
+    ? employee.blockedTimes
+    : [],
     })
   )
 }

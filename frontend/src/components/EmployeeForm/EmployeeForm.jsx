@@ -36,6 +36,29 @@ const weekDays = [
   },
 ]
 
+const blockedTimeTypes = [
+  {
+    value: 'BREAK',
+    label: 'Pauza',
+  },
+  {
+    value: 'PRIVATE',
+    label: 'Privatna obveza',
+  },
+  {
+    value: 'MEETING',
+    label: 'Sastanak',
+  },
+  {
+    value: 'TRAINING',
+    label: 'Edukacija',
+  },
+  {
+    value: 'OTHER',
+    label: 'Ostalo',
+  },
+]
+
 const timeOffTypes = [
   {
     value: 'VACATION',
@@ -327,6 +350,106 @@ function validateDateOverrides(
   return ''
 }
 
+function validateBlockedTimes(
+  blockedTimes
+) {
+  if (!Array.isArray(blockedTimes)) {
+    return 'Podaci blokiranog vremena nisu ispravni.'
+  }
+
+  for (const blockedTime of blockedTimes) {
+    if (
+      !blockedTime.date ||
+      !blockedTime.startTime ||
+      !blockedTime.endTime
+    ) {
+      return 'Svaka blokada mora imati datum, početak i kraj.'
+    }
+
+    const startMinutes =
+      timeToMinutes(
+        blockedTime.startTime
+      )
+
+    const endMinutes =
+      timeToMinutes(
+        blockedTime.endTime
+      )
+
+    if (
+      startMinutes === null ||
+      endMinutes === null
+    ) {
+      return 'Vrijeme blokade nije ispravno.'
+    }
+
+    if (startMinutes >= endMinutes) {
+      return 'Početak blokade mora biti prije kraja.'
+    }
+  }
+
+  for (
+    let firstIndex = 0;
+    firstIndex < blockedTimes.length;
+    firstIndex++
+  ) {
+    const firstBlockedTime =
+      blockedTimes[firstIndex]
+
+    for (
+      let secondIndex =
+        firstIndex + 1;
+      secondIndex <
+        blockedTimes.length;
+      secondIndex++
+    ) {
+      const secondBlockedTime =
+        blockedTimes[secondIndex]
+
+      if (
+        firstBlockedTime.date !==
+        secondBlockedTime.date
+      ) {
+        continue
+      }
+
+      const firstStartMinutes =
+        timeToMinutes(
+          firstBlockedTime.startTime
+        )
+
+      const firstEndMinutes =
+        timeToMinutes(
+          firstBlockedTime.endTime
+        )
+
+      const secondStartMinutes =
+        timeToMinutes(
+          secondBlockedTime.startTime
+        )
+
+      const secondEndMinutes =
+        timeToMinutes(
+          secondBlockedTime.endTime
+        )
+
+      const hasOverlap =
+        firstStartMinutes <
+          secondEndMinutes &&
+        firstEndMinutes >
+          secondStartMinutes
+
+      if (hasOverlap) {
+        return `Blokirana vremena za ${formatDate(
+          firstBlockedTime.date
+        )} ne smiju se preklapati.`
+      }
+    }
+  }
+
+  return ''
+}
+
 function validateTimeOff(timeOff) {
   const sortedTimeOff = [...timeOff].sort(
     (firstTimeOff, secondTimeOff) =>
@@ -377,6 +500,16 @@ function validateTimeOff(timeOff) {
   return ''
 }
 
+function getBlockedTimeTypeLabel(type) {
+  const matchingType =
+    blockedTimeTypes.find(
+      (typeOption) =>
+        typeOption.value === type
+    )
+
+  return matchingType?.label || type
+}
+
 function EmployeeForm({
   serviceList = [],
   onAddEmployee,
@@ -399,7 +532,28 @@ function EmployeeForm({
   const [timeOff, setTimeOff] =
   useState([])
 
-  const [timeOffStartDate, setTimeOffStartDate] =
+  const [blockedTimes, setBlockedTimes] =
+  useState([])
+
+const [blockedTimeDate, setBlockedTimeDate] =
+  useState('')
+
+const [blockedTimeStartTime, setBlockedTimeStartTime] =
+  useState('12:00')
+
+const [blockedTimeEndTime, setBlockedTimeEndTime] =
+  useState('13:00')
+
+const [blockedTimeType, setBlockedTimeType] =
+  useState('BREAK')
+
+const [blockedTimeNote, setBlockedTimeNote] =
+  useState('')
+
+const [isBlockedTimesOpen, setIsBlockedTimesOpen] =
+  useState(false)
+
+const [timeOffStartDate, setTimeOffStartDate] =
   useState('')
 
 const [timeOffEndDate, setTimeOffEndDate] =
@@ -462,9 +616,18 @@ setTimeOff(
     : []
 )
 
+setBlockedTimes(
+  Array.isArray(
+    editingEmployee.blockedTimes
+  )
+    ? editingEmployee.blockedTimes
+    : []
+)
+
     setIsWorkingHoursOpen(false)
     setIsDateOverridesOpen(false)
     setIsTimeOffOpen(false)
+    setIsBlockedTimesOpen(false)
 
   } else {
     setName('')
@@ -476,10 +639,12 @@ setTimeOff(
     )
     setDateOverrides([])
     setTimeOff([])
+    setBlockedTimes([])
 
     setIsWorkingHoursOpen(false)
     setIsDateOverridesOpen(false)
     setIsTimeOffOpen(false)
+    setIsBlockedTimesOpen(false)
   }
 }, [editingEmployee])
 
@@ -645,7 +810,7 @@ function removeTimeOff(
 
 function removeDateOverride(
   overrideId
-) {
+  ) {
   setDateOverrides(
     (currentOverrides) =>
       currentOverrides.filter(
@@ -653,7 +818,7 @@ function removeDateOverride(
           override.id !== overrideId
       )
   )
-}
+ }
 
   function toggleService(serviceId) {
     setSelectedServiceIds((currentIds) =>
@@ -692,6 +857,94 @@ function removeDateOverride(
         },
       }
     }
+  )
+}
+
+function addBlockedTime() {
+  if (
+    !blockedTimeDate ||
+    !blockedTimeStartTime ||
+    !blockedTimeEndTime
+  ) {
+    window.alert(
+      'Odaberite datum, početak i kraj blokiranog vremena.'
+    )
+
+    return
+  }
+
+  const startMinutes =
+    timeToMinutes(
+      blockedTimeStartTime
+    )
+
+  const endMinutes =
+    timeToMinutes(
+      blockedTimeEndTime
+    )
+
+  if (
+    startMinutes === null ||
+    endMinutes === null ||
+    startMinutes >= endMinutes
+  ) {
+    window.alert(
+      'Početak blokiranog vremena mora biti prije kraja.'
+    )
+
+    return
+  }
+
+  const newBlockedTime = {
+    id: Date.now(),
+    date: blockedTimeDate,
+    startTime:
+      blockedTimeStartTime,
+    endTime:
+      blockedTimeEndTime,
+    type: blockedTimeType,
+    note: blockedTimeNote.trim(),
+   }
+
+const nextBlockedTimes = [
+  ...blockedTimes,
+  newBlockedTime,
+]
+
+const blockedTimesError =
+  validateBlockedTimes(
+    nextBlockedTimes
+  )
+
+if (blockedTimesError) {
+  window.alert(
+    blockedTimesError
+  )
+
+  return
+}
+
+   setBlockedTimes(
+  nextBlockedTimes
+)
+
+  setBlockedTimeDate('')
+  setBlockedTimeStartTime('12:00')
+  setBlockedTimeEndTime('13:00')
+  setBlockedTimeType('BREAK')
+  setBlockedTimeNote('')
+}
+
+function removeBlockedTime(
+  blockedTimeId
+) {
+  setBlockedTimes(
+    (currentBlockedTimes) =>
+      currentBlockedTimes.filter(
+        (blockedTime) =>
+          blockedTime.id !==
+          blockedTimeId
+      )
   )
 }
 
@@ -770,6 +1023,21 @@ if (timeOffError) {
   return
 }
 
+const blockedTimesError =
+  validateBlockedTimes(
+    blockedTimes
+  )
+
+if (blockedTimesError) {
+  setIsBlockedTimesOpen(true)
+
+  window.alert(
+    blockedTimesError
+  )
+
+  return
+}
+
   if (editingEmployee) {
     onUpdateEmployee({
       ...editingEmployee,
@@ -779,6 +1047,7 @@ if (timeOffError) {
       workingHours,
       dateOverrides,
       timeOff,
+      blockedTimes,
     })
   } else {
     const newEmployee = {
@@ -790,6 +1059,7 @@ if (timeOffError) {
       workingHours,
       dateOverrides,
       timeOff,
+      blockedTimes,
     }
 
     onAddEmployee(newEmployee)
@@ -802,6 +1072,7 @@ if (timeOffError) {
   )
   setDateOverrides([])
   setTimeOff([])
+  setBlockedTimes([])
  }
 
   return (
@@ -1385,6 +1656,245 @@ if (timeOffError) {
                   onClick={() =>
                     removeTimeOff(
                       timeOffItem.id
+                    )
+                  }
+                >
+                  Obriši
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
+    </>
+  )}
+</fieldset>
+
+<fieldset className="employee-blocked-times-fieldset">
+  <div className="employee-blocked-times-header">
+    <div>
+      <legend>
+        Blokirano vrijeme
+      </legend>
+
+      <p className="employee-blocked-times-description">
+        Blokirajte dio radnog dana za pauzu,
+        sastanak, edukaciju ili drugu obvezu.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      className="employee-blocked-times-toggle-button"
+      onClick={() =>
+        setIsBlockedTimesOpen(
+          (currentValue) => !currentValue
+        )
+      }
+      aria-expanded={isBlockedTimesOpen}
+    >
+      {isBlockedTimesOpen
+        ? 'Sakrij blokirano vrijeme'
+        : 'Uredi blokirano vrijeme'}
+    </button>
+  </div>
+
+  {!isBlockedTimesOpen && (
+    <div className="employee-blocked-times-summary">
+      {blockedTimes.length === 0
+        ? 'Nema evidentiranog blokiranog vremena'
+        : `${blockedTimes.length} ${
+            blockedTimes.length === 1
+              ? 'evidentirana blokada'
+              : 'evidentirane blokade'
+          }`}
+    </div>
+  )}
+
+  {isBlockedTimesOpen && (
+    <>
+      <div className="employee-blocked-time-form">
+        <div className="employee-blocked-time-field">
+          <label htmlFor="blocked-time-date">
+            Datum
+          </label>
+
+          <input
+            id="blocked-time-date"
+            type="date"
+            value={blockedTimeDate}
+            onChange={(event) =>
+              setBlockedTimeDate(
+                event.target.value
+              )
+            }
+          />
+        </div>
+
+        <div className="employee-blocked-time-field">
+          <label htmlFor="blocked-time-start">
+            Od
+          </label>
+
+          <select
+            id="blocked-time-start"
+            value={blockedTimeStartTime}
+            onChange={(event) =>
+              setBlockedTimeStartTime(
+                event.target.value
+              )
+            }
+          >
+            {workingTimeOptions.map(
+              (timeOption) => (
+                <option
+                  key={timeOption}
+                  value={timeOption}
+                >
+                  {timeOption}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        <div className="employee-blocked-time-field">
+          <label htmlFor="blocked-time-end">
+            Do
+          </label>
+
+          <select
+            id="blocked-time-end"
+            value={blockedTimeEndTime}
+            onChange={(event) =>
+              setBlockedTimeEndTime(
+                event.target.value
+              )
+            }
+          >
+            {workingTimeOptions.map(
+              (timeOption) => (
+                <option
+                  key={timeOption}
+                  value={timeOption}
+                >
+                  {timeOption}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        <div className="employee-blocked-time-field">
+          <label htmlFor="blocked-time-type">
+            Vrsta
+          </label>
+
+          <select
+            id="blocked-time-type"
+            value={blockedTimeType}
+            onChange={(event) =>
+              setBlockedTimeType(
+                event.target.value
+              )
+            }
+          >
+            {blockedTimeTypes.map(
+              (typeOption) => (
+                <option
+                  key={typeOption.value}
+                  value={typeOption.value}
+                >
+                  {typeOption.label}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        <div className="employee-blocked-time-field employee-blocked-time-note-field">
+          <label htmlFor="blocked-time-note">
+            Napomena
+          </label>
+
+          <input
+            id="blocked-time-note"
+            type="text"
+            value={blockedTimeNote}
+            placeholder="Opcionalno..."
+            onChange={(event) =>
+              setBlockedTimeNote(
+                event.target.value
+              )
+            }
+          />
+        </div>
+
+        <button
+          type="button"
+          className="employee-blocked-time-add"
+          onClick={addBlockedTime}
+        >
+          + Dodaj blokirano vrijeme
+        </button>
+      </div>
+
+      {blockedTimes.length > 0 && (
+        <div className="employee-blocked-times-list">
+          {[...blockedTimes]
+            .sort(
+              (
+                firstBlockedTime,
+                secondBlockedTime
+              ) => {
+                const dateComparison =
+                  firstBlockedTime.date.localeCompare(
+                    secondBlockedTime.date
+                  )
+
+                if (dateComparison !== 0) {
+                  return dateComparison
+                }
+
+                return firstBlockedTime.startTime.localeCompare(
+                  secondBlockedTime.startTime
+                )
+              }
+            )
+            .map((blockedTime) => (
+              <div
+                key={blockedTime.id}
+                className="employee-blocked-time-item"
+              >
+                <div className="employee-blocked-time-info">
+                  <strong>
+                    {formatDate(
+                      blockedTime.date
+                    )}
+                  </strong>
+
+                  <span>
+                    {blockedTime.startTime}
+                    {'–'}
+                    {blockedTime.endTime}
+                    {' · '}
+                    {getBlockedTimeTypeLabel(
+                      blockedTime.type
+                    )}
+                  </span>
+
+                  {blockedTime.note && (
+                    <small>
+                      {blockedTime.note}
+                    </small>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="employee-blocked-time-remove"
+                  onClick={() =>
+                    removeBlockedTime(
+                      blockedTime.id
                     )
                   }
                 >

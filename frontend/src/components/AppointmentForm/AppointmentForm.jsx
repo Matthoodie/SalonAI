@@ -157,6 +157,9 @@ const availableTimeOptions =
            timeOff:
   selectedEmployeeForAvailability
     ?.timeOff ?? [],
+    blockedTimes:
+  selectedEmployeeForAvailability
+    ?.blockedTimes ?? [],
           date,
           startTime: timeOption,
           durationMinutes:
@@ -188,10 +191,13 @@ const availableTimeOptions =
               .dateOverrides ?? [],
 
               timeOff:
-  selectedEmployeeForAvailability
-    .timeOff ?? [],
+               selectedEmployeeForAvailability
+               .timeOff ?? [],
 
-        
+           blockedTimes:
+              selectedEmployeeForAvailability
+              .blockedTimes ?? [],
+
             date,
             startTime: timeOption,
 
@@ -222,6 +228,11 @@ const availableTimeOptions =
   const hasTimeOffReason =
   unavailableTimeReasons.includes(
     AVAILABILITY_REASONS.TIME_OFF
+  )
+
+  const hasBlockedTimeReason =
+  unavailableTimeReasons.includes(
+    AVAILABILITY_REASONS.BLOCKED_TIME
   )
 
 const hasCollisionReason =
@@ -259,17 +270,25 @@ if (!selectedServiceForEmployee) {
   if (hasTimeOffReason) {
     timeOptionsMessage =
       `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} nije dostupan zbog evidentirane odsutnosti`
+
+  } else if (hasBlockedTimeReason) {
+  timeOptionsMessage =
+    'Dio radnog vremena zaposlenika je blokiran'
+
   } else if (hasDayOffReason) {
     timeOptionsMessage =
       `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} ne radi odabranog dana`
+
   } else if (hasCollisionReason) {
     timeOptionsMessage =
       'Nema slobodnih termina za odabrani dan'
+
   } else if (
     hasOutsideWorkingHoursReason
   ) {
     timeOptionsMessage =
       'Usluga ne stane u radno vrijeme zaposlenika'
+
   } else {
     timeOptionsMessage =
       'Nema slobodnih termina'
@@ -378,6 +397,10 @@ const availabilityResult =
           selectedEmployee
             .timeOff ?? [],
 
+            blockedTimes:
+  selectedEmployee
+    .blockedTimes ?? [],
+
         date,
         startTime: time,
 
@@ -406,6 +429,11 @@ if (!availabilityResult.available) {
       case AVAILABILITY_REASONS.TIME_OFF:
   availabilityErrorMessage =
     `${selectedEmployee.name} nije dostupan/na zbog evidentirane odsutnosti.`
+  break
+
+  case AVAILABILITY_REASONS.BLOCKED_TIME:
+  availabilityErrorMessage =
+    `${selectedEmployee.name} ima blokirano vrijeme koje se preklapa s odabranim terminom.`
   break
 
     case AVAILABILITY_REASONS.OUTSIDE_WORKING_HOURS:

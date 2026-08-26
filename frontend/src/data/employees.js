@@ -45,6 +45,8 @@ export const employees = [
     dateOverrides: [],
 
     timeOff: [],
+
+    blockedTimes: [],
   },
 
   {
@@ -94,6 +96,8 @@ export const employees = [
     dateOverrides: [],
 
     timeOff: [],
+
+    blockedTimes: [],
   },
 
   {
@@ -142,5 +146,7 @@ export const employees = [
     dateOverrides: [],
 
     timeOff: [],
+
+    blockedTimes: [],
   },
 ]
