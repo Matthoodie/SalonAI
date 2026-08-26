@@ -19,6 +19,7 @@ function timeToMinutes(time) {
 export const AVAILABILITY_REASONS = {
   INVALID_INPUT: 'INVALID_INPUT',
   DAY_OFF: 'DAY_OFF',
+  TIME_OFF: 'TIME_OFF',
   OUTSIDE_WORKING_HOURS: 'OUTSIDE_WORKING_HOURS',
   APPOINTMENT_COLLISION: 'APPOINTMENT_COLLISION',
 }
@@ -75,6 +76,26 @@ function getDateOverride({
     dateOverrides.find(
       (override) =>
         override.date === date
+    ) ?? null
+  )
+}
+
+function getTimeOffForDate({
+  date,
+  timeOff,
+}) {
+  if (
+    !date ||
+    !Array.isArray(timeOff)
+  ) {
+    return null
+  }
+
+  return (
+    timeOff.find(
+      (timeOffItem) =>
+        date >= timeOffItem.startDate &&
+        date <= timeOffItem.endDate
     ) ?? null
   )
 }
@@ -168,6 +189,7 @@ export function checkEmployeeAvailability({
   excludeAppointmentId = null,
   workingHours = null,
   dateOverrides = [],
+  timeOff = [],
 }) {
   if (
     !employeeId ||
@@ -181,6 +203,20 @@ export function checkEmployeeAvailability({
         AVAILABILITY_REASONS.INVALID_INPUT,
     }
   }
+
+  const activeTimeOff =
+  getTimeOffForDate({
+    date,
+    timeOff,
+  })
+
+if (activeTimeOff) {
+  return {
+    available: false,
+    reason:
+      AVAILABILITY_REASONS.TIME_OFF,
+  }
+}
 
   const dateOverride =
   getDateOverride({
@@ -329,6 +365,7 @@ export function isEmployeeAvailable({
   excludeAppointmentId = null,
   workingHours = null,
   dateOverrides = [],
+  timeOff = [],
 }) {
   const result =
     checkEmployeeAvailability({
@@ -340,6 +377,7 @@ export function isEmployeeAvailable({
       excludeAppointmentId,
       workingHours,
       dateOverrides,
+      timeOff,
     })
 
   return result.available

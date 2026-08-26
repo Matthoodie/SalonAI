@@ -154,6 +154,9 @@ const availableTimeOptions =
             dateOverrides:
            selectedEmployeeForAvailability
            ?.dateOverrides ?? [],
+           timeOff:
+  selectedEmployeeForAvailability
+    ?.timeOff ?? [],
           date,
           startTime: timeOption,
           durationMinutes:
@@ -184,6 +187,11 @@ const availableTimeOptions =
               selectedEmployeeForAvailability
               .dateOverrides ?? [],
 
+              timeOff:
+  selectedEmployeeForAvailability
+    .timeOff ?? [],
+
+        
             date,
             startTime: timeOption,
 
@@ -209,6 +217,11 @@ const availableTimeOptions =
   const hasDayOffReason =
   unavailableTimeReasons.includes(
     AVAILABILITY_REASONS.DAY_OFF
+  )
+
+  const hasTimeOffReason =
+  unavailableTimeReasons.includes(
+    AVAILABILITY_REASONS.TIME_OFF
   )
 
 const hasCollisionReason =
@@ -243,7 +256,10 @@ if (!selectedServiceForEmployee) {
 } else if (
   availableTimeOptions.length === 0
 ) {
-  if (hasDayOffReason) {
+  if (hasTimeOffReason) {
+    timeOptionsMessage =
+      `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} nije dostupan zbog evidentirane odsutnosti`
+  } else if (hasDayOffReason) {
     timeOptionsMessage =
       `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} ne radi odabranog dana`
   } else if (hasCollisionReason) {
@@ -329,7 +345,7 @@ setEmployeeId(
     String(client.id) === clientId
  )
 
-const selectedEmployee =
+ const selectedEmployee =
   employeeList.find(
     (employee) =>
       String(employee.id) === employeeId
@@ -358,6 +374,10 @@ const availabilityResult =
             selectedEmployee
            .dateOverrides ?? [],
 
+                   timeOff:
+          selectedEmployee
+            .timeOff ?? [],
+
         date,
         startTime: time,
 
@@ -382,6 +402,11 @@ if (!availabilityResult.available) {
       availabilityErrorMessage =
         `${selectedEmployee.name} ne radi odabranog dana.`
       break
+
+      case AVAILABILITY_REASONS.TIME_OFF:
+  availabilityErrorMessage =
+    `${selectedEmployee.name} nije dostupan/na zbog evidentirane odsutnosti.`
+  break
 
     case AVAILABILITY_REASONS.OUTSIDE_WORKING_HOURS:
       availabilityErrorMessage =

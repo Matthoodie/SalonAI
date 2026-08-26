@@ -160,6 +160,13 @@ function migrateEmployees(
         )
           ? employee.dateOverrides
           : [],
+
+          timeOff:
+  Array.isArray(
+    employee.timeOff
+  )
+    ? employee.timeOff
+    : [],
     })
   )
 }

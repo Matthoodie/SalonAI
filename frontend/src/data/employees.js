@@ -43,6 +43,8 @@ export const employees = [
       },
     },
     dateOverrides: [],
+
+    timeOff: [],
   },
 
   {
@@ -90,6 +92,8 @@ export const employees = [
     },
 
     dateOverrides: [],
+
+    timeOff: [],
   },
 
   {
@@ -136,5 +140,7 @@ export const employees = [
       },
     },
     dateOverrides: [],
+
+    timeOff: [],
   },
 ]

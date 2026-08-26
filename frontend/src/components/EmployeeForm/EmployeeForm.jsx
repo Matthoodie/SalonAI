@@ -36,6 +36,33 @@ const weekDays = [
   },
 ]
 
+const timeOffTypes = [
+  {
+    value: 'VACATION',
+    label: 'Godišnji odmor',
+  },
+  {
+    value: 'SICK_LEAVE',
+    label: 'Bolovanje',
+  },
+  {
+    value: 'DAY_OFF',
+    label: 'Slobodan dan',
+  },
+  {
+    value: 'TRAINING',
+    label: 'Edukacija',
+  },
+  {
+    value: 'PRIVATE',
+    label: 'Privatna odsutnost',
+  },
+  {
+    value: 'OTHER',
+    label: 'Drugo',
+  },
+]
+
 function createDefaultWorkingHours() {
   return {
     monday: {
@@ -183,6 +210,16 @@ function formatDate(date) {
   return `${day}.${month}.${year}.`
 }
 
+function getTimeOffTypeLabel(type) {
+  const timeOffType =
+    timeOffTypes.find(
+      (typeOption) =>
+        typeOption.value === type
+    )
+
+  return timeOffType?.label ?? 'Drugo'
+}
+
 function getTodayDate() {
   const today = new Date()
 
@@ -290,6 +327,56 @@ function validateDateOverrides(
   return ''
 }
 
+function validateTimeOff(timeOff) {
+  const sortedTimeOff = [...timeOff].sort(
+    (firstTimeOff, secondTimeOff) =>
+      firstTimeOff.startDate.localeCompare(
+        secondTimeOff.startDate
+      )
+  )
+
+  for (
+    let index = 0;
+    index < sortedTimeOff.length;
+    index++
+  ) {
+    const timeOffItem =
+      sortedTimeOff[index]
+
+    if (
+      !timeOffItem.startDate ||
+      !timeOffItem.endDate
+    ) {
+      return 'Svaka odsutnost mora imati početni i završni datum.'
+    }
+
+    if (
+      timeOffItem.startDate >
+      timeOffItem.endDate
+    ) {
+      return 'Početni datum odsutnosti mora biti prije ili jednak završnom datumu.'
+    }
+
+    if (!timeOffItem.type) {
+      return 'Svaka odsutnost mora imati odabranu vrstu.'
+    }
+
+    if (index > 0) {
+      const previousTimeOff =
+        sortedTimeOff[index - 1]
+
+      if (
+        timeOffItem.startDate <=
+        previousTimeOff.endDate
+      ) {
+        return 'Periodi odsutnosti ne smiju se međusobno preklapati.'
+      }
+    }
+  }
+
+  return ''
+}
+
 function EmployeeForm({
   serviceList = [],
   onAddEmployee,
@@ -308,6 +395,24 @@ function EmployeeForm({
  
   const [dateOverrides, setDateOverrides] =
   useState([])
+
+  const [timeOff, setTimeOff] =
+  useState([])
+
+  const [timeOffStartDate, setTimeOffStartDate] =
+  useState('')
+
+const [timeOffEndDate, setTimeOffEndDate] =
+  useState('')
+
+const [timeOffType, setTimeOffType] =
+  useState('VACATION')
+
+const [timeOffNote, setTimeOffNote] =
+  useState('')
+
+const [isTimeOffOpen, setIsTimeOffOpen] =
+  useState(false)
 
   const [overrideDate, setOverrideDate] =
   useState('')
@@ -349,9 +454,17 @@ const [isDateOverridesOpen, setIsDateOverridesOpen] =
     ? editingEmployee.dateOverrides
     : []
 )
+setTimeOff(
+  Array.isArray(
+    editingEmployee.timeOff
+  )
+    ? editingEmployee.timeOff
+    : []
+)
 
     setIsWorkingHoursOpen(false)
     setIsDateOverridesOpen(false)
+    setIsTimeOffOpen(false)
 
   } else {
     setName('')
@@ -362,9 +475,11 @@ const [isDateOverridesOpen, setIsDateOverridesOpen] =
       createDefaultWorkingHours()
     )
     setDateOverrides([])
+    setTimeOff([])
 
     setIsWorkingHoursOpen(false)
     setIsDateOverridesOpen(false)
+    setIsTimeOffOpen(false)
   }
 }, [editingEmployee])
 
@@ -444,6 +559,88 @@ function addDateOverride() {
   setOverrideEnabled(true)
   setOverrideStartTime('08:00')
   setOverrideEndTime('16:00')
+}
+
+function addTimeOff() {
+  if (
+    !timeOffStartDate ||
+    !timeOffEndDate
+  ) {
+    window.alert(
+      'Odaberite početni i završni datum odsutnosti.'
+    )
+
+    return
+  }
+
+  if (
+    timeOffStartDate >
+    timeOffEndDate
+  ) {
+    window.alert(
+      'Početni datum odsutnosti mora biti prije ili jednak završnom datumu.'
+    )
+
+    return
+  }
+
+  const hasOverlap =
+    timeOff.some((timeOffItem) => {
+      return (
+        timeOffStartDate <=
+          timeOffItem.endDate &&
+        timeOffEndDate >=
+          timeOffItem.startDate
+      )
+    })
+
+  if (hasOverlap) {
+    window.alert(
+      'Odabrani period preklapa se s postojećom odsutnošću.'
+    )
+
+    return
+  }
+
+  const newTimeOff = {
+    id: Date.now(),
+
+    startDate:
+      timeOffStartDate,
+
+    endDate:
+      timeOffEndDate,
+
+    type:
+      timeOffType,
+
+    note:
+      timeOffNote.trim(),
+  }
+
+  setTimeOff(
+    (currentTimeOff) => [
+      ...currentTimeOff,
+      newTimeOff,
+    ]
+  )
+
+  setTimeOffStartDate('')
+  setTimeOffEndDate('')
+  setTimeOffType('VACATION')
+  setTimeOffNote('')
+}
+
+function removeTimeOff(
+  timeOffId
+) {
+  setTimeOff(
+    (currentTimeOff) =>
+      currentTimeOff.filter(
+        (timeOffItem) =>
+          timeOffItem.id !== timeOffId
+      )
+  )
 }
 
 function removeDateOverride(
@@ -558,6 +755,21 @@ if (dateOverridesError) {
   return
 }
 
+const timeOffError =
+  validateTimeOff(
+    timeOff
+  )
+
+if (timeOffError) {
+  setIsTimeOffOpen(true)
+
+  window.alert(
+    timeOffError
+  )
+
+  return
+}
+
   if (editingEmployee) {
     onUpdateEmployee({
       ...editingEmployee,
@@ -566,6 +778,7 @@ if (dateOverridesError) {
         selectedServiceIds,
       workingHours,
       dateOverrides,
+      timeOff,
     })
   } else {
     const newEmployee = {
@@ -576,6 +789,7 @@ if (dateOverridesError) {
         selectedServiceIds,
       workingHours,
       dateOverrides,
+      timeOff,
     }
 
     onAddEmployee(newEmployee)
@@ -587,6 +801,7 @@ if (dateOverridesError) {
   createDefaultWorkingHours()
   )
   setDateOverrides([])
+  setTimeOff([])
  }
 
   return (
@@ -986,6 +1201,200 @@ if (dateOverridesError) {
         </button>
       </div>
     </div>
+  )}
+</fieldset>
+
+<fieldset className="employee-time-off-fieldset">
+  <div className="employee-time-off-header">
+    <div>
+      <legend>
+        Odsutnosti
+      </legend>
+
+      <p className="employee-time-off-description">
+        Dodajte godišnji odmor, bolovanje ili
+        drugi period odsutnosti zaposlenika.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      className="employee-time-off-toggle-button"
+      onClick={() =>
+        setIsTimeOffOpen(
+          (currentValue) => !currentValue
+        )
+      }
+      aria-expanded={isTimeOffOpen}
+    >
+      {isTimeOffOpen
+        ? 'Sakrij odsutnosti'
+        : 'Uredi odsutnosti'}
+    </button>
+  </div>
+
+  {!isTimeOffOpen && (
+    <div className="employee-time-off-summary">
+      {timeOff.length === 0
+        ? 'Nema evidentiranih odsutnosti'
+        : `${timeOff.length} ${
+            timeOff.length === 1
+              ? 'evidentirana odsutnost'
+              : 'evidentirane odsutnosti'
+          }`}
+    </div>
+  )}
+
+  {isTimeOffOpen && (
+    <>
+      <div className="employee-time-off-form">
+        <div className="employee-time-off-field">
+          <label htmlFor="time-off-start-date">
+            Od
+          </label>
+
+          <input
+            id="time-off-start-date"
+            type="date"
+            value={timeOffStartDate}
+            onChange={(event) =>
+              setTimeOffStartDate(
+                event.target.value
+              )
+            }
+          />
+        </div>
+
+        <div className="employee-time-off-field">
+          <label htmlFor="time-off-end-date">
+            Do
+          </label>
+
+          <input
+            id="time-off-end-date"
+            type="date"
+            value={timeOffEndDate}
+            onChange={(event) =>
+              setTimeOffEndDate(
+                event.target.value
+              )
+            }
+          />
+        </div>
+
+        <div className="employee-time-off-field">
+          <label htmlFor="time-off-type">
+            Vrsta odsutnosti
+          </label>
+
+          <select
+            id="time-off-type"
+            value={timeOffType}
+            onChange={(event) =>
+              setTimeOffType(
+                event.target.value
+              )
+            }
+          >
+            {timeOffTypes.map(
+              (typeOption) => (
+                <option
+                  key={typeOption.value}
+                  value={typeOption.value}
+                >
+                  {typeOption.label}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        <div className="employee-time-off-field employee-time-off-note-field">
+          <label htmlFor="time-off-note">
+            Napomena
+          </label>
+
+          <input
+            id="time-off-note"
+            type="text"
+            value={timeOffNote}
+            placeholder="Opcionalno..."
+            onChange={(event) =>
+              setTimeOffNote(
+                event.target.value
+              )
+            }
+          />
+        </div>
+
+        <button
+          type="button"
+          className="employee-time-off-add"
+          onClick={addTimeOff}
+        >
+          + Dodaj odsutnost
+        </button>
+      </div>
+
+      {timeOff.length > 0 && (
+        <div className="employee-time-off-list">
+          {[...timeOff]
+            .sort(
+              (
+                firstTimeOff,
+                secondTimeOff
+              ) =>
+                firstTimeOff.startDate.localeCompare(
+                  secondTimeOff.startDate
+                )
+            )
+            .map((timeOffItem) => (
+              <div
+                key={timeOffItem.id}
+                className="employee-time-off-item"
+              >
+                <div className="employee-time-off-info">
+                  <strong>
+                    {formatDate(
+                      timeOffItem.startDate
+                    )}
+
+                    {' — '}
+
+                    {formatDate(
+                      timeOffItem.endDate
+                    )}
+                  </strong>
+
+                  <span>
+                    {getTimeOffTypeLabel(
+                      timeOffItem.type
+                    )}
+                  </span>
+
+                  {timeOffItem.note && (
+                    <small>
+                      {timeOffItem.note}
+                    </small>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="employee-time-off-remove"
+                  onClick={() =>
+                    removeTimeOff(
+                      timeOffItem.id
+                    )
+                  }
+                >
+                  Obriši
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
+    </>
   )}
 </fieldset>
 
