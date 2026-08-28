@@ -1,20 +1,18 @@
+import express from 'express'
+
+import appointmentRoutes from './routes/appointmentRoutes.js'
+import healthRoutes from './routes/healthRoutes.js'
 import {
   errorHandler,
   notFoundHandler,
 } from './middleware/errorHandler.js'
 
-import express from 'express'
-
 const app = express()
 
 app.use(express.json())
 
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    service: 'salonai-backend',
-  })
-})
+app.use('/api/health', healthRoutes)
+app.use('/api/appointments', appointmentRoutes)
 
 app.use(notFoundHandler)
 app.use(errorHandler)
