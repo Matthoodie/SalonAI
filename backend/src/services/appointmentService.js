@@ -9,6 +9,7 @@ import {
     findSalonById,
     findServiceById,
     insertAppointment,
+    updateAppointmentStatus,
 } from '../repositories/appointmentRepository.js'
 
 
@@ -58,12 +59,104 @@ function getZonedDateTimeParts(date, timeZone) {
 }
 
 
+const APPOINTMENT_STATUS_TRANSITIONS = {
+    pending: [
+        'confirmed',
+        'cancelled',
+    ],
+
+    confirmed: [
+        'completed',
+        'cancelled',
+        'no_show',
+    ],
+
+    completed: [],
+    cancelled: [],
+    no_show: [],
+}
+
 export async function getAllAppointments() {
     return findAllAppointments()
 }
 
 export async function getAppointmentById(id) {
     return findAppointmentById(id)
+}
+
+export async function changeAppointmentStatus(
+    appointmentId,
+    newStatus
+) {
+    const allowedStatuses = [
+        'pending',
+        'confirmed',
+        'completed',
+        'cancelled',
+        'no_show',
+    ]
+
+    if (!allowedStatuses.includes(newStatus)) {
+        return {
+            error: {
+                status: 400,
+                code: 'INVALID_APPOINTMENT_STATUS',
+                message:
+                    'Appointment status is invalid.',
+            },
+        }
+    }
+
+    const appointment =
+        await findAppointmentById(appointmentId)
+
+    if (!appointment) {
+        return {
+            error: {
+                status: 404,
+                code: 'APPOINTMENT_NOT_FOUND',
+                message:
+                    'Appointment was not found.',
+            },
+        }
+    }
+
+    if (appointment.status === newStatus) {
+        return {
+            error: {
+                status: 409,
+                code: 'APPOINTMENT_STATUS_UNCHANGED',
+                message:
+                    'Appointment already has the selected status.',
+            },
+        }
+    }
+
+    const allowedTransitions =
+        APPOINTMENT_STATUS_TRANSITIONS[
+            appointment.status
+        ] ?? []
+
+    if (!allowedTransitions.includes(newStatus)) {
+        return {
+            error: {
+                status: 409,
+                code: 'INVALID_APPOINTMENT_STATUS_TRANSITION',
+                message:
+                    `Appointment cannot transition from ${appointment.status} to ${newStatus}.`,
+            },
+        }
+    }
+
+    const updatedAppointment =
+        await updateAppointmentStatus(
+            appointmentId,
+            newStatus
+        )
+
+    return {
+        data: updatedAppointment,
+    }
 }
 
 export async function prepareAppointmentCreation({
@@ -252,7 +345,7 @@ export async function prepareAppointmentCreation({
     }
 
 
-        const timeOff = await findEmployeeTimeOff(
+    const timeOff = await findEmployeeTimeOff(
         employee_id,
         localStart.date
     )

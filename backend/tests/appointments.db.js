@@ -1144,3 +1144,605 @@ test('POST /api/appointments rejects overlapping appointment', async () => {
     }
   }
 })
+
+test('PATCH /api/appointments/:id/status changes confirmed appointment to completed', async () => {
+  const fixture = await getSeedFixture()
+
+  let server
+  let appointmentId = null
+
+  try {
+    server = app.listen(0)
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T10:00:00+01:00',
+          notes:
+            'SalonAI regression status transition test',
+        }),
+      }
+    )
+
+    const createBody = await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+    assert.equal(createBody.data.status, 'confirmed')
+
+    appointmentId = createBody.data.id
+
+    const originalUpdatedAt =
+      createBody.data.updated_at
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${appointmentId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'completed',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 200)
+
+    assert.equal(
+      body.data.id,
+      appointmentId
+    )
+
+    assert.equal(
+      body.data.status,
+      'completed'
+    )
+
+    assert.equal(
+      body.data.notes,
+      'SalonAI regression status transition test'
+    )
+
+    assert.notEqual(
+      body.data.updated_at,
+      originalUpdatedAt
+    )
+
+    const databaseResult = await pool.query(
+      `
+        SELECT
+          status,
+          updated_at
+        FROM appointments
+        WHERE id = $1
+      `,
+      [appointmentId]
+    )
+
+    assert.equal(
+      databaseResult.rows[0].status,
+      'completed'
+    )
+
+    assert.equal(
+      new Date(
+        databaseResult.rows[0].updated_at
+      ).toISOString(),
+      body.data.updated_at
+    )
+  } finally {
+    if (appointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [appointmentId]
+      )
+    }
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
+test('PATCH /api/appointments/:id/status rejects transition from completed to confirmed', async () => {
+  const fixture = await getSeedFixture()
+
+  let server
+  let appointmentId = null
+
+  try {
+    server = app.listen(0)
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T11:00:00+01:00',
+          notes:
+            'SalonAI regression invalid status transition test',
+        }),
+      }
+    )
+
+    const createBody = await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+    assert.equal(createBody.data.status, 'confirmed')
+
+    appointmentId = createBody.data.id
+
+    const completeResponse = await fetch(
+      `${baseUrl}/api/appointments/${appointmentId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'completed',
+        }),
+      }
+    )
+
+    const completeBody =
+      await completeResponse.json()
+
+    assert.equal(completeResponse.status, 200)
+    assert.equal(
+      completeBody.data.status,
+      'completed'
+    )
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${appointmentId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'confirmed',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 409)
+
+    assert.deepEqual(body, {
+      error: {
+        code:
+          'INVALID_APPOINTMENT_STATUS_TRANSITION',
+        message:
+          'Appointment cannot transition from completed to confirmed.',
+      },
+    })
+
+    const databaseResult = await pool.query(
+      `
+        SELECT status
+        FROM appointments
+        WHERE id = $1
+      `,
+      [appointmentId]
+    )
+
+    assert.equal(
+      databaseResult.rows[0].status,
+      'completed'
+    )
+  } finally {
+    if (appointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [appointmentId]
+      )
+    }
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
+test('PATCH /api/appointments/:id/status rejects unchanged status', async () => {
+  const fixture = await getSeedFixture()
+
+  let server
+  let appointmentId = null
+
+  try {
+    server = app.listen(0)
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T12:00:00+01:00',
+          notes:
+            'SalonAI regression unchanged status test',
+        }),
+      }
+    )
+
+    const createBody = await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+    assert.equal(createBody.data.status, 'confirmed')
+
+    appointmentId = createBody.data.id
+
+    const originalUpdatedAt =
+      createBody.data.updated_at
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${appointmentId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'confirmed',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 409)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'APPOINTMENT_STATUS_UNCHANGED',
+        message:
+          'Appointment already has the selected status.',
+      },
+    })
+
+    const databaseResult = await pool.query(
+      `
+        SELECT
+          status,
+          updated_at
+        FROM appointments
+        WHERE id = $1
+      `,
+      [appointmentId]
+    )
+
+    assert.equal(
+      databaseResult.rows[0].status,
+      'confirmed'
+    )
+
+    assert.equal(
+      new Date(
+        databaseResult.rows[0].updated_at
+      ).toISOString(),
+      originalUpdatedAt
+    )
+  } finally {
+    if (appointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [appointmentId]
+      )
+    }
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
+test('PATCH /api/appointments/:id/status rejects invalid appointment status', async () => {
+  const fixture = await getSeedFixture()
+
+  let server
+  let appointmentId = null
+
+  try {
+    server = app.listen(0)
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T13:00:00+01:00',
+          notes:
+            'SalonAI regression invalid status test',
+        }),
+      }
+    )
+
+    const createBody = await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+    assert.equal(createBody.data.status, 'confirmed')
+
+    appointmentId = createBody.data.id
+
+    const originalUpdatedAt =
+      createBody.data.updated_at
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${appointmentId}/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'banana',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 400)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'INVALID_APPOINTMENT_STATUS',
+        message:
+          'Appointment status is invalid.',
+      },
+    })
+
+    const databaseResult = await pool.query(
+      `
+        SELECT
+          status,
+          updated_at
+        FROM appointments
+        WHERE id = $1
+      `,
+      [appointmentId]
+    )
+
+    assert.equal(
+      databaseResult.rows[0].status,
+      'confirmed'
+    )
+
+    assert.equal(
+      new Date(
+        databaseResult.rows[0].updated_at
+      ).toISOString(),
+      originalUpdatedAt
+    )
+  } finally {
+    if (appointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [appointmentId]
+      )
+    }
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
+test('PATCH /api/appointments/:id/status returns 404 for missing appointment', async () => {
+  const server = app.listen(0)
+
+  try {
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/999999/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'completed',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 404)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'APPOINTMENT_NOT_FOUND',
+        message: 'Appointment was not found.',
+      },
+    })
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
+  }
+})
+
+test('PATCH /api/appointments/:id/status rejects invalid appointment ID', async () => {
+  const server = app.listen(0)
+
+  try {
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/banana/status`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'completed',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 400)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'INVALID_APPOINTMENT_ID',
+        message:
+          'Appointment ID must be a positive integer.',
+      },
+    })
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
+  }
+})

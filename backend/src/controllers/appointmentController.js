@@ -1,4 +1,5 @@
 import {
+  changeAppointmentStatus,
   getAllAppointments,
   getAppointmentById,
   prepareAppointmentCreation,
@@ -130,6 +131,65 @@ export async function createAppointment(req, res, next) {
         }
 
         res.status(201).json({
+            data: result.data,
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export async function updateAppointmentStatus(
+    req,
+    res,
+    next
+) {
+    try {
+        const id = Number(req.params.id)
+
+        if (
+            !Number.isSafeInteger(id) ||
+            id <= 0
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: 'INVALID_APPOINTMENT_ID',
+                    message:
+                        'Appointment ID must be a positive integer.',
+                },
+            })
+        }
+
+        const { status } = req.body
+
+        if (typeof status !== 'string') {
+            return res.status(400).json({
+                error: {
+                    code: 'VALIDATION_ERROR',
+                    message:
+                        'status must be a string.',
+                },
+            })
+        }
+
+        const result =
+            await changeAppointmentStatus(
+                id,
+                status
+            )
+
+        if (result.error) {
+            return res
+                .status(result.error.status)
+                .json({
+                    error: {
+                        code: result.error.code,
+                        message:
+                            result.error.message,
+                    },
+                })
+        }
+
+        res.status(200).json({
             data: result.data,
         })
     } catch (error) {
