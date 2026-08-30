@@ -58,6 +58,134 @@ function getZonedDateTimeParts(date, timeZone) {
     }
 }
 
+async function validateAppointmentAvailability({
+    employeeId,
+    startsAt,
+    endsAt,
+    salonTimezone,
+}) {
+    const localStart = getZonedDateTimeParts(
+        startsAt,
+        salonTimezone
+    )
+
+    const localEnd = getZonedDateTimeParts(
+        endsAt,
+        salonTimezone
+    )
+
+    const dateOverride =
+        await findEmployeeDateOverride(
+            employeeId,
+            localStart.date
+        )
+
+    if (dateOverride && !dateOverride.enabled) {
+        return {
+            error: {
+                status: 409,
+                code: 'EMPLOYEE_UNAVAILABLE',
+                message:
+                    'Employee is not available on the selected date.',
+            },
+        }
+    }
+
+    let workingStartTime
+    let workingEndTime
+
+    if (dateOverride) {
+        workingStartTime = dateOverride.start_time
+        workingEndTime = dateOverride.end_time
+    } else {
+        const workingHours =
+            await findEmployeeWorkingHours(
+                employeeId,
+                localStart.dayOfWeek
+            )
+
+        if (!workingHours) {
+            return {
+                error: {
+                    status: 409,
+                    code: 'EMPLOYEE_NOT_WORKING',
+                    message:
+                        'Employee is not working on the selected day.',
+                },
+            }
+        }
+
+        workingStartTime = workingHours.start_time
+        workingEndTime = workingHours.end_time
+    }
+
+    if (localEnd.date !== localStart.date) {
+        return {
+            error: {
+                status: 409,
+                code: 'APPOINTMENT_OUTSIDE_WORKING_HOURS',
+                message:
+                    'Appointment must end on the same working day.',
+            },
+        }
+    }
+
+    if (
+        localStart.time < workingStartTime ||
+        localEnd.time > workingEndTime
+    ) {
+        return {
+            error: {
+                status: 409,
+                code: 'APPOINTMENT_OUTSIDE_WORKING_HOURS',
+                message:
+                    'Appointment is outside employee working hours.',
+            },
+        }
+    }
+
+    const timeOff =
+        await findEmployeeTimeOff(
+            employeeId,
+            localStart.date
+        )
+
+    if (timeOff) {
+        return {
+            error: {
+                status: 409,
+                code: 'EMPLOYEE_TIME_OFF',
+                message:
+                    'Employee is unavailable due to time off.',
+            },
+        }
+    }
+
+    const blockedTime =
+        await findEmployeeBlockedTimeOverlap(
+            employeeId,
+            startsAt,
+            endsAt
+        )
+
+    if (blockedTime) {
+        return {
+            error: {
+                status: 409,
+                code: 'EMPLOYEE_BLOCKED_TIME',
+                message:
+                    'Employee is unavailable during the selected time.',
+            },
+        }
+    }
+
+    return {
+        data: {
+            localStart,
+            localEnd,
+        },
+    }
+}
 
 const APPOINTMENT_STATUS_TRANSITIONS = {
     pending: [
@@ -134,7 +262,7 @@ export async function changeAppointmentStatus(
 
     const allowedTransitions =
         APPOINTMENT_STATUS_TRANSITIONS[
-            appointment.status
+        appointment.status
         ] ?? []
 
     if (!allowedTransitions.includes(newStatus)) {
@@ -263,122 +391,17 @@ export async function prepareAppointmentCreation({
         service.default_duration_minutes * 60 * 1000
     )
 
-    const localStart = getZonedDateTimeParts(
-        startsAt,
-        salon.timezone
-    )
-
-    const localEnd = getZonedDateTimeParts(
-        endsAt,
-        salon.timezone
-    )
-
-    const dateOverride =
-        await findEmployeeDateOverride(
-            employee_id,
-            localStart.date
-        )
-
-    if (dateOverride && !dateOverride.enabled) {
-        return {
-            error: {
-                status: 409,
-                code: 'EMPLOYEE_UNAVAILABLE',
-                message:
-                    'Employee is not available on the selected date.',
-            },
-        }
-    }
-
-    let workingStartTime
-    let workingEndTime
-
-    if (dateOverride) {
-        workingStartTime = dateOverride.start_time
-        workingEndTime = dateOverride.end_time
-    } else {
-        const workingHours =
-            await findEmployeeWorkingHours(
-                employee_id,
-                localStart.dayOfWeek
-            )
-
-        if (!workingHours) {
-            return {
-                error: {
-                    status: 409,
-                    code: 'EMPLOYEE_NOT_WORKING',
-                    message:
-                        'Employee is not working on the selected day.',
-                },
-            }
-        }
-
-        workingStartTime = workingHours.start_time
-        workingEndTime = workingHours.end_time
-    }
-
-
-    if (localEnd.date !== localStart.date) {
-        return {
-            error: {
-                status: 409,
-                code: 'APPOINTMENT_OUTSIDE_WORKING_HOURS',
-                message:
-                    'Appointment must end on the same working day.',
-            },
-        }
-    }
-
-    if (
-        localStart.time < workingStartTime ||
-        localEnd.time > workingEndTime
-    ) {
-        return {
-            error: {
-                status: 409,
-                code: 'APPOINTMENT_OUTSIDE_WORKING_HOURS',
-                message:
-                    'Appointment is outside employee working hours.',
-            },
-        }
-    }
-
-
-    const timeOff = await findEmployeeTimeOff(
-        employee_id,
-        localStart.date
-    )
-
-    if (timeOff) {
-        return {
-            error: {
-                status: 409,
-                code: 'EMPLOYEE_TIME_OFF',
-                message:
-                    'Employee is unavailable due to time off.',
-            },
-        }
-    }
-
-    const blockedTime =
-        await findEmployeeBlockedTimeOverlap(
-            employee_id,
+    const availabilityResult =
+        await validateAppointmentAvailability({
+            employeeId: employee_id,
             startsAt,
-            endsAt
-        )
+            endsAt,
+            salonTimezone: salon.timezone,
+        })
 
-    if (blockedTime) {
-        return {
-            error: {
-                status: 409,
-                code: 'EMPLOYEE_BLOCKED_TIME',
-                message:
-                    'Employee is unavailable during the selected time.',
-            },
-        }
+    if (availabilityResult.error) {
+        return availabilityResult
     }
-
     const appointmentData = {
         salon_id: Number(salon_id),
         client_id: Number(client_id),
