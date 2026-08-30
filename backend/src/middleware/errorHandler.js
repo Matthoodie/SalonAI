@@ -1,3 +1,5 @@
+import { mapDatabaseError } from '../errors/databaseErrorMapper.js'
+
 export function notFoundHandler(
   req,
   res
@@ -17,6 +19,17 @@ export function errorHandler(
   next
 ) {
   console.error(error)
+
+  const mappedError = mapDatabaseError(error)
+
+  if (mappedError) {
+    return res.status(mappedError.status).json({
+      error: {
+        code: mappedError.code,
+        message: mappedError.message,
+      },
+    })
+  }
 
   res.status(500).json({
     error: {
