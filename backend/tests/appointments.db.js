@@ -1145,6 +1145,910 @@ test('POST /api/appointments rejects overlapping appointment', async () => {
   }
 })
 
+test('PATCH /api/appointments/:id/schedule reschedules appointment successfully', async () => {
+  const fixture = await getSeedFixture()
+
+  const server = app.listen(0)
+
+  let createdAppointmentId = null
+
+  try {
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T10:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule success test',
+        }),
+      }
+    )
+
+    const createBody =
+      await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+
+    createdAppointmentId =
+      createBody.data.id
+
+    const rescheduleResponse = await fetch(
+      `${baseUrl}/api/appointments/${createdAppointmentId}/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-14T11:00:00+01:00',
+        }),
+      }
+    )
+
+    const rescheduleBody =
+      await rescheduleResponse.json()
+
+    assert.equal(
+      rescheduleResponse.status,
+      200
+    )
+
+    assert.equal(
+      rescheduleBody.data.id,
+      createdAppointmentId
+    )
+
+    assert.equal(
+      new Date(
+        rescheduleBody.data.starts_at
+      ).toISOString(),
+      '2030-01-14T10:00:00.000Z'
+    )
+
+    assert.equal(
+      new Date(
+        rescheduleBody.data.ends_at
+      ).toISOString(),
+      '2030-01-14T10:30:00.000Z'
+    )
+
+    assert.equal(
+      rescheduleBody.data.duration_minutes,
+      30
+    )
+
+    const databaseResult =
+      await pool.query(
+        `
+          SELECT
+            starts_at,
+            ends_at,
+            duration_minutes
+          FROM appointments
+          WHERE id = $1
+        `,
+        [createdAppointmentId]
+      )
+
+    assert.equal(
+      databaseResult.rows.length,
+      1
+    )
+
+    assert.equal(
+      databaseResult.rows[0]
+        .starts_at
+        .toISOString(),
+      '2030-01-14T10:00:00.000Z'
+    )
+
+    assert.equal(
+      databaseResult.rows[0]
+        .ends_at
+        .toISOString(),
+      '2030-01-14T10:30:00.000Z'
+    )
+
+    assert.equal(
+      databaseResult.rows[0]
+        .duration_minutes,
+      30
+    )
+  } finally {
+    if (createdAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [createdAppointmentId]
+      )
+    }
+
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
+  }
+})
+
+test('PATCH /api/appointments/:id/schedule rejects invalid appointment ID', async () => {
+  const server = app.listen(0)
+
+  try {
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/not-a-number/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-14T11:00:00+01:00',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 400)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'INVALID_APPOINTMENT_ID',
+        message:
+          'Appointment ID must be a positive integer.',
+      },
+    })
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
+  }
+})
+
+test('PATCH /api/appointments/:id/schedule returns 404 for missing appointment', async () => {
+  const server = app.listen(0)
+
+  try {
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/999999/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-14T11:00:00+01:00',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 404)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'APPOINTMENT_NOT_FOUND',
+        message:
+          'Appointment was not found.',
+      },
+    })
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
+  }
+})
+
+test('PATCH /api/appointments/:id/schedule rejects appointment outside employee working hours', async () => {
+  const fixture = await getSeedFixture()
+
+  const server = app.listen(0)
+
+  let createdAppointmentId = null
+
+  try {
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T10:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule outside working hours test',
+        }),
+      }
+    )
+
+    const createBody =
+      await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+
+    createdAppointmentId =
+      createBody.data.id
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${createdAppointmentId}/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-14T16:45:00+01:00',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 409)
+
+    assert.deepEqual(body, {
+      error: {
+        code:
+          'APPOINTMENT_OUTSIDE_WORKING_HOURS',
+        message:
+          'Appointment is outside employee working hours.',
+      },
+    })
+  } finally {
+    if (createdAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [createdAppointmentId]
+      )
+    }
+
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
+  }
+})
+
+test('PATCH /api/appointments/:id/schedule rejects appointment during employee time off', async () => {
+  const fixture = await getSeedFixture()
+
+  const timeOffDate = '2030-01-15'
+
+  let server
+  let createdAppointmentId = null
+
+  try {
+    const createServer = app.listen(0)
+    server = createServer
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T10:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule time off base appointment',
+        }),
+      }
+    )
+
+    const createBody =
+      await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+
+    createdAppointmentId =
+      createBody.data.id
+
+    await pool.query(
+      `
+        INSERT INTO employee_time_off (
+          employee_id,
+          start_date,
+          end_date,
+          type,
+          note
+        )
+        VALUES (
+          $1,
+          $2,
+          $2,
+          'vacation',
+          'SalonAI regression reschedule time off test'
+        )
+      `,
+      [
+        fixture.employee_id,
+        timeOffDate,
+      ]
+    )
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${createdAppointmentId}/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-15T10:00:00+01:00',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 409)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'EMPLOYEE_TIME_OFF',
+        message:
+          'Employee is unavailable due to time off.',
+      },
+    })
+  } finally {
+    if (createdAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [createdAppointmentId]
+      )
+    }
+
+    await pool.query(
+      `
+        DELETE FROM employee_time_off
+        WHERE employee_id = $1
+          AND start_date = $2
+          AND end_date = $2
+          AND note =
+            'SalonAI regression reschedule time off test'
+      `,
+      [
+        fixture.employee_id,
+        timeOffDate,
+      ]
+    )
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
+test('PATCH /api/appointments/:id/schedule rejects appointment overlapping employee blocked time', async () => {
+  const fixture = await getSeedFixture()
+
+  const blockedStart =
+    '2030-01-16T10:00:00+01:00'
+  const blockedEnd =
+    '2030-01-16T11:00:00+01:00'
+
+  let server
+  let createdAppointmentId = null
+
+  try {
+    server = app.listen(0)
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const createResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-14T10:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule blocked time base appointment',
+        }),
+      }
+    )
+
+    const createBody =
+      await createResponse.json()
+
+    assert.equal(createResponse.status, 201)
+
+    createdAppointmentId =
+      createBody.data.id
+
+    await pool.query(
+      `
+        INSERT INTO employee_blocked_times (
+          employee_id,
+          starts_at,
+          ends_at,
+          reason
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          'SalonAI regression reschedule blocked time test'
+        )
+      `,
+      [
+        fixture.employee_id,
+        blockedStart,
+        blockedEnd,
+      ]
+    )
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${createdAppointmentId}/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-16T10:30:00+01:00',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 409)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'EMPLOYEE_BLOCKED_TIME',
+        message:
+          'Employee is unavailable during the selected time.',
+      },
+    })
+  } finally {
+    if (createdAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [createdAppointmentId]
+      )
+    }
+
+    await pool.query(
+      `
+        DELETE FROM employee_blocked_times
+        WHERE employee_id = $1
+          AND starts_at = $2
+          AND ends_at = $3
+          AND reason =
+            'SalonAI regression reschedule blocked time test'
+      `,
+      [
+        fixture.employee_id,
+        blockedStart,
+        blockedEnd,
+      ]
+    )
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
+test('PATCH /api/appointments/:id/schedule rejects conflict with another appointment', async () => {
+  const fixture = await getSeedFixture()
+
+  let server
+  let firstAppointmentId = null
+  let secondAppointmentId = null
+
+  try {
+    server = app.listen(0)
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const firstResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-17T10:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule conflict first appointment',
+        }),
+      }
+    )
+
+    const firstBody =
+      await firstResponse.json()
+
+    assert.equal(firstResponse.status, 201)
+
+    firstAppointmentId =
+      firstBody.data.id
+
+    const secondResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-17T11:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule conflict second appointment',
+        }),
+      }
+    )
+
+    const secondBody =
+      await secondResponse.json()
+
+    assert.equal(secondResponse.status, 201)
+
+    secondAppointmentId =
+      secondBody.data.id
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${secondAppointmentId}/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-17T10:15:00+01:00',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 409)
+
+    assert.deepEqual(body, {
+      error: {
+        code: 'APPOINTMENT_CONFLICT',
+        message:
+          'Employee already has an appointment during this time.',
+      },
+    })
+  } finally {
+    if (secondAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [secondAppointmentId]
+      )
+    }
+
+    if (firstAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [firstAppointmentId]
+      )
+    }
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
+test('PATCH /api/appointments/:id/schedule allows appointment ending exactly when another appointment starts', async () => {
+  const fixture = await getSeedFixture()
+
+  let server
+  let firstAppointmentId = null
+  let secondAppointmentId = null
+
+  try {
+    server = app.listen(0)
+
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl =
+      `http://127.0.0.1:${address.port}`
+
+    const firstResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-18T10:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule boundary first appointment',
+        }),
+      }
+    )
+
+    const firstBody =
+      await firstResponse.json()
+
+    assert.equal(firstResponse.status, 201)
+
+    firstAppointmentId =
+      firstBody.data.id
+
+    const secondResponse = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          salon_id: fixture.salon_id,
+          client_id: fixture.client_id,
+          employee_id: fixture.employee_id,
+          service_id: fixture.service_id,
+          starts_at:
+            '2030-01-18T11:00:00+01:00',
+          notes:
+            'SalonAI regression reschedule boundary second appointment',
+        }),
+      }
+    )
+
+    const secondBody =
+      await secondResponse.json()
+
+    assert.equal(secondResponse.status, 201)
+
+    secondAppointmentId =
+      secondBody.data.id
+
+    const response = await fetch(
+      `${baseUrl}/api/appointments/${secondAppointmentId}/schedule`,
+      {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          starts_at:
+            '2030-01-18T10:30:00+01:00',
+        }),
+      }
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 200)
+
+    assert.equal(
+      body.data.id,
+      secondAppointmentId
+    )
+
+    assert.equal(
+      new Date(
+        body.data.starts_at
+      ).toISOString(),
+      '2030-01-18T09:30:00.000Z'
+    )
+
+    assert.equal(
+      new Date(
+        body.data.ends_at
+      ).toISOString(),
+      '2030-01-18T10:00:00.000Z'
+    )
+  } finally {
+    if (secondAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [secondAppointmentId]
+      )
+    }
+
+    if (firstAppointmentId) {
+      await pool.query(
+        `
+          DELETE FROM appointments
+          WHERE id = $1
+        `,
+        [firstAppointmentId]
+      )
+    }
+
+    if (server) {
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+})
+
 test('PATCH /api/appointments/:id/status changes confirmed appointment to completed', async () => {
   const fixture = await getSeedFixture()
 

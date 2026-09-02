@@ -9,6 +9,7 @@ import {
     findSalonById,
     findServiceById,
     insertAppointment,
+    updateAppointmentSchedule,
     updateAppointmentStatus,
 } from '../repositories/appointmentRepository.js'
 
@@ -286,6 +287,70 @@ export async function changeAppointmentStatus(
         data: updatedAppointment,
     }
 }
+
+export async function rescheduleAppointment(
+    appointmentId,
+    startsAtInput
+) {
+    const appointment =
+        await findAppointmentById(appointmentId)
+
+    if (!appointment) {
+        return {
+            error: {
+                status: 404,
+                code: 'APPOINTMENT_NOT_FOUND',
+                message:
+                    'Appointment was not found.',
+            },
+        }
+    }
+
+    const salon =
+        await findSalonById(appointment.salon_id)
+
+    if (!salon) {
+        return {
+            error: {
+                status: 404,
+                code: 'SALON_NOT_FOUND',
+                message:
+                    'Salon was not found.',
+            },
+        }
+    }
+
+    const startsAt = new Date(startsAtInput)
+
+    const endsAt = new Date(
+        startsAt.getTime() +
+        appointment.duration_minutes * 60 * 1000
+    )
+
+    const availabilityResult =
+        await validateAppointmentAvailability({
+            employeeId: appointment.employee_id,
+            startsAt,
+            endsAt,
+            salonTimezone: salon.timezone,
+        })
+
+    if (availabilityResult.error) {
+        return availabilityResult
+    }
+
+    const updatedAppointment =
+        await updateAppointmentSchedule(
+            appointmentId,
+            startsAt,
+            endsAt
+        )
+
+    return {
+        data: updatedAppointment,
+    }
+}
+
 
 export async function prepareAppointmentCreation({
     salon_id,

@@ -3,6 +3,7 @@ import {
   getAllAppointments,
   getAppointmentById,
   prepareAppointmentCreation,
+  rescheduleAppointment as rescheduleAppointmentService,
 } from '../services/appointmentService.js'
 
 export async function getAppointments(req, res, next) {
@@ -175,6 +176,68 @@ export async function updateAppointmentStatus(
             await changeAppointmentStatus(
                 id,
                 status
+            )
+
+        if (result.error) {
+            return res
+                .status(result.error.status)
+                .json({
+                    error: {
+                        code: result.error.code,
+                        message:
+                            result.error.message,
+                    },
+                })
+        }
+
+        res.status(200).json({
+            data: result.data,
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export async function rescheduleAppointment(
+    req,
+    res,
+    next
+) {
+    try {
+        const id = Number(req.params.id)
+
+        if (
+            !Number.isSafeInteger(id) ||
+            id <= 0
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: 'INVALID_APPOINTMENT_ID',
+                    message:
+                        'Appointment ID must be a positive integer.',
+                },
+            })
+        }
+
+        const { starts_at } = req.body
+
+        if (
+            typeof starts_at !== 'string' ||
+            Number.isNaN(Date.parse(starts_at))
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: 'VALIDATION_ERROR',
+                    message:
+                        'starts_at must be a valid date-time.',
+                },
+            })
+        }
+
+        const result =
+            await rescheduleAppointmentService(
+                id,
+                starts_at
             )
 
         if (result.error) {
