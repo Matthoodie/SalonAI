@@ -1,4 +1,8 @@
 import {
+    mapDatabaseError,
+} from '../errors/databaseErrorMapper.js'
+
+import {
     findAllAppointments,
     findAppointmentById,
     findEmployeeBlockedTimeOverlap,
@@ -482,10 +486,25 @@ export async function prepareAppointmentCreation({
         notes: notes ?? null,
     }
 
-    const appointment =
-        await insertAppointment(appointmentData)
+    try {
+        const appointment =
+            await insertAppointment(
+                appointmentData
+            )
 
-    return {
-        data: appointment,
+        return {
+            data: appointment,
+        }
+    } catch (error) {
+        const mappedError =
+            mapDatabaseError(error)
+
+        if (mappedError) {
+            return {
+                error: mappedError,
+            }
+        }
+
+        throw error
     }
 }
