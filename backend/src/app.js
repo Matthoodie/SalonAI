@@ -3,6 +3,8 @@ import express from 'express'
 import appointmentRoutes from './routes/appointmentRoutes.js'
 import availabilityRoutes from './routes/availabilityRoutes.js'
 import bookingRoutes from './routes/bookingRoutes.js'
+import calendarRoutes from './routes/calendarRoutes.js'
+import serviceRoutes from './routes/serviceRoutes.js'
 
 import healthRoutes from './routes/healthRoutes.js'
 
@@ -19,6 +21,8 @@ app.use('/api/health', healthRoutes)
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/availability', availabilityRoutes)
 app.use('/api/bookings', bookingRoutes)
+app.use('/api/calendar', calendarRoutes)
+app.use('/api/services', serviceRoutes)
 
 app.use(notFoundHandler)
 app.use(errorHandler)

@@ -1,5 +1,17 @@
 import { useState } from 'react'
+
 import ServiceForm from '../../components/ServiceForm/ServiceForm'
+
+import {
+  createService,
+  updateService as updateServiceApi,
+  updateServiceActive,
+} from '../../api/serviceApi'
+
+import {
+  mapServiceToFrontend,
+} from '../../api/serviceMapper'
+
 import './Services.css'
 
 function formatPrice(price) {
@@ -35,12 +47,28 @@ function formatDuration(defaultDurationMinutes) {
 function Services({
   serviceList = [],
   setServiceList,
+  salonId,
 }) {
   const [isFormOpen, setIsFormOpen] =
     useState(false)
 
   const [editingService, setEditingService] =
     useState(null)
+
+  const [
+    isCreatingService,
+    setIsCreatingService,
+  ] = useState(false)
+
+  const [
+    isUpdatingService,
+    setIsUpdatingService,
+  ] = useState(false)
+
+  const [
+    updatingServiceActiveId,
+    setUpdatingServiceActiveId,
+  ] = useState(null)
 
   const [searchQuery, setSearchQuery] =
     useState('')
@@ -51,16 +79,68 @@ function Services({
   ] = useState('all')
 
   const [selectedStatus, setSelectedStatus] =
-  useState('all')
+    useState('all')
 
-  function addService(newService) {
-    setServiceList((currentServices) => [
-      ...currentServices,
-      newService,
-    ])
+  async function addService(newService) {
+    if (!salonId) {
+      window.alert(
+        'Podaci salona nisu učitani. Pokušajte ponovno.'
+      )
 
-    setIsFormOpen(false)
-    setEditingService(null)
+      return false
+    }
+
+    if (isCreatingService) {
+      return false
+    }
+
+    setIsCreatingService(true)
+
+    try {
+      const backendService =
+        await createService({
+          salonId,
+          name: newService.name,
+          category: newService.category,
+          priceCents:
+            Math.round(
+              newService.price * 100
+            ),
+          defaultDurationMinutes:
+            newService.defaultDurationMinutes,
+        })
+
+      const createdService =
+        mapServiceToFrontend(
+          backendService
+        )
+
+      setServiceList(
+        (currentServices) => [
+          ...currentServices,
+          createdService,
+        ]
+      )
+
+      setIsFormOpen(false)
+      setEditingService(null)
+
+      return true
+    } catch (error) {
+      console.error(
+        'Neuspješno kreiranje usluge:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Uslugu trenutno nije moguće kreirati.'
+      )
+
+      return false
+    } finally {
+      setIsCreatingService(false)
+    }
   }
 
   function startEditingService(service) {
@@ -68,17 +148,69 @@ function Services({
     setIsFormOpen(true)
   }
 
-  function updateService(updatedService) {
-    setServiceList((currentServices) =>
-      currentServices.map((service) =>
-        service.id === updatedService.id
-          ? updatedService
-          : service
+  async function updateService(updatedService) {
+    if (!salonId) {
+      window.alert(
+        'Podaci salona nisu učitani. Pokušajte ponovno.'
       )
-    )
 
-    setEditingService(null)
-    setIsFormOpen(false)
+      return false
+    }
+
+    if (isUpdatingService) {
+      return false
+    }
+
+    setIsUpdatingService(true)
+
+    try {
+      const backendService =
+        await updateServiceApi({
+          serviceId: updatedService.id,
+          salonId,
+          name: updatedService.name,
+          category: updatedService.category,
+          priceCents:
+            Math.round(
+              updatedService.price * 100
+            ),
+          defaultDurationMinutes:
+            updatedService.defaultDurationMinutes,
+        })
+
+      const mappedService =
+        mapServiceToFrontend(
+          backendService
+        )
+
+      setServiceList(
+        (currentServices) =>
+          currentServices.map((service) =>
+            service.id === mappedService.id
+              ? mappedService
+              : service
+          )
+      )
+
+      setEditingService(null)
+      setIsFormOpen(false)
+
+      return true
+    } catch (error) {
+      console.error(
+        'Neuspješno uređivanje usluge:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Uslugu trenutno nije moguće urediti.'
+      )
+
+      return false
+    } finally {
+      setIsUpdatingService(false)
+    }
   }
 
   function cancelServiceForm() {
@@ -86,23 +218,82 @@ function Services({
     setIsFormOpen(false)
   }
 
-  function toggleServiceActive(serviceId) {
-    setServiceList((currentServices) =>
-      currentServices.map((service) =>
-        service.id === serviceId
-          ? {
-              ...service,
-              active: !service.active,
-            }
-          : service
+  async function toggleServiceActive(
+    serviceId
+  ) {
+    if (!salonId) {
+      window.alert(
+        'Podaci salona nisu učitani. Pokušajte ponovno.'
       )
+
+      return
+    }
+
+    if (updatingServiceActiveId !== null) {
+      return
+    }
+
+    const serviceToUpdate =
+      serviceList.find(
+        (service) =>
+          service.id === serviceId
+      )
+
+    if (!serviceToUpdate) {
+      return
+    }
+
+    setUpdatingServiceActiveId(
+      serviceId
     )
 
-    if (editingService?.id === serviceId) {
-      setEditingService((currentService) => ({
-        ...currentService,
-        active: !currentService.active,
-      }))
+    try {
+      const backendService =
+        await updateServiceActive({
+          serviceId,
+          salonId,
+          active:
+            !serviceToUpdate.active,
+        })
+
+      const mappedService =
+        mapServiceToFrontend(
+          backendService
+        )
+
+      setServiceList(
+        (currentServices) =>
+          currentServices.map(
+            (service) =>
+              service.id ===
+                mappedService.id
+                ? mappedService
+                : service
+          )
+      )
+
+      if (
+        editingService?.id ===
+        mappedService.id
+      ) {
+        setEditingService(
+          mappedService
+        )
+      }
+    } catch (error) {
+      console.error(
+        'Neuspješna promjena statusa usluge:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Status usluge trenutno nije moguće promijeniti.'
+      )
+    } finally {
+      setUpdatingServiceActiveId(
+        null
+      )
     }
   }
 
@@ -124,33 +315,33 @@ function Services({
     ),
   ].sort()
 
-const filteredServices =
-  serviceList.filter((service) => {
-    const matchesSearch =
-      service.name
-        .toLowerCase()
-        .includes(
-          searchQuery.toLowerCase()
-        )
+  const filteredServices =
+    serviceList.filter((service) => {
+      const matchesSearch =
+        service.name
+          .toLowerCase()
+          .includes(
+            searchQuery.toLowerCase()
+          )
 
-    const matchesCategory =
-      selectedCategory === 'all' ||
-      (service.category || 'Ostalo') ===
+      const matchesCategory =
+        selectedCategory === 'all' ||
+        (service.category || 'Ostalo') ===
         selectedCategory
 
-    const matchesStatus =
-      selectedStatus === 'all' ||
-      (selectedStatus === 'active' &&
-        service.active) ||
-      (selectedStatus === 'inactive' &&
-        !service.active)
+      const matchesStatus =
+        selectedStatus === 'all' ||
+        (selectedStatus === 'active' &&
+          service.active) ||
+        (selectedStatus === 'inactive' &&
+          !service.active)
 
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesStatus
-    )
-  })
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesStatus
+      )
+    })
 
   return (
     <div className="services-page">
@@ -187,6 +378,8 @@ const filteredServices =
           onUpdateService={updateService}
           onCancel={cancelServiceForm}
           editingService={editingService}
+          isCreating={isCreatingService}
+          isUpdating={isUpdatingService}
         />
       )}
 
@@ -264,32 +457,32 @@ const filteredServices =
         </div>
 
         <div className="services-filter">
-  <label htmlFor="services-status-filter">
-    Status
-  </label>
+          <label htmlFor="services-status-filter">
+            Status
+          </label>
 
-  <select
-    id="services-status-filter"
-    value={selectedStatus}
-    onChange={(event) =>
-      setSelectedStatus(
-        event.target.value
-      )
-    }
-  >
-    <option value="all">
-      Sve
-    </option>
+          <select
+            id="services-status-filter"
+            value={selectedStatus}
+            onChange={(event) =>
+              setSelectedStatus(
+                event.target.value
+              )
+            }
+          >
+            <option value="all">
+              Sve
+            </option>
 
-    <option value="active">
-      Aktivne
-    </option>
+            <option value="active">
+              Aktivne
+            </option>
 
-    <option value="inactive">
-      Neaktivne
-    </option>
-  </select>
-</div>
+            <option value="inactive">
+              Neaktivne
+            </option>
+          </select>
+        </div>
       </div>
 
       {serviceList.length === 0 ? (
@@ -390,10 +583,16 @@ const filteredServices =
                         service.id
                       )
                     }
+                    disabled={
+                      updatingServiceActiveId !== null
+                    }
                   >
-                    {service.active
-                      ? 'Deaktiviraj'
-                      : 'Aktiviraj'}
+                    {updatingServiceActiveId ===
+                      service.id
+                      ? 'Spremanje...'
+                      : service.active
+                        ? 'Deaktiviraj'
+                        : 'Aktiviraj'}
                   </button>
                 </div>
               </article>

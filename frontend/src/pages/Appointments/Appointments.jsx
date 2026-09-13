@@ -7,6 +7,16 @@ import {
 import AppointmentCard from '../../components/AppointmentCard/AppointmentCard'
 import AppointmentForm from '../../components/AppointmentForm/AppointmentForm'
 
+import {
+  createAppointment,
+  rescheduleAppointment,
+  updateAppointmentStatus,
+} from '../../api/appointmentApi'
+
+import {
+  salonDateTimeToUtcIso,
+} from '../../api/appointmentDateTime'
+
 import './Appointments.css'
 
 function getTodayDate() {
@@ -20,6 +30,8 @@ function getTodayDate() {
 function Appointments({
   appointmentList,
   setAppointmentList,
+  salonTimezone,
+  salonId,
   serviceList,
   clientList,
   initialAppointmentDate,
@@ -27,124 +39,378 @@ function Appointments({
   initialEditingAppointmentId,
   employeeList,
   clearInitialEditingAppointmentId,
+  appointmentsLoading,
+  appointmentsLoadError,
 }) {
 
   const [formInitialDate] = useState(
-  initialAppointmentDate || ''
-)
+    initialAppointmentDate || ''
+  )
 
   const [editingAppointment, setEditingAppointment] =
     useState(null)
 
   const appointmentFormRef = useRef(null)
 
+  const [
+    updatingAppointmentId,
+    setUpdatingAppointmentId,
+  ] = useState(null)
+
+  const [
+    isCreatingAppointment,
+    setIsCreatingAppointment,
+  ] = useState(false)
+
   const [appointmentView, setAppointmentView] =
-  useState('upcoming')
+    useState('upcoming')
 
   const [searchQuery, setSearchQuery] =
-  useState('')
+    useState('')
 
   useEffect(() => {
-  if (initialAppointmentDate) {
-    clearInitialAppointmentDate()
-  }
-}, [
-  initialAppointmentDate,
-  clearInitialAppointmentDate,
-])
+    if (initialAppointmentDate) {
+      clearInitialAppointmentDate()
+    }
+  }, [
+    initialAppointmentDate,
+    clearInitialAppointmentDate,
+  ])
 
-useEffect(() => {
-  if (!initialEditingAppointmentId) {
-    return
-  }
+  useEffect(() => {
+    if (!initialEditingAppointmentId) {
+      return
+    }
 
-  const appointmentToEdit = appointmentList.find(
-    (appointment) =>
-      appointment.id === initialEditingAppointmentId
-  )
-
-  if (appointmentToEdit) {
-    setEditingAppointment(appointmentToEdit)
-  }
-
-  clearInitialEditingAppointmentId()
-}, [
-  initialEditingAppointmentId,
-  appointmentList,
-  clearInitialEditingAppointmentId,
-])
-
-  function completeAppointment(appointmentId) {
-    setAppointmentList((currentAppointments) =>
-      currentAppointments.map((appointment) =>
-        appointment.id === appointmentId
-          ? {
-              ...appointment,
-              status: 'Završen',
-            }
-          : appointment
-      )
+    const appointmentToEdit = appointmentList.find(
+      (appointment) =>
+        appointment.id === initialEditingAppointmentId
     )
+
+    if (appointmentToEdit) {
+      setEditingAppointment(appointmentToEdit)
+    }
+
+    clearInitialEditingAppointmentId()
+  }, [
+    initialEditingAppointmentId,
+    appointmentList,
+    clearInitialEditingAppointmentId,
+  ])
+
+  async function completeAppointment(
+    appointmentId
+  ) {
+    if (updatingAppointmentId !== null) {
+      return
+    }
+
+    setUpdatingAppointmentId(
+      appointmentId
+    )
+
+    try {
+      await updateAppointmentStatus(
+        appointmentId,
+        'completed'
+      )
+
+      setAppointmentList(
+        (currentAppointments) =>
+          currentAppointments.map(
+            (appointment) =>
+              appointment.id ===
+                appointmentId
+                ? {
+                  ...appointment,
+                  status: 'Završen',
+                  statusCode: 'completed',
+                }
+                : appointment
+          )
+      )
+    } catch (error) {
+      console.error(
+        'Neuspješno označavanje termina kao završenog:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Termin nije moguće označiti kao završen.'
+      )
+    } finally {
+      setUpdatingAppointmentId(null)
+    }
   }
 
-  function deleteAppointment(appointmentId) {
+  async function cancelAppointment(
+    appointmentId
+  ) {
     const isConfirmed = window.confirm(
-      'Jeste li sigurni da želite obrisati ovaj termin?'
+      'Jeste li sigurni da želite otkazati ovaj termin?'
     )
 
     if (!isConfirmed) {
       return
     }
 
-    setAppointmentList((currentAppointments) =>
-      currentAppointments.filter(
-        (appointment) => appointment.id !== appointmentId
-      )
+    if (updatingAppointmentId !== null) {
+      return
+    }
+
+    setUpdatingAppointmentId(
+      appointmentId
     )
 
-    if (editingAppointment?.id === appointmentId) {
-      setEditingAppointment(null)
+    try {
+      await updateAppointmentStatus(
+        appointmentId,
+        'cancelled'
+      )
+
+      setAppointmentList(
+        (currentAppointments) =>
+          currentAppointments.map(
+            (appointment) =>
+              appointment.id ===
+                appointmentId
+                ? {
+                  ...appointment,
+                  status: 'Otkazano',
+                  statusCode: 'cancelled',
+                }
+                : appointment
+          )
+      )
+
+      if (
+        editingAppointment?.id ===
+        appointmentId
+      ) {
+        setEditingAppointment(null)
+      }
+    } catch (error) {
+      console.error(
+        'Neuspješno otkazivanje termina:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Termin trenutno nije moguće otkazati.'
+      )
+    } finally {
+      setUpdatingAppointmentId(null)
     }
   }
 
   function startEditingAppointment(appointment) {
-  setEditingAppointment(appointment)
+    setEditingAppointment(appointment)
 
-  requestAnimationFrame(() => {
-    appointmentFormRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
+    requestAnimationFrame(() => {
+      appointmentFormRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
     })
-  })
-}
-
-  function addAppointment(newAppointment) {
-    const appointmentWithDate = {
-      ...newAppointment,
-      date: newAppointment.date || getTodayDate(),
-    }
-
-    setAppointmentList((currentAppointments) => [
-      ...currentAppointments,
-      appointmentWithDate,
-    ])
   }
 
-  function updateAppointment(updatedAppointment) {
-    const appointmentWithDate = {
-      ...updatedAppointment,
-      date: updatedAppointment.date || getTodayDate(),
+  async function addAppointment(newAppointment) {
+    if (!salonId || !salonTimezone) {
+      window.alert(
+        'Podaci salona nisu učitani. Pokušajte ponovno.'
+      )
+
+      return false
     }
 
-    setAppointmentList((currentAppointments) =>
-      currentAppointments.map((appointment) =>
-        appointment.id === appointmentWithDate.id
-          ? appointmentWithDate
-          : appointment
+    if (isCreatingAppointment) {
+      return false
+    }
+
+    setIsCreatingAppointment(true)
+
+    try {
+      const startsAt =
+        salonDateTimeToUtcIso(
+          newAppointment.date,
+          newAppointment.time,
+          salonTimezone
+        )
+
+      const backendAppointment =
+        await createAppointment({
+          salonId,
+          clientId: newAppointment.clientId,
+          employeeId: newAppointment.employeeId,
+          serviceId: newAppointment.serviceId,
+          startsAt,
+          notes: newAppointment.notes ?? null,
+        })
+
+      const createdAppointment = {
+        ...newAppointment,
+
+        id: backendAppointment.id,
+
+        date:
+          newAppointment.date ||
+          getTodayDate(),
+
+        startsAt:
+          backendAppointment.starts_at,
+
+        endsAt:
+          backendAppointment.ends_at,
+
+        durationMinutes:
+          backendAppointment.duration_minutes,
+
+        priceCents:
+          backendAppointment.price_cents,
+
+        status: 'Zakazano',
+
+        statusCode:
+          backendAppointment.status,
+
+        source:
+          backendAppointment.source,
+
+        notes:
+          backendAppointment.notes,
+      }
+
+      setAppointmentList(
+        (currentAppointments) => [
+          ...currentAppointments,
+          createdAppointment,
+        ]
       )
+      return true
+    } catch (error) {
+      console.error(
+        'Neuspješno kreiranje termina:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Termin trenutno nije moguće kreirati.'
+      )
+      return false
+    } finally {
+      setIsCreatingAppointment(false)
+    }
+  }
+
+  async function updateAppointment(
+    updatedAppointment
+  ) {
+    if (!editingAppointment) {
+      return false
+    }
+
+    if (!salonTimezone) {
+      window.alert(
+        'Vremenska zona salona nije učitana. Pokušajte ponovno.'
+      )
+
+      return false
+    }
+
+    const clientChanged =
+      String(updatedAppointment.clientId) !==
+      String(editingAppointment.clientId)
+
+    const employeeChanged =
+      String(updatedAppointment.employeeId) !==
+      String(editingAppointment.employeeId)
+
+    const serviceChanged =
+      String(updatedAppointment.serviceId) !==
+      String(editingAppointment.serviceId)
+
+    if (
+      clientChanged ||
+      employeeChanged ||
+      serviceChanged
+    ) {
+      window.alert(
+        'U ovom koraku moguće je mijenjati samo datum i vrijeme termina.'
+      )
+
+      return false
+    }
+
+    if (updatingAppointmentId !== null) {
+      return false
+    }
+
+    setUpdatingAppointmentId(
+      updatedAppointment.id
     )
 
-    setEditingAppointment(null)
+    try {
+      const startsAt =
+        salonDateTimeToUtcIso(
+          updatedAppointment.date,
+          updatedAppointment.time,
+          salonTimezone
+        )
+
+      const backendAppointment =
+        await rescheduleAppointment(
+          updatedAppointment.id,
+          startsAt
+        )
+
+      setAppointmentList(
+        (currentAppointments) =>
+          currentAppointments.map(
+            (appointment) =>
+              appointment.id ===
+                updatedAppointment.id
+                ? {
+                  ...appointment,
+
+                  date:
+                    updatedAppointment.date,
+
+                  time:
+                    updatedAppointment.time,
+
+                  startsAt:
+                    backendAppointment
+                      .starts_at,
+
+                  endsAt:
+                    backendAppointment
+                      .ends_at,
+                }
+                : appointment
+          )
+      )
+
+      setEditingAppointment(null)
+
+      return true
+    } catch (error) {
+      console.error(
+        'Neuspješno premještanje termina:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Termin trenutno nije moguće premjestiti.'
+      )
+
+      return false
+    } finally {
+      setUpdatingAppointmentId(null)
+    }
   }
 
   function cancelEditingAppointment() {
@@ -174,88 +440,88 @@ useEffect(() => {
 
   const todayDate = getTodayDate()
 
-const todayAppointments =
-  sortedAppointments.filter(
-    (appointment) =>
-      appointment.date === todayDate
-  )
-
-const upcomingAppointments =
-  sortedAppointments.filter(
-    (appointment) =>
-      appointment.date >= todayDate &&
-      appointment.status !== 'Završen'
-  )
-
-const historyAppointments =
-  sortedAppointments
-    .filter(
+  const todayAppointments =
+    sortedAppointments.filter(
       (appointment) =>
-        appointment.date < todayDate ||
-        appointment.status === 'Završen'
+        appointment.date === todayDate
     )
-    .sort(
-      (
-        firstAppointment,
-        secondAppointment
-      ) => {
-        const firstDateTime =
-          `${firstAppointment.date} ${firstAppointment.time}`
 
-        const secondDateTime =
-          `${secondAppointment.date} ${secondAppointment.time}`
-
-        return secondDateTime.localeCompare(
-          firstDateTime
-        )
-      }
+  const upcomingAppointments =
+    sortedAppointments.filter(
+      (appointment) =>
+        appointment.date >= todayDate &&
+        appointment.status !== 'Završen'
     )
+
+  const historyAppointments =
+    sortedAppointments
+      .filter(
+        (appointment) =>
+          appointment.date < todayDate ||
+          appointment.status === 'Završen'
+      )
+      .sort(
+        (
+          firstAppointment,
+          secondAppointment
+        ) => {
+          const firstDateTime =
+            `${firstAppointment.date} ${firstAppointment.time}`
+
+          const secondDateTime =
+            `${secondAppointment.date} ${secondAppointment.time}`
+
+          return secondDateTime.localeCompare(
+            firstDateTime
+          )
+        }
+      )
 
 
   let visibleAppointments =
-  upcomingAppointments
+    upcomingAppointments
 
-if (appointmentView === 'today') {
-  visibleAppointments =
-    todayAppointments
-}
+  if (appointmentView === 'today') {
+    visibleAppointments =
+      todayAppointments
+  }
 
-if (appointmentView === 'history') {
-  visibleAppointments =
-    historyAppointments
-}
+  if (appointmentView === 'history') {
+    visibleAppointments =
+      historyAppointments
+  }
 
-if (appointmentView === 'all') {
-  visibleAppointments =
-    sortedAppointments
-}
+  if (appointmentView === 'all') {
+    visibleAppointments =
+      sortedAppointments
+  }
 
-const normalizedSearchQuery =
-  searchQuery.trim().toLowerCase()
+  const normalizedSearchQuery =
+    searchQuery.trim().toLowerCase()
 
-const searchedAppointments =
-  visibleAppointments.filter(
-    (appointment) => {
-      if (!normalizedSearchQuery) {
-        return true
+  const searchedAppointments =
+    visibleAppointments.filter(
+      (appointment) => {
+        if (!normalizedSearchQuery) {
+          return true
+        }
+
+        const searchableText = [
+          appointment.clientName,
+          appointment.serviceName,
+          appointment.service,
+          appointment.date,
+          appointment.time,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+
+        return searchableText.includes(
+          normalizedSearchQuery
+        )
       }
-
-      const searchableText = [
-        appointment.clientName,
-        appointment.serviceName,
-        appointment.service,
-        appointment.date,
-        appointment.time,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-
-      return searchableText.includes(
-        normalizedSearchQuery
-      )
-    }
-  )
+    )
 
   const scheduledAppointmentsCount =
     appointmentList.filter(
@@ -268,6 +534,30 @@ const searchedAppointments =
       (appointment) =>
         appointment.status === 'Završen'
     ).length
+
+  if (appointmentsLoading) {
+    return (
+      <div className="appointments-page">
+        <h1>Termini</h1>
+
+        <p>
+          Učitavanje termina...
+        </p>
+      </div>
+    )
+  }
+
+  if (appointmentsLoadError) {
+    return (
+      <div className="appointments-page">
+        <h1>Termini</h1>
+
+        <p>
+          Termine trenutno nije moguće učitati.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="appointments-page">
@@ -291,120 +581,128 @@ const searchedAppointments =
       </div>
 
       <div className="appointments-view-tabs">
-  <button
-    type="button"
-    className={
-      appointmentView === 'upcoming'
-        ? 'appointments-view-tab appointments-view-tab-active'
-        : 'appointments-view-tab'
-    }
-    onClick={() =>
-      setAppointmentView('upcoming')
-    }
-  >
-    Nadolazeći
-    <span>
-      {upcomingAppointments.length}
-    </span>
-  </button>
+        <button
+          type="button"
+          className={
+            appointmentView === 'upcoming'
+              ? 'appointments-view-tab appointments-view-tab-active'
+              : 'appointments-view-tab'
+          }
+          onClick={() =>
+            setAppointmentView('upcoming')
+          }
+        >
+          Nadolazeći
+          <span>
+            {upcomingAppointments.length}
+          </span>
+        </button>
 
-  <button
-    type="button"
-    className={
-      appointmentView === 'today'
-        ? 'appointments-view-tab appointments-view-tab-active'
-        : 'appointments-view-tab'
-    }
-    onClick={() =>
-      setAppointmentView('today')
-    }
-  >
-    Danas
-    <span>
-      {todayAppointments.length}
-    </span>
-  </button>
+        <button
+          type="button"
+          className={
+            appointmentView === 'today'
+              ? 'appointments-view-tab appointments-view-tab-active'
+              : 'appointments-view-tab'
+          }
+          onClick={() =>
+            setAppointmentView('today')
+          }
+        >
+          Danas
+          <span>
+            {todayAppointments.length}
+          </span>
+        </button>
 
-  <button
-    type="button"
-    className={
-      appointmentView === 'history'
-        ? 'appointments-view-tab appointments-view-tab-active'
-        : 'appointments-view-tab'
-    }
-    onClick={() =>
-      setAppointmentView('history')
-    }
-  >
-    Povijest
-    <span>
-      {historyAppointments.length}
-    </span>
-  </button>
+        <button
+          type="button"
+          className={
+            appointmentView === 'history'
+              ? 'appointments-view-tab appointments-view-tab-active'
+              : 'appointments-view-tab'
+          }
+          onClick={() =>
+            setAppointmentView('history')
+          }
+        >
+          Povijest
+          <span>
+            {historyAppointments.length}
+          </span>
+        </button>
 
-  <button
-    type="button"
-    className={
-      appointmentView === 'all'
-        ? 'appointments-view-tab appointments-view-tab-active'
-        : 'appointments-view-tab'
-    }
-    onClick={() =>
-      setAppointmentView('all')
-    }
-  >
-    Svi
-    <span>
-      {appointmentList.length}
-    </span>
-  </button>
-</div>
+        <button
+          type="button"
+          className={
+            appointmentView === 'all'
+              ? 'appointments-view-tab appointments-view-tab-active'
+              : 'appointments-view-tab'
+          }
+          onClick={() =>
+            setAppointmentView('all')
+          }
+        >
+          Svi
+          <span>
+            {appointmentList.length}
+          </span>
+        </button>
+      </div>
 
-<div className="appointments-search">
-  <span
-    className="appointments-search-icon"
-    aria-hidden="true"
-  >
-    🔍
-  </span>
+      <div className="appointments-search">
+        <span
+          className="appointments-search-icon"
+          aria-hidden="true"
+        >
+          🔍
+        </span>
 
-  <input
-    type="search"
-    value={searchQuery}
-    onChange={(event) =>
-      setSearchQuery(event.target.value)
-    }
-    placeholder="Pretraži termine..."
-    aria-label="Pretraži termine"
-  />
+        <input
+          type="search"
+          value={searchQuery}
+          onChange={(event) =>
+            setSearchQuery(event.target.value)
+          }
+          placeholder="Pretraži termine..."
+          aria-label="Pretraži termine"
+        />
 
-  {searchQuery && (
-    <button
-      type="button"
-      className="appointments-search-clear"
-      onClick={() =>
-        setSearchQuery('')
-      }
-      aria-label="Očisti pretragu"
-    >
-      ×
-    </button>
-  )}
-</div>
+        {searchQuery && (
+          <button
+            type="button"
+            className="appointments-search-clear"
+            onClick={() =>
+              setSearchQuery('')
+            }
+            aria-label="Očisti pretragu"
+          >
+            ×
+          </button>
+        )}
+      </div>
 
       <div ref={appointmentFormRef}>
-  <AppointmentForm
-    appointments={appointmentList}
-    serviceList={serviceList}
-    clientList={clientList}
-    employeeList={employeeList}
-    onAddAppointment={addAppointment}
-    onUpdateAppointment={updateAppointment}
-    onCancelEdit={cancelEditingAppointment}
-    editingAppointment={editingAppointment}
-    initialDate={formInitialDate}
-  />
-</div>
+        <AppointmentForm
+          appointments={appointmentList}
+          serviceList={serviceList}
+          clientList={clientList}
+          employeeList={employeeList}
+          onAddAppointment={addAppointment}
+          onUpdateAppointment={updateAppointment}
+          onCancelEdit={cancelEditingAppointment}
+          editingAppointment={editingAppointment}
+          isUpdating={
+            editingAppointment !== null &&
+            updatingAppointmentId ===
+            editingAppointment.id
+          }
+          isCreating={
+            isCreatingAppointment
+          }
+          initialDate={formInitialDate}
+        />
+      </div>
 
       <div className="appointments-list">
         {searchedAppointments.length === 0 ? (
@@ -414,12 +712,12 @@ const searchedAppointments =
             </span>
 
             <h3>
-  Nema termina u ovom prikazu
-</h3>
+              Nema termina u ovom prikazu
+            </h3>
 
-<p>
-  Odaberite drugi prikaz ili dodajte novi termin.
-</p>
+            <p>
+              Odaberite drugi prikaz ili dodajte novi termin.
+            </p>
           </div>
         ) : (
           searchedAppointments.map((appointment) => (
@@ -427,8 +725,12 @@ const searchedAppointments =
               key={appointment.id}
               appointment={appointment}
               onComplete={completeAppointment}
-              onDelete={deleteAppointment}
+              onCancel={cancelAppointment}
               onEdit={startEditingAppointment}
+              isUpdating={
+                updatingAppointmentId ===
+                appointment.id
+              }
             />
           ))
         )}

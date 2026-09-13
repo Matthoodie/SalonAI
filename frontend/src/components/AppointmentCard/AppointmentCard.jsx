@@ -23,10 +23,15 @@ function formatAppointmentDate(date) {
 function AppointmentCard({
   appointment,
   onComplete,
-  onDelete,
+  onCancel,
   onEdit,
+  isUpdating = false,
 }) {
   const isCompleted = appointment.status === 'Završen'
+
+  const canCancel =
+    appointment.statusCode === 'pending' ||
+    appointment.statusCode === 'confirmed'
 
   return (
     <article
@@ -83,30 +88,35 @@ function AppointmentCard({
           </span>
 
           <p>
-  {appointment.serviceName ||
-    appointment.service ||
-    'Nepoznata usluga'}
-</p>
+            {appointment.serviceName ||
+              appointment.service ||
+              'Nepoznata usluga'}
+          </p>
         </div>
-  <div className="appointment-detail">
-  <span className="appointment-detail-label">
-    Zaposlenik
-  </span>
+        <div className="appointment-detail">
+          <span className="appointment-detail-label">
+            Zaposlenik
+          </span>
 
-  <p>
-    {appointment.employeeName ||
-      'Nije dodijeljen'}
-  </p>
-</div>
-  </div>
-   <div className="appointment-actions">
+          <p>
+            {appointment.employeeName ||
+              'Nije dodijeljen'}
+          </p>
+        </div>
+      </div>
+      <div className="appointment-actions">
         {!isCompleted && (
           <button
             type="button"
             className="appointment-button appointment-button-complete"
-            onClick={() => onComplete(appointment.id)}
+            onClick={() =>
+              onComplete(appointment.id)
+            }
+            disabled={isUpdating}
           >
-            Označi kao završen
+            {isUpdating
+              ? 'Ažuriranje...'
+              : 'Označi kao završen'}
           </button>
         )}
 
@@ -118,13 +128,20 @@ function AppointmentCard({
           Uredi
         </button>
 
-        <button
-          type="button"
-          className="appointment-button appointment-button-delete"
-          onClick={() => onDelete(appointment.id)}
-        >
-          Obriši
-        </button>
+        {canCancel && (
+          <button
+            type="button"
+            className="appointment-button appointment-button-delete"
+            onClick={() =>
+              onCancel(appointment.id)
+            }
+            disabled={isUpdating}
+          >
+            {isUpdating
+              ? 'Ažuriranje...'
+              : 'Otkaži termin'}
+          </button>
+        )}
       </div>
     </article>
   )

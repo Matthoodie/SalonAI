@@ -64,6 +64,8 @@ function AppointmentForm({
   onUpdateAppointment,
   onCancelEdit,
   editingAppointment,
+  isUpdating = false,
+  isCreating = false,
   initialDate = '',
 }) {
 
@@ -72,28 +74,28 @@ function AppointmentForm({
   )
 
   const editingClientName =
-  editingAppointment?.clientName || ''
+    editingAppointment?.clientName || ''
 
-const isLegacyEditingClient =
-  Boolean(
-    editingAppointment &&
-    !editingAppointment.clientId &&
-    editingClientName
-  )
-  
-  const editingServiceName =
-  editingAppointment?.serviceName ||
-  editingAppointment?.service ||
-  ''
-const isLegacyEditingService =
-  Boolean(
-    editingAppointment &&
-    editingServiceName &&
-    !serviceList.some(
-      (serviceItem) =>
-        serviceItem.name === editingServiceName
+  const isLegacyEditingClient =
+    Boolean(
+      editingAppointment &&
+      !editingAppointment.clientId &&
+      editingClientName
     )
-  )
+
+  const editingServiceName =
+    editingAppointment?.serviceName ||
+    editingAppointment?.service ||
+    ''
+  const isLegacyEditingService =
+    Boolean(
+      editingAppointment &&
+      editingServiceName &&
+      !serviceList.some(
+        (serviceItem) =>
+          serviceItem.name === editingServiceName
+      )
+    )
 
 
   const [date, setDate] = useState(getTodayDate())
@@ -103,63 +105,63 @@ const isLegacyEditingService =
   const [service, setService] = useState('')
 
   const [employeeId, setEmployeeId] =
-  useState('')
+    useState('')
 
   const selectedServiceForEmployee =
-  serviceList.find(
-    (serviceItem) =>
-      serviceItem.name === service
-  ) || null
+    serviceList.find(
+      (serviceItem) =>
+        serviceItem.name === service
+    ) || null
 
   const selectedServiceDuration =
-  selectedServiceForEmployee
-    ?.defaultDurationMinutes || 0
+    selectedServiceForEmployee
+      ?.defaultDurationMinutes || 0
 
   const appointmentEndTime =
-  time && selectedServiceDuration
-    ? addMinutesToTime(
+    time && selectedServiceDuration
+      ? addMinutesToTime(
         time,
         selectedServiceDuration
       )
-    : ''
+      : ''
 
   const availableEmployees =
-  selectedServiceForEmployee
-    ? employeeList.filter(
+    selectedServiceForEmployee
+      ? employeeList.filter(
         (employee) =>
           employee.active !== false &&
           employee.serviceIds?.includes(
             selectedServiceForEmployee.id
           )
       )
-    : []
+      : []
 
-const selectedEmployeeForAvailability =
-  employeeList.find(
-    (employee) =>
-      String(employee.id) ===
-      String(employeeId)
-  ) || null
+  const selectedEmployeeForAvailability =
+    employeeList.find(
+      (employee) =>
+        String(employee.id) ===
+        String(employeeId)
+    ) || null
 
-const availableTimeOptions =
-  date &&
-  employeeId &&
-  selectedServiceDuration > 0
-    ? timeOptions.filter((timeOption) =>
+  const availableTimeOptions =
+    date &&
+      employeeId &&
+      selectedServiceDuration > 0
+      ? timeOptions.filter((timeOption) =>
         isEmployeeAvailable({
           employeeId,
           workingHours:
-           selectedEmployeeForAvailability
-            ?.workingHours ?? null,
-            dateOverrides:
-           selectedEmployeeForAvailability
-           ?.dateOverrides ?? [],
-           timeOff:
-  selectedEmployeeForAvailability
-    ?.timeOff ?? [],
-    blockedTimes:
-  selectedEmployeeForAvailability
-    ?.blockedTimes ?? [],
+            selectedEmployeeForAvailability
+              ?.workingHours ?? null,
+          dateOverrides:
+            selectedEmployeeForAvailability
+              ?.dateOverrides ?? [],
+          timeOff:
+            selectedEmployeeForAvailability
+              ?.timeOff ?? [],
+          blockedTimes:
+            selectedEmployeeForAvailability
+              ?.blockedTimes ?? [],
           date,
           startTime: timeOption,
           durationMinutes:
@@ -169,15 +171,15 @@ const availableTimeOptions =
             editingAppointment?.id ?? null,
         })
       )
-    : []
+      : []
 
 
   const unavailableTimeReasons =
-  date &&
-  employeeId &&
-  selectedServiceDuration > 0 &&
-  selectedEmployeeForAvailability
-    ? timeOptions
+    date &&
+      employeeId &&
+      selectedServiceDuration > 0 &&
+      selectedEmployeeForAvailability
+      ? timeOptions
         .map((timeOption) =>
           checkEmployeeAvailability({
             employeeId,
@@ -188,15 +190,15 @@ const availableTimeOptions =
 
             dateOverrides:
               selectedEmployeeForAvailability
-              .dateOverrides ?? [],
+                .dateOverrides ?? [],
 
-              timeOff:
-               selectedEmployeeForAvailability
-               .timeOff ?? [],
-
-           blockedTimes:
+            timeOff:
               selectedEmployeeForAvailability
-              .blockedTimes ?? [],
+                .timeOff ?? [],
+
+            blockedTimes:
+              selectedEmployeeForAvailability
+                .blockedTimes ?? [],
 
             date,
             startTime: timeOption,
@@ -218,34 +220,34 @@ const availableTimeOptions =
         .map(
           (result) => result.reason
         )
-    : []
+      : []
 
   const hasDayOffReason =
-  unavailableTimeReasons.includes(
-    AVAILABILITY_REASONS.DAY_OFF
-  )
+    unavailableTimeReasons.includes(
+      AVAILABILITY_REASONS.DAY_OFF
+    )
 
   const hasTimeOffReason =
-  unavailableTimeReasons.includes(
-    AVAILABILITY_REASONS.TIME_OFF
-  )
+    unavailableTimeReasons.includes(
+      AVAILABILITY_REASONS.TIME_OFF
+    )
 
   const hasBlockedTimeReason =
-  unavailableTimeReasons.includes(
-    AVAILABILITY_REASONS.BLOCKED_TIME
-  )
+    unavailableTimeReasons.includes(
+      AVAILABILITY_REASONS.BLOCKED_TIME
+    )
 
-const hasCollisionReason =
-  unavailableTimeReasons.includes(
-    AVAILABILITY_REASONS
-      .APPOINTMENT_COLLISION
-  )
+  const hasCollisionReason =
+    unavailableTimeReasons.includes(
+      AVAILABILITY_REASONS
+        .APPOINTMENT_COLLISION
+    )
 
-const hasOutsideWorkingHoursReason =
-  unavailableTimeReasons.includes(
-    AVAILABILITY_REASONS
-      .OUTSIDE_WORKING_HOURS
-  )
+  const hasOutsideWorkingHoursReason =
+    unavailableTimeReasons.includes(
+      AVAILABILITY_REASONS
+        .OUTSIDE_WORKING_HOURS
+    )
 
   const [errors, setErrors] = useState({
     date: '',
@@ -256,44 +258,44 @@ const hasOutsideWorkingHoursReason =
   })
 
   let timeOptionsMessage =
-  'Odaberite vrijeme'
+    'Odaberite vrijeme'
 
-if (!selectedServiceForEmployee) {
-  timeOptionsMessage =
-    'Prvo odaberite uslugu'
-} else if (!employeeId) {
-  timeOptionsMessage =
-    'Prvo odaberite zaposlenika'
-} else if (
-  availableTimeOptions.length === 0
-) {
-  if (hasTimeOffReason) {
+  if (!selectedServiceForEmployee) {
     timeOptionsMessage =
-      `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} nije dostupan zbog evidentirane odsutnosti`
-
-  } else if (hasBlockedTimeReason) {
-  timeOptionsMessage =
-    'Dio radnog vremena zaposlenika je blokiran'
-
-  } else if (hasDayOffReason) {
+      'Prvo odaberite uslugu'
+  } else if (!employeeId) {
     timeOptionsMessage =
-      `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} ne radi odabranog dana`
-
-  } else if (hasCollisionReason) {
-    timeOptionsMessage =
-      'Nema slobodnih termina za odabrani dan'
-
+      'Prvo odaberite zaposlenika'
   } else if (
-    hasOutsideWorkingHoursReason
+    availableTimeOptions.length === 0
   ) {
-    timeOptionsMessage =
-      'Usluga ne stane u radno vrijeme zaposlenika'
+    if (hasTimeOffReason) {
+      timeOptionsMessage =
+        `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} nije dostupan zbog evidentirane odsutnosti`
 
-  } else {
-    timeOptionsMessage =
-      'Nema slobodnih termina'
+    } else if (hasBlockedTimeReason) {
+      timeOptionsMessage =
+        'Dio radnog vremena zaposlenika je blokiran'
+
+    } else if (hasDayOffReason) {
+      timeOptionsMessage =
+        `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} ne radi odabranog dana`
+
+    } else if (hasCollisionReason) {
+      timeOptionsMessage =
+        'Nema slobodnih termina za odabrani dan'
+
+    } else if (
+      hasOutsideWorkingHoursReason
+    ) {
+      timeOptionsMessage =
+        'Usluga ne stane u radno vrijeme zaposlenika'
+
+    } else {
+      timeOptionsMessage =
+        'Nema slobodnih termina'
+    }
   }
-}
 
 
   const dateInputRef = useRef(null)
@@ -311,29 +313,29 @@ if (!selectedServiceForEmployee) {
       setTime(editingAppointment.time)
       setClientName(editingAppointment.clientName)
 
-  const matchingClient = clientList.find(
-     (client) =>
-      client.id === editingAppointment.clientId ||
-      client.name === editingAppointment.clientName
-)
+      const matchingClient = clientList.find(
+        (client) =>
+          client.id === editingAppointment.clientId ||
+          client.name === editingAppointment.clientName
+      )
 
-setClientId(
-  matchingClient
-    ? String(matchingClient.id)
-    : ''
-)
+      setClientId(
+        matchingClient
+          ? String(matchingClient.id)
+          : ''
+      )
 
       setService(
         editingAppointment.serviceName ||
         editingAppointment.service ||
         ''
-)
+      )
 
-setEmployeeId(
-  editingAppointment.employeeId
-    ? String(editingAppointment.employeeId)
-    : ''
-)
+      setEmployeeId(
+        editingAppointment.employeeId
+          ? String(editingAppointment.employeeId)
+          : ''
+      )
     } else {
       setDate(initialDate || getTodayDate())
       setTime('')
@@ -352,149 +354,149 @@ setEmployeeId(
     })
   }, [editingAppointment, initialDate])
 
- function handleSubmit() {
+  async function handleSubmit() {
 
-  const selectedService = serviceList.find(
-    (serviceItem) =>
-      serviceItem.name === service
-  )
+    const selectedService = serviceList.find(
+      (serviceItem) =>
+        serviceItem.name === service
+    )
 
-  const selectedClient = clientList.find(
-  (client) =>
-    String(client.id) === clientId
- )
+    const selectedClient = clientList.find(
+      (client) =>
+        String(client.id) === clientId
+    )
 
- const selectedEmployee =
-  employeeList.find(
-    (employee) =>
-      String(employee.id) === employeeId
-  )
+    const selectedEmployee =
+      employeeList.find(
+        (employee) =>
+          String(employee.id) === employeeId
+      )
 
-  const candidateDuration =
-  Number(
-    selectedService?.defaultDurationMinutes ??
-    editingAppointment?.serviceDurationMinutes
-  ) || 0
+    const candidateDuration =
+      Number(
+        selectedService?.defaultDurationMinutes ??
+        editingAppointment?.serviceDurationMinutes
+      ) || 0
 
-const availabilityResult =
-  selectedEmployee &&
-  candidateDuration > 0 &&
-  date &&
-  time
-    ? checkEmployeeAvailability({
-        employeeId:
-          selectedEmployee.id,
+    const availabilityResult =
+      selectedEmployee &&
+        candidateDuration > 0 &&
+        date &&
+        time
+        ? checkEmployeeAvailability({
+          employeeId:
+            selectedEmployee.id,
 
-        workingHours:
-          selectedEmployee
-            .workingHours ?? null,
-
-            dateOverrides:
+          workingHours:
             selectedEmployee
-           .dateOverrides ?? [],
+              .workingHours ?? null,
 
-                   timeOff:
-          selectedEmployee
-            .timeOff ?? [],
+          dateOverrides:
+            selectedEmployee
+              .dateOverrides ?? [],
 
-            blockedTimes:
-  selectedEmployee
-    .blockedTimes ?? [],
+          timeOff:
+            selectedEmployee
+              .timeOff ?? [],
 
-        date,
-        startTime: time,
+          blockedTimes:
+            selectedEmployee
+              .blockedTimes ?? [],
 
-        durationMinutes:
-          candidateDuration,
+          date,
+          startTime: time,
 
-        appointments,
+          durationMinutes:
+            candidateDuration,
 
-        excludeAppointmentId:
-          editingAppointment?.id ?? null,
-      })
-    : {
-        available: true,
-        reason: null,
+          appointments,
+
+          excludeAppointmentId:
+            editingAppointment?.id ?? null,
+        })
+        : {
+          available: true,
+          reason: null,
+        }
+
+    let availabilityErrorMessage = ''
+
+    if (!availabilityResult.available) {
+      switch (availabilityResult.reason) {
+        case AVAILABILITY_REASONS.DAY_OFF:
+          availabilityErrorMessage =
+            `${selectedEmployee.name} ne radi odabranog dana.`
+          break
+
+        case AVAILABILITY_REASONS.TIME_OFF:
+          availabilityErrorMessage =
+            `${selectedEmployee.name} nije dostupan/na zbog evidentirane odsutnosti.`
+          break
+
+        case AVAILABILITY_REASONS.BLOCKED_TIME:
+          availabilityErrorMessage =
+            `${selectedEmployee.name} ima blokirano vrijeme koje se preklapa s odabranim terminom.`
+          break
+
+        case AVAILABILITY_REASONS.OUTSIDE_WORKING_HOURS:
+          availabilityErrorMessage =
+            `Odabrano vrijeme je izvan radnog vremena zaposlenika ${selectedEmployee.name}.`
+          break
+
+        case AVAILABILITY_REASONS.APPOINTMENT_COLLISION:
+          availabilityErrorMessage =
+            `${selectedEmployee.name} već ima termin koji se preklapa s ovim vremenom.`
+          break
+
+        case AVAILABILITY_REASONS.INVALID_INPUT:
+          availabilityErrorMessage =
+            'Podaci termina nisu ispravni.'
+          break
+
+        default:
+          availabilityErrorMessage =
+            'Odabrani termin nije dostupan.'
       }
+    }
 
-  let availabilityErrorMessage = ''
+    const isUnchangedLegacyClient =
+      isLegacyEditingClient &&
+      !selectedClient &&
+      clientName === editingClientName
 
-if (!availabilityResult.available) {
-  switch (availabilityResult.reason) {
-    case AVAILABILITY_REASONS.DAY_OFF:
-      availabilityErrorMessage =
-        `${selectedEmployee.name} ne radi odabranog dana.`
-      break
+    const isUnchangedLegacyService =
+      isLegacyEditingService &&
+      service === editingServiceName
 
-      case AVAILABILITY_REASONS.TIME_OFF:
-  availabilityErrorMessage =
-    `${selectedEmployee.name} nije dostupan/na zbog evidentirane odsutnosti.`
-  break
+    const newErrors = {
+      date: date
+        ? ''
+        : 'Odaberite datum termina.',
 
-  case AVAILABILITY_REASONS.BLOCKED_TIME:
-  availabilityErrorMessage =
-    `${selectedEmployee.name} ima blokirano vrijeme koje se preklapa s odabranim terminom.`
-  break
+      time: !time
+        ? 'Odaberite vrijeme termina.'
+        : availabilityErrorMessage,
 
-    case AVAILABILITY_REASONS.OUTSIDE_WORKING_HOURS:
-      availabilityErrorMessage =
-        `Odabrano vrijeme je izvan radnog vremena zaposlenika ${selectedEmployee.name}.`
-      break
+      clientName:
+        selectedClient ||
+          isUnchangedLegacyClient
+          ? ''
+          : 'Odaberite klijenta.',
 
-    case AVAILABILITY_REASONS.APPOINTMENT_COLLISION:
-      availabilityErrorMessage =
-        `${selectedEmployee.name} već ima termin koji se preklapa s ovim vremenom.`
-      break
+      service:
+        selectedService ||
+          isUnchangedLegacyService
+          ? ''
+          : 'Odaberite uslugu.',
 
-    case AVAILABILITY_REASONS.INVALID_INPUT:
-      availabilityErrorMessage =
-        'Podaci termina nisu ispravni.'
-      break
-
-    default:
-      availabilityErrorMessage =
-        'Odabrani termin nije dostupan.'
-  }
-}
-
-  const isUnchangedLegacyClient =
-  isLegacyEditingClient &&
-  !selectedClient &&
-  clientName === editingClientName
-
-  const isUnchangedLegacyService =
-  isLegacyEditingService &&
-  service === editingServiceName
-
-  const newErrors = {
-  date: date
-    ? ''
-    : 'Odaberite datum termina.',
-
-  time: !time
-  ? 'Odaberite vrijeme termina.'
-  : availabilityErrorMessage,
-
-  clientName:
-    selectedClient ||
-    isUnchangedLegacyClient
-      ? ''
-      : 'Odaberite klijenta.',
-
-  service:
-    selectedService ||
-    isUnchangedLegacyService
-      ? ''
-      : 'Odaberite uslugu.',
-
-  employee: selectedEmployee
-    ? ''
-    : 'Odaberite zaposlenika.',
-}
+      employee: selectedEmployee
+        ? ''
+        : 'Odaberite zaposlenika.',
+    }
 
 
 
-setErrors(newErrors)
+    setErrors(newErrors)
 
     const hasErrors = Object.values(
       newErrors
@@ -518,91 +520,49 @@ setErrors(newErrors)
       return
     }
 
- if (editingAppointment) {
-  if (selectedService) {
-    onUpdateAppointment({
-      ...editingAppointment,
+    if (editingAppointment) {
+      const updateSucceeded =
+        await onUpdateAppointment({
+          ...editingAppointment,
+          date,
+          time,
+        })
 
-      date,
-      time,
+      if (!updateSucceeded) {
+        return
+      }
+    } else {
+      const createSucceeded =
+        await onAddAppointment({
+          date,
+          time,
 
-      clientId: selectedClient
-        ? selectedClient.id
-        : null,
+          clientId: selectedClient.id,
+          clientName: selectedClient.name,
 
-      clientName: selectedClient
-        ? selectedClient.name
-        : clientName.trim(),
+          employeeId: selectedEmployee.id,
+          employeeName: selectedEmployee.name,
 
-      employeeId: selectedEmployee.id,
-      employeeName: selectedEmployee.name,
+          service: selectedService.name,
 
-      service: selectedService.name,
+          serviceId: selectedService.id,
+          serviceName: selectedService.name,
+          servicePrice: selectedService.price,
+          serviceDurationMinutes:
+            selectedService.defaultDurationMinutes,
+        })
 
-      serviceId: selectedService.id,
-      serviceName: selectedService.name,
-      servicePrice: selectedService.price,
-      serviceDurationMinutes:
-        selectedService.defaultDurationMinutes,
-    })
-  } else {
-    onUpdateAppointment({
-      ...editingAppointment,
+      if (!createSucceeded) {
+        return
+      }
+    }
 
-      date,
-      time,
-
-      clientId: selectedClient
-        ? selectedClient.id
-        : null,
-
-      clientName: selectedClient
-        ? selectedClient.name
-        : clientName.trim(),
-
-      employeeId: selectedEmployee.id,
-      employeeName: selectedEmployee.name,
-
-      service: editingServiceName,
-
-      serviceId: null,
-      serviceName: editingServiceName,
-      servicePrice: null,
-      serviceDurationMinutes: null,
-    })
-  }
-} else {
-  onAddAppointment({
-    id: Date.now(),
-
-    date,
-    time,
-
-    clientId: selectedClient.id,
-    clientName: selectedClient.name,
-
-    employeeId: selectedEmployee.id,
-    employeeName: selectedEmployee.name,
-
-    service: selectedService.name,
-
-    serviceId: selectedService.id,
-    serviceName: selectedService.name,
-    servicePrice: selectedService.price,
-    serviceDurationMinutes:
-      selectedService.defaultDurationMinutes,
-
-    status: 'Zakazano',
-  })
-}
-
-
-setDate(getTodayDate())
-setTime('')
-setClientName('')
-setClientId('')
-setService('')
-setEmployeeId('')
+    setDate(getTodayDate())
+    setTime('')
+    setClientName('')
+    setClientId('')
+    setService('')
+    setEmployeeId('')
 
     setErrors({
       date: '',
@@ -636,12 +596,12 @@ setEmployeeId('')
     }
   }
 
- function handleServiceChange(event) {
-  setService(event.target.value)
-  setEmployeeId('')
-  setTime('')
+  function handleServiceChange(event) {
+    setService(event.target.value)
+    setEmployeeId('')
+    setTime('')
 
-  if (errors.service) {
+    if (errors.service) {
       setErrors((currentErrors) => ({
         ...currentErrors,
         service: '',
@@ -657,105 +617,105 @@ setEmployeeId('')
           : 'Novi termin'}
       </h2>
 
-    <div className="form-field">
-  <label htmlFor="appointment-date">
-    Datum
-  </label>
+      <div className="form-field">
+        <label htmlFor="appointment-date">
+          Datum
+        </label>
 
-  <input
-    id="appointment-date"
-    ref={dateInputRef}
-    className={
-      errors.date
-        ? 'input-error'
-        : ''
-    }
-    type="date"
-    value={date}
-    onChange={handleDateChange}
-  />
+        <input
+          id="appointment-date"
+          ref={dateInputRef}
+          className={
+            errors.date
+              ? 'input-error'
+              : ''
+          }
+          type="date"
+          value={date}
+          onChange={handleDateChange}
+        />
 
-  <p
-    className={
-      errors.date
-        ? 'form-error form-error-visible'
-        : 'form-error'
-    }
-  >
-    {errors.date || '\u00A0'}
-  </p>
-</div>
+        <p
+          className={
+            errors.date
+              ? 'form-error form-error-visible'
+              : 'form-error'
+          }
+        >
+          {errors.date || '\u00A0'}
+        </p>
+      </div>
 
 
       <div className="form-field">
-  <label htmlFor="appointment-client">
-    Klijent
-  </label>
+        <label htmlFor="appointment-client">
+          Klijent
+        </label>
 
-  <select
-    id="appointment-client"
-    ref={clientNameInputRef}
-    className={
-      errors.clientName
-        ? 'input-error'
-        : ''
-    }
-    value={clientId}
-    onChange={(event) => {
-      const newClientId = event.target.value
+        <select
+          id="appointment-client"
+          ref={clientNameInputRef}
+          className={
+            errors.clientName
+              ? 'input-error'
+              : ''
+          }
+          value={clientId}
+          onChange={(event) => {
+            const newClientId = event.target.value
 
-      setClientId(newClientId)
+            setClientId(newClientId)
 
-      const newSelectedClient =
-        clientList.find(
-          (client) =>
-            String(client.id) ===
-            newClientId
-        )
+            const newSelectedClient =
+              clientList.find(
+                (client) =>
+                  String(client.id) ===
+                  newClientId
+              )
 
-      setClientName(
-        newSelectedClient?.name || ''
-      )
+            setClientName(
+              newSelectedClient?.name || ''
+            )
 
-      if (errors.clientName) {
-        setErrors((currentErrors) => ({
-          ...currentErrors,
-          clientName: '',
-        }))
-      }
-    }}
-  >
-    <option value="">
-      Odaberite klijenta
-    </option>
+            if (errors.clientName) {
+              setErrors((currentErrors) => ({
+                ...currentErrors,
+                clientName: '',
+              }))
+            }
+          }}
+        >
+          <option value="">
+            Odaberite klijenta
+          </option>
 
-    {isLegacyEditingClient &&
-      !clientId && (
-        <option value="">
-          Stari klijent — {editingClientName}
-        </option>
-      )}
+          {isLegacyEditingClient &&
+            !clientId && (
+              <option value="">
+                Stari klijent — {editingClientName}
+              </option>
+            )}
 
-    {clientList.map((client) => (
-      <option
-        key={client.id}
-        value={String(client.id)}
-      >
-        {client.name}
-      </option>
-    ))}
-  </select>
+          {clientList.map((client) => (
+            <option
+              key={client.id}
+              value={String(client.id)}
+            >
+              {client.name}
+            </option>
+          ))}
+        </select>
 
-  <p
-    className={
-      errors.clientName
-        ? 'form-error form-error-visible'
-        : 'form-error'
-    }
-  >
-    {errors.clientName || '\u00A0'}
-  </p>
-</div>
+        <p
+          className={
+            errors.clientName
+              ? 'form-error form-error-visible'
+              : 'form-error'
+          }
+        >
+          {errors.clientName || '\u00A0'}
+        </p>
+      </div>
 
       <div className="form-field">
         <label htmlFor="appointment-service">
@@ -777,11 +737,11 @@ setEmployeeId('')
             Odaberite uslugu
           </option>
 
-   {isLegacyEditingService && (
-  <option value={editingServiceName}>
-    Stara usluga — {editingServiceName}
-  </option>
-   )}
+          {isLegacyEditingService && (
+            <option value={editingServiceName}>
+              Stara usluga — {editingServiceName}
+            </option>
+          )}
 
           {activeServices.map(
             (serviceItem) => (
@@ -807,65 +767,65 @@ setEmployeeId('')
       </div>
 
       <div className="form-field">
-  <label htmlFor="appointment-employee">
-    Zaposlenik
-  </label>
+        <label htmlFor="appointment-employee">
+          Zaposlenik
+        </label>
 
-  <select
-  id="appointment-employee"
-  ref={employeeInputRef}
-  className={
-    errors.employee
-      ? 'input-error'
-      : ''
-  }
-  value={employeeId}
-    onChange={(event) => {
-  setEmployeeId(event.target.value)
-  setTime('')
+        <select
+          id="appointment-employee"
+          ref={employeeInputRef}
+          className={
+            errors.employee
+              ? 'input-error'
+              : ''
+          }
+          value={employeeId}
+          onChange={(event) => {
+            setEmployeeId(event.target.value)
+            setTime('')
 
-  if (errors.employee) {
-    setErrors((currentErrors) => ({
-      ...currentErrors,
-      employee: '',
-    }))
-  }
-}}
-    disabled={!selectedServiceForEmployee}
-  >
-    <option value="">
-      {!selectedServiceForEmployee
-        ? 'Prvo odaberite uslugu'
-        : availableEmployees.length === 0
-          ? 'Nema dostupnih zaposlenika'
-          : 'Odaberite zaposlenika'}
-    </option>
-
-    {availableEmployees.map(
-      (employee) => (
-        <option
-          key={employee.id}
-          value={String(employee.id)}
+            if (errors.employee) {
+              setErrors((currentErrors) => ({
+                ...currentErrors,
+                employee: '',
+              }))
+            }
+          }}
+          disabled={!selectedServiceForEmployee}
         >
-          {employee.name}
-        </option>
-      )
-    )}
-  </select>
+          <option value="">
+            {!selectedServiceForEmployee
+              ? 'Prvo odaberite uslugu'
+              : availableEmployees.length === 0
+                ? 'Nema dostupnih zaposlenika'
+                : 'Odaberite zaposlenika'}
+          </option>
 
-  <p
-  className={
-    errors.employee
-      ? 'form-error form-error-visible'
-      : 'form-error'
-  }
->
-  {errors.employee || '\u00A0'}
-</p>
-</div>
+          {availableEmployees.map(
+            (employee) => (
+              <option
+                key={employee.id}
+                value={String(employee.id)}
+              >
+                {employee.name}
+              </option>
+            )
+          )}
+        </select>
+
+        <p
+          className={
+            errors.employee
+              ? 'form-error form-error-visible'
+              : 'form-error'
+          }
+        >
+          {errors.employee || '\u00A0'}
+        </p>
+      </div>
 
 
-<div className="form-field">
+      <div className="form-field">
         <label htmlFor="appointment-time">
           Vrijeme
         </label>
@@ -896,14 +856,14 @@ setEmployeeId('')
             value={time}
             onChange={handleTimeChange}
             disabled={
-            !selectedServiceForEmployee ||
-            !employeeId
-           }
+              !selectedServiceForEmployee ||
+              !employeeId
+            }
           >
 
-           <option value="">
-             {timeOptionsMessage}
-           </option>
+            <option value="">
+              {timeOptionsMessage}
+            </option>
 
             {availableTimeOptions.map(
               (timeOption) => (
@@ -930,30 +890,36 @@ setEmployeeId('')
       </div>
 
       {appointmentEndTime && (
-  <div className="appointment-duration-preview">
-    <span>
-      Predviđeni završetak
-    </span>
+        <div className="appointment-duration-preview">
+          <span>
+            Predviđeni završetak
+          </span>
 
-    <strong>
-      {appointmentEndTime}
-    </strong>
+          <strong>
+            {appointmentEndTime}
+          </strong>
 
-    <small>
-      Trajanje: {selectedServiceDuration} min
-    </small>
-  </div>
-)}
+          <small>
+            Trajanje: {selectedServiceDuration} min
+          </small>
+        </div>
+      )}
 
       <div className="form-actions">
         <button
           type="button"
           className="primary-button"
           onClick={handleSubmit}
+          disabled={
+            isUpdating ||
+            isCreating
+          }
         >
-          {editingAppointment
-            ? 'Spremi promjene'
-            : 'Dodaj termin'}
+          {isUpdating || isCreating
+            ? 'Spremanje...'
+            : editingAppointment
+              ? 'Spremi promjene'
+              : 'Dodaj termin'}
         </button>
 
         {editingAppointment && (
@@ -961,6 +927,7 @@ setEmployeeId('')
             type="button"
             className="secondary-button"
             onClick={onCancelEdit}
+            disabled={isUpdating}
           >
             Odustani
           </button>

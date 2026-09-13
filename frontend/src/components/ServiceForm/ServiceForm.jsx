@@ -6,10 +6,16 @@ function ServiceForm({
   onUpdateService,
   onCancel,
   editingService,
+  isCreating = false,
+  isUpdating = false,
 }) {
+  const isSaving =
+    isCreating || isUpdating
+
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState('')
+
   const [
     defaultDurationMinutes,
     setDefaultDurationMinutes,
@@ -18,20 +24,31 @@ function ServiceForm({
   const [errors, setErrors] = useState({
     name: '',
     price: '',
+    duration: '',
   })
 
   useEffect(() => {
     if (editingService) {
       setName(editingService.name)
-      setCategory(editingService.category || '')
-      setPrice(String(editingService.price))
+
+      setCategory(
+        editingService.category || ''
+      )
+
+      setPrice(
+        String(editingService.price)
+      )
+
       setDefaultDurationMinutes(
         editingService.defaultDurationMinutes
-          ? String(editingService.defaultDurationMinutes)
+          ? String(
+            editingService.defaultDurationMinutes
+          )
           : ''
       )
     } else {
       setName('')
+      setCategory('')
       setPrice('')
       setDefaultDurationMinutes('')
     }
@@ -39,10 +56,11 @@ function ServiceForm({
     setErrors({
       name: '',
       price: '',
+      duration: '',
     })
   }, [editingService])
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const parsedPrice = Number(price)
 
     const parsedDuration =
@@ -57,47 +75,69 @@ function ServiceForm({
 
       price:
         price !== '' &&
-        !Number.isNaN(parsedPrice) &&
-        parsedPrice >= 0
+          !Number.isNaN(parsedPrice) &&
+          parsedPrice >= 0
           ? ''
           : 'Upišite ispravnu cijenu.',
+
+      duration:
+        parsedDuration !== null &&
+          Number.isSafeInteger(
+            parsedDuration
+          ) &&
+          parsedDuration > 0
+          ? ''
+          : 'Upišite ispravno trajanje usluge.',
     }
 
     setErrors(newErrors)
 
-    const hasErrors = Object.values(newErrors).some(
-      (errorMessage) => errorMessage !== ''
-    )
+    const hasErrors =
+      Object.values(newErrors).some(
+        (errorMessage) =>
+          errorMessage !== ''
+      )
 
     if (hasErrors) {
       return
     }
 
     if (editingService) {
-      onUpdateService({
-        ...editingService,
-        name: name.trim(),
-        category: category.trim() || 'Ostalo',
-        price: parsedPrice,
-        defaultDurationMinutes:
-          parsedDuration &&
-          parsedDuration > 0
-            ? parsedDuration
-            : null,
-      })
+      const updateSucceeded =
+        await onUpdateService({
+          ...editingService,
+
+          name: name.trim(),
+
+          category:
+            category.trim() || 'Ostalo',
+
+          price: parsedPrice,
+
+          defaultDurationMinutes:
+            parsedDuration,
+        })
+
+      if (!updateSucceeded) {
+        return
+      }
     } else {
-      onAddService({
-        id: Date.now(),
-        name: name.trim(),
-        category: category.trim() || 'Ostalo',
-        price: parsedPrice,
-        defaultDurationMinutes:
-          parsedDuration &&
-          parsedDuration > 0
-            ? parsedDuration
-            : null,
-        active: true,
-      })
+      const createSucceeded =
+        await onAddService({
+          name: name.trim(),
+
+          category:
+            category.trim() || 'Ostalo',
+
+          price: parsedPrice,
+
+          defaultDurationMinutes:
+            parsedDuration,
+        })
+
+      if (!createSucceeded) {
+        return
+      }
     }
   }
 
@@ -123,6 +163,7 @@ function ServiceForm({
           className="service-form-close-button"
           onClick={onCancel}
           aria-label="Zatvori formu"
+          disabled={isSaving}
         >
           ×
         </button>
@@ -141,10 +182,12 @@ function ServiceForm({
             setName(event.target.value)
 
             if (errors.name) {
-              setErrors((currentErrors) => ({
-                ...currentErrors,
-                name: '',
-              }))
+              setErrors(
+                (currentErrors) => ({
+                  ...currentErrors,
+                  name: '',
+                })
+              )
             }
           }}
           placeholder="npr. Muško šišanje"
@@ -160,27 +203,29 @@ function ServiceForm({
         </p>
       </div>
 
-
       <div className="service-form-field">
-  <label htmlFor="service-category">
-    Kategorija
-  </label>
+        <label htmlFor="service-category">
+          Kategorija
+        </label>
 
-  <input
-    id="service-category"
-    type="text"
-    value={category}
-    onChange={(event) =>
-      setCategory(event.target.value)
-    }
-    placeholder="npr. Šišanje"
-  />
+        <input
+          id="service-category"
+          type="text"
+          value={category}
+          onChange={(event) =>
+            setCategory(
+              event.target.value
+            )
+          }
+          placeholder="npr. Šišanje"
+        />
 
-  <p className="service-form-help">
-    Ako kategoriju ne unesete, usluga će biti
-    spremljena pod "Ostalo".
-  </p>
-</div>
+        <p className="service-form-help">
+          Ako kategoriju ne unesete,
+          usluga će biti spremljena pod
+          "Ostalo".
+        </p>
+      </div>
 
       <div className="service-form-field">
         <label htmlFor="service-price">
@@ -197,10 +242,12 @@ function ServiceForm({
             setPrice(event.target.value)
 
             if (errors.price) {
-              setErrors((currentErrors) => ({
-                ...currentErrors,
-                price: '',
-              }))
+              setErrors(
+                (currentErrors) => ({
+                  ...currentErrors,
+                  price: '',
+                })
+              )
             }
           }}
           placeholder="18"
@@ -226,18 +273,33 @@ function ServiceForm({
           type="number"
           min="1"
           step="1"
-          value={defaultDurationMinutes}
-          onChange={(event) =>
+          value={
+            defaultDurationMinutes
+          }
+          onChange={(event) => {
             setDefaultDurationMinutes(
               event.target.value
             )
+
+            if (errors.duration) {
+              setErrors(
+                (currentErrors) => ({
+                  ...currentErrors,
+                  duration: '',
+                })
+              )
+            }
+          }}
+          placeholder="npr. 30"
+          className={
+            errors.duration
+              ? 'service-input-error'
+              : ''
           }
-          placeholder="Opcionalno"
         />
 
-        <p className="service-form-help">
-          Trajanje je opcionalno i služi kao
-          očekivano zadano trajanje usluge.
+        <p className="service-form-error">
+          {errors.duration || '\u00A0'}
         </p>
       </div>
 
@@ -246,16 +308,20 @@ function ServiceForm({
           type="button"
           className="service-form-primary-button"
           onClick={handleSubmit}
+          disabled={isSaving}
         >
-          {editingService
-            ? 'Spremi promjene'
-            : 'Dodaj uslugu'}
+          {isSaving
+            ? 'Spremanje...'
+            : editingService
+              ? 'Spremi promjene'
+              : 'Dodaj uslugu'}
         </button>
 
         <button
           type="button"
           className="service-form-secondary-button"
           onClick={onCancel}
+          disabled={isSaving}
         >
           Odustani
         </button>

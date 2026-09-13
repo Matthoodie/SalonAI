@@ -6,6 +6,22 @@ import { clients } from './data/clients'
 import { services } from './data/services'
 import { employees } from './data/employees'
 
+import {
+  fetchCalendar,
+} from './api/calendarApi'
+
+import {
+  mapCalendarResponseToAppointments,
+} from './api/appointmentMapper'
+
+import {
+  fetchServices,
+} from './api/serviceApi'
+
+import {
+  mapServicesToFrontend,
+} from './api/serviceMapper'
+
 import Layout from './components/Layout/Layout'
 
 import Services from './pages/Services/Services'
@@ -27,6 +43,41 @@ function getTodayDate() {
   return localDate
     .toISOString()
     .split('T')[0]
+}
+
+function formatDateKey(date) {
+  const year = date.getFullYear()
+
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, '0')
+
+  const day = String(
+    date.getDate()
+  ).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
+function getInitialCalendarRange() {
+  const today = new Date()
+
+  const rangeStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    1
+  )
+
+  const rangeEnd = new Date(
+    today.getFullYear(),
+    today.getMonth() + 2,
+    0
+  )
+
+  return {
+    from: formatDateKey(rangeStart),
+    to: formatDateKey(rangeEnd),
+  }
 }
 
 function migrateAppointments(
@@ -161,19 +212,19 @@ function migrateEmployees(
           ? employee.dateOverrides
           : [],
 
-          timeOff:
-  Array.isArray(
-    employee.timeOff
-  )
-    ? employee.timeOff
-    : [],
+      timeOff:
+        Array.isArray(
+          employee.timeOff
+        )
+          ? employee.timeOff
+          : [],
 
-  blockedTimes:
-  Array.isArray(
-    employee.blockedTimes
-  )
-    ? employee.blockedTimes
-    : [],
+      blockedTimes:
+        Array.isArray(
+          employee.blockedTimes
+        )
+          ? employee.blockedTimes
+          : [],
     })
   )
 }
@@ -190,71 +241,43 @@ function App() {
   ] = useState(null)
 
   const [serviceList, setServiceList] =
+    useState([])
+
+  const [employeeList, setEmployeeList] =
     useState(() => {
-      const savedServices =
+      const savedEmployees =
         localStorage.getItem(
-          'salonai-services'
+          'salonai-employees'
         )
 
-      if (savedServices) {
+      if (savedEmployees) {
         try {
-          const parsedServices =
-            JSON.parse(savedServices)
+          const parsedEmployees =
+            JSON.parse(savedEmployees)
 
-          return parsedServices.map(
-            (service) => ({
-              ...service,
-              category:
-                service.category ||
-                'Ostalo',
-            })
+          return migrateEmployees(
+            parsedEmployees
           )
+
         } catch (error) {
           console.error(
-            'Neuspješno učitavanje spremljenih usluga:',
+            'Neuspješno učitavanje spremljenih zaposlenika:',
             error
           )
         }
       }
 
-      return services
+      return migrateEmployees(
+        employees
+      )
     })
 
-const [employeeList, setEmployeeList] =
-  useState(() => {
-    const savedEmployees =
-      localStorage.getItem(
-        'salonai-employees'
-      )
-
-    if (savedEmployees) {
-      try {
-        const parsedEmployees =
-          JSON.parse(savedEmployees)
-
-        return migrateEmployees(
-         parsedEmployees
-       )
-
-      } catch (error) {
-        console.error(
-          'Neuspješno učitavanje spremljenih zaposlenika:',
-          error
-        )
-      }
-    }
-
-    return migrateEmployees(
-  employees
-)
-  })
-
-useEffect(() => {
-  localStorage.setItem(
-    'salonai-employees',
-    JSON.stringify(employeeList)
-  )
-}, [employeeList])
+  useEffect(() => {
+    localStorage.setItem(
+      'salonai-employees',
+      JSON.stringify(employeeList)
+    )
+  }, [employeeList])
 
 
   const [clientList, setClientList] =
@@ -327,56 +350,104 @@ useEffect(() => {
   const [
     appointmentList,
     setAppointmentList,
-  ] = useState(() => {
-    const savedAppointments =
-      localStorage.getItem(
-        'salonai-appointments'
-      )
+  ] = useState([])
 
-    let migratedAppointments
+  const [
+    appointmentsLoading,
+    setAppointmentsLoading,
+  ] = useState(true)
 
-    if (savedAppointments) {
+  const [
+    appointmentsLoadError,
+    setAppointmentsLoadError,
+  ] = useState(null)
+
+  const [
+    salonTimezone,
+    setSalonTimezone,
+  ] = useState(null)
+
+  const [
+    salonId,
+    setSalonId,
+  ] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAppointmentsFromBackend() {
       try {
-        const parsedAppointments =
-          JSON.parse(savedAppointments)
+        setAppointmentsLoading(true)
+        setAppointmentsLoadError(null)
+        const {
+          from,
+          to,
+        } = getInitialCalendarRange()
 
-        migratedAppointments =
-          migrateAppointments(
-            parsedAppointments,
-            serviceList,
-            clientList
+        const calendarData =
+          await fetchCalendar({
+            salonId: 1,
+            from,
+            to,
+          })
+
+        if (cancelled) {
+          return
+        }
+
+        setSalonTimezone(
+          calendarData.salon.timezone
+        )
+
+        setSalonId(
+          calendarData.salon.id
+        )
+
+        const backendServices =
+          await fetchServices(
+            calendarData.salon.id
           )
+
+        if (cancelled) {
+          return
+        }
+
+        setServiceList(
+          mapServicesToFrontend(
+            backendServices
+          )
+        )
+
+        const backendAppointments =
+          mapCalendarResponseToAppointments(
+            calendarData
+          )
+
+        setAppointmentList(
+          backendAppointments
+        )
       } catch (error) {
         console.error(
-          'Neuspješno učitavanje spremljenih termina:',
+          'Neuspješno učitavanje termina s backenda:',
           error
         )
 
-        migratedAppointments =
-          migrateAppointments(
-            appointments,
-            serviceList,
-            clientList
-          )
+        if (!cancelled) {
+          setAppointmentsLoadError(error)
+        }
+      } finally {
+        if (!cancelled) {
+          setAppointmentsLoading(false)
+        }
       }
-    } else {
-      migratedAppointments =
-        migrateAppointments(
-          appointments,
-          serviceList,
-          clientList
-        )
     }
 
-    localStorage.setItem(
-      'salonai-appointments',
-      JSON.stringify(
-        migratedAppointments
-      )
-    )
+    loadAppointmentsFromBackend()
 
-    return migratedAppointments
-  })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     localStorage.setItem(
@@ -384,20 +455,6 @@ useEffect(() => {
       JSON.stringify(clientList)
     )
   }, [clientList])
-
-  useEffect(() => {
-    localStorage.setItem(
-      'salonai-appointments',
-      JSON.stringify(appointmentList)
-    )
-  }, [appointmentList])
-
-  useEffect(() => {
-    localStorage.setItem(
-      'salonai-services',
-      JSON.stringify(serviceList)
-    )
-  }, [serviceList])
 
   function exportSalonData() {
     const salonData = {
@@ -462,11 +519,11 @@ useEffect(() => {
             event.target.result
           )
 
-       const hasValidStructure =
-  Array.isArray(importedData.clients) &&
-  Array.isArray(importedData.services) &&
-  Array.isArray(importedData.employees) &&
-  Array.isArray(importedData.appointments)
+        const hasValidStructure =
+          Array.isArray(importedData.clients) &&
+          Array.isArray(importedData.services) &&
+          Array.isArray(importedData.employees) &&
+          Array.isArray(importedData.appointments)
 
         if (!hasValidStructure) {
           window.alert(
@@ -493,10 +550,10 @@ useEffect(() => {
         )
 
         setEmployeeList(
-        migrateEmployees(
-         importedData.employees
+          migrateEmployees(
+            importedData.employees
+          )
         )
-      )
 
         const migratedAppointments =
           migrateAppointments(
@@ -557,14 +614,14 @@ useEffect(() => {
 
       <Routes>
         <Route
-  path="/"
-  element={
-    <Dashboard
-      appointmentList={appointmentList}
-      clientList={clientList}
-    />
-  }
-/>
+          path="/"
+          element={
+            <Dashboard
+              appointmentList={appointmentList}
+              clientList={clientList}
+            />
+          }
+        />
 
         <Route
           path="/clients"
@@ -591,20 +648,23 @@ useEffect(() => {
               setServiceList={
                 setServiceList
               }
+              salonId={
+                salonId
+              }
             />
           }
         />
 
         <Route
-  path="/employees"
-  element={
-    <Employees
-      employeeList={employeeList}
-      setEmployeeList={setEmployeeList}
-       serviceList={serviceList}
-    />
-  }
-/>
+          path="/employees"
+          element={
+            <Employees
+              employeeList={employeeList}
+              setEmployeeList={setEmployeeList}
+              serviceList={serviceList}
+            />
+          }
+        />
 
         <Route
           path="/appointments"
@@ -615,6 +675,12 @@ useEffect(() => {
               }
               setAppointmentList={
                 setAppointmentList
+              }
+              salonTimezone={
+                salonTimezone
+              }
+              salonId={
+                salonId
               }
               serviceList={
                 serviceList
@@ -650,6 +716,12 @@ useEffect(() => {
             <Calendar
               appointmentList={
                 appointmentList
+              }
+              appointmentsLoading={
+                appointmentsLoading
+              }
+              appointmentsLoadError={
+                appointmentsLoadError
               }
               onRequestNewAppointment={
                 setAppointmentFormInitialDate

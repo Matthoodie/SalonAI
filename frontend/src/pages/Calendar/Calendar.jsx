@@ -73,6 +73,8 @@ function Calendar({
   appointmentList = [],
   onRequestNewAppointment,
   onRequestEditAppointment,
+  appointmentsLoading,
+  appointmentsLoadError,
 }) {
 
   const navigate = useNavigate()
@@ -162,6 +164,46 @@ function editAppointmentFromCalendar(appointmentId) {
   onRequestEditAppointment(appointmentId)
   navigate('/appointments')
 }
+
+  if (appointmentsLoading) {
+    return (
+      <div className="calendar-page">
+        <div className="calendar-page-header">
+          <div>
+            <span className="calendar-eyebrow">
+              Upravljanje rasporedom
+            </span>
+
+            <h1>Kalendar</h1>
+
+            <p>
+              Učitavanje termina...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (appointmentsLoadError) {
+    return (
+      <div className="calendar-page">
+        <div className="calendar-page-header">
+          <div>
+            <span className="calendar-eyebrow">
+              Upravljanje rasporedom
+            </span>
+
+            <h1>Kalendar</h1>
+
+            <p>
+              Termine trenutno nije moguće učitati.
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="calendar-page">
