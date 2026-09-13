@@ -31,6 +31,22 @@ export function errorHandler(
     })
   }
 
+  if (
+    Number.isSafeInteger(error.statusCode) &&
+    error.statusCode >= 400 &&
+    error.statusCode <= 599 &&
+    error.code
+  ) {
+    return res.status(error.statusCode).json({
+      error: {
+        code: error.code,
+        message:
+          error.message ||
+          'Request failed.',
+      },
+    })
+  }
+
   res.status(500).json({
     error: {
       code: 'INTERNAL_SERVER_ERROR',

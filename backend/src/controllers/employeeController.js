@@ -1,5 +1,7 @@
 import {
   getEmployeesForSalon,
+  createEmployeeForSalon,
+  updateEmployeeForSalon,
 } from '../services/employeeService.js'
 
 export async function getEmployees(
@@ -31,6 +33,80 @@ export async function getEmployees(
 
     res.status(200).json({
       data: employees,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function createEmployee(
+  req,
+  res,
+  next
+) {
+  try {
+    const salonId =
+      Number(req.body.salon_id)
+
+    const employee =
+      await createEmployeeForSalon({
+        salonId,
+        name: req.body.name,
+        active:
+          req.body.active ?? true,
+        serviceIds:
+          req.body.service_ids ?? [],
+        workingHours:
+          req.body.working_hours ?? [],
+        dateOverrides:
+          req.body.date_overrides ?? [],
+        timeOff:
+          req.body.time_off ?? [],
+        blockedTimes:
+          req.body.blocked_times ?? [],
+      })
+
+    res.status(201).json({
+      data: employee,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function updateEmployee(
+  req,
+  res,
+  next
+) {
+  try {
+    const employeeId =
+      Number(req.params.id)
+
+    const salonId =
+      Number(req.body.salon_id)
+
+    const employee =
+      await updateEmployeeForSalon({
+        employeeId,
+        salonId,
+        name: req.body.name,
+        active:
+          req.body.active ?? true,
+        serviceIds:
+          req.body.service_ids ?? [],
+        workingHours:
+          req.body.working_hours ?? [],
+        dateOverrides:
+          req.body.date_overrides ?? [],
+        timeOff:
+          req.body.time_off ?? [],
+        blockedTimes:
+          req.body.blocked_times ?? [],
+      })
+
+    res.status(200).json({
+      data: employee,
     })
   } catch (error) {
     next(error)

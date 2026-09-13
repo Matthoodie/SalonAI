@@ -698,6 +698,7 @@ function App() {
               employeeList={employeeList}
               setEmployeeList={setEmployeeList}
               serviceList={serviceList}
+              salonId={salonId}
             />
           }
         />

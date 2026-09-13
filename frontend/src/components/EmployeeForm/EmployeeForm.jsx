@@ -965,7 +965,7 @@ function updateWorkingTime(
   )
 }
 
-function handleSubmit(event) {
+async function handleSubmit(event) {
   event.preventDefault()
 
   const trimmedName = name.trim()
@@ -1039,7 +1039,8 @@ if (blockedTimesError) {
 }
 
   if (editingEmployee) {
-    onUpdateEmployee({
+  const updateSucceeded =
+    await onUpdateEmployee({
       ...editingEmployee,
       name: trimmedName,
       serviceIds:
@@ -1049,21 +1050,32 @@ if (blockedTimesError) {
       timeOff,
       blockedTimes,
     })
-  } else {
-    const newEmployee = {
-      id: Date.now(),
-      name: trimmedName,
-      active: true,
-      serviceIds:
-        selectedServiceIds,
-      workingHours,
-      dateOverrides,
-      timeOff,
-      blockedTimes,
-    }
 
-    onAddEmployee(newEmployee)
+  if (!updateSucceeded) {
+    return
   }
+}
+else {
+  const newEmployee = {
+    name: trimmedName,
+    active: true,
+    serviceIds:
+      selectedServiceIds,
+    workingHours,
+    dateOverrides,
+    timeOff,
+    blockedTimes,
+  }
+
+  const createSucceeded =
+    await onAddEmployee(
+      newEmployee
+    )
+
+  if (!createSucceeded) {
+    return
+  }
+}
 
   setName('')
   setSelectedServiceIds([])

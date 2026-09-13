@@ -4,6 +4,17 @@ import {
   useState,
 } from 'react'
 
+import {
+  createEmployee as createEmployeeRequest,
+  updateEmployee as updateEmployeeRequest,
+  fetchEmployees,
+} from '../../api/employeeApi'
+
+import {
+  mapEmployeeToCreatePayload,
+  mapEmployeesToFrontend,
+} from '../../api/employeeMapper'
+
 import EmployeeCard from '../../components/EmployeeCard/EmployeeCard'
 import EmployeeForm from '../../components/EmployeeForm/EmployeeForm'
 
@@ -13,6 +24,7 @@ function Employees({
   employeeList = [],
   setEmployeeList,
   serviceList = [],
+  salonId,
 }) {
   const [editingEmployee, setEditingEmployee] =
     useState(null)
@@ -58,28 +70,122 @@ function Employees({
     setIsFormOpen(true)
   }
 
-  function addEmployee(newEmployee) {
-    setEmployeeList((currentEmployees) => [
-      ...currentEmployees,
-      newEmployee,
-    ])
-
-    setEditingEmployee(null)
-    setIsFormOpen(false)
-  }
-
-  function updateEmployee(updatedEmployee) {
-    setEmployeeList((currentEmployees) =>
-      currentEmployees.map((employee) =>
-        employee.id === updatedEmployee.id
-          ? updatedEmployee
-          : employee
+  async function addEmployee(
+  newEmployee
+) {
+  try {
+    if (
+      !Number.isSafeInteger(
+        Number(salonId)
+      ) ||
+      Number(salonId) <= 0
+    ) {
+      throw new Error(
+        'Salon nije spreman za dodavanje zaposlenika.'
       )
+    }
+
+    const employeePayload =
+      mapEmployeeToCreatePayload(
+        newEmployee,
+        Number(salonId)
+      )
+
+    await createEmployeeRequest(
+      employeePayload
+    )
+
+    const backendEmployees =
+      await fetchEmployees({
+        salonId: Number(salonId),
+      })
+
+    const mappedEmployees =
+      mapEmployeesToFrontend(
+        backendEmployees
+      )
+
+    setEmployeeList(
+      mappedEmployees
     )
 
     setEditingEmployee(null)
     setIsFormOpen(false)
+
+    return true
+  } catch (error) {
+    console.error(
+      'Neuspješno kreiranje zaposlenika:',
+      error
+    )
+
+    window.alert(
+      error.message ||
+        'Zaposlenika trenutno nije moguće dodati.'
+    )
+
+    return false
   }
+}
+
+  async function updateEmployee(
+  updatedEmployee
+) {
+  try {
+    if (
+      !Number.isSafeInteger(
+        Number(salonId)
+      ) ||
+      Number(salonId) <= 0
+    ) {
+      throw new Error(
+        'Salon nije spreman za uređivanje zaposlenika.'
+      )
+    }
+
+    const employeePayload =
+      mapEmployeeToCreatePayload(
+        updatedEmployee,
+        Number(salonId)
+      )
+
+    await updateEmployeeRequest(
+      updatedEmployee.id,
+      employeePayload
+    )
+
+    const backendEmployees =
+      await fetchEmployees({
+        salonId: Number(salonId),
+      })
+
+    const mappedEmployees =
+      mapEmployeesToFrontend(
+        backendEmployees
+      )
+
+    setEmployeeList(
+      mappedEmployees
+    )
+
+    setEditingEmployee(null)
+    setIsFormOpen(false)
+
+    return true
+  } catch (error) {
+    console.error(
+      'Neuspješno uređivanje zaposlenika:',
+      error
+    )
+
+    window.alert(
+      error.message ||
+        'Zaposlenika trenutno nije moguće urediti.'
+    )
+
+    return false
+  }
+}
 
   function cancelEmployeeForm() {
     setEditingEmployee(null)
