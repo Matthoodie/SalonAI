@@ -321,3 +321,31 @@ export async function deleteEmployeeBlockedTimes(
     [employeeId]
   )
 }
+
+export async function updateEmployeeActive(
+  client,
+  {
+    employeeId,
+    salonId,
+    active,
+  }
+) {
+  const result = await client.query(
+    `
+      UPDATE employees
+      SET
+        active = $3,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+        AND salon_id = $2
+      RETURNING *
+    `,
+    [
+      employeeId,
+      salonId,
+      active,
+    ]
+  )
+
+  return result.rows[0] ?? null
+}

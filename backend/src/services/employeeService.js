@@ -14,6 +14,7 @@ import {
   deleteEmployeeDateOverrides,
   deleteEmployeeTimeOff,
   deleteEmployeeBlockedTimes,
+  updateEmployeeActive,
 } from '../repositories/employeeRepository.js'
 
 export async function getEmployeesForSalon(
@@ -279,6 +280,91 @@ export async function updateEmployeeForSalon({
         blockedTimes,
       }
     )
+
+    await client.query('COMMIT')
+
+    return employee
+  } catch (error) {
+    await client.query('ROLLBACK')
+
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+export async function updateEmployeeActiveForSalon({
+  employeeId,
+  salonId,
+  active,
+}) {
+  if (
+    !Number.isSafeInteger(employeeId) ||
+    employeeId <= 0
+  ) {
+    const error = new Error(
+      'employee_id must be a positive integer.'
+    )
+
+    error.code = 'VALIDATION_ERROR'
+    error.statusCode = 400
+
+    throw error
+  }
+
+  if (
+    !Number.isSafeInteger(salonId) ||
+    salonId <= 0
+  ) {
+    const error = new Error(
+      'salon_id must be a positive integer.'
+    )
+
+    error.code = 'VALIDATION_ERROR'
+    error.statusCode = 400
+
+    throw error
+  }
+
+  if (typeof active !== 'boolean') {
+    const error = new Error(
+      'active must be a boolean.'
+    )
+
+    error.code = 'VALIDATION_ERROR'
+    error.statusCode = 400
+
+    throw error
+  }
+
+  const client =
+    await pool.connect()
+
+  try {
+    await client.query('BEGIN')
+
+    const employee =
+      await updateEmployeeActive(
+        client,
+        {
+          employeeId,
+          salonId,
+          active,
+        }
+      )
+
+    if (!employee) {
+      const error = new Error(
+        'Employee was not found.'
+      )
+
+      error.code =
+        'EMPLOYEE_NOT_FOUND'
+
+      error.statusCode = 404
+
+      throw error
+    }
 
     await client.query('COMMIT')
 

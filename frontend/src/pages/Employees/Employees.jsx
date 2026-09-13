@@ -7,6 +7,7 @@ import {
 import {
   createEmployee as createEmployeeRequest,
   updateEmployee as updateEmployeeRequest,
+  updateEmployeeActive as updateEmployeeActiveRequest,
   fetchEmployees,
 } from '../../api/employeeApi'
 
@@ -126,11 +127,11 @@ function Employees({
 
     return false
   }
-}
+ }
 
-  async function updateEmployee(
+ async function updateEmployee(
   updatedEmployee
-) {
+  ) {
   try {
     if (
       !Number.isSafeInteger(
@@ -151,7 +152,7 @@ function Employees({
 
     await updateEmployeeRequest(
       updatedEmployee.id,
-      employeePayload
+      employeePayloadf
     )
 
     const backendEmployees =
@@ -192,25 +193,82 @@ function Employees({
     setIsFormOpen(false)
   }
 
-  function toggleEmployeeActive(employeeId) {
-    setEmployeeList((currentEmployees) =>
-      currentEmployees.map((employee) =>
-        employee.id === employeeId
-          ? {
-              ...employee,
-              active: !employee.active,
-            }
-          : employee
+  async function toggleEmployeeActive(
+  employeeId
+) {
+  try {
+    const employee =
+      employeeList.find(
+        (item) =>
+          item.id === employeeId
       )
+
+    if (!employee) {
+      throw new Error(
+        'Zaposlenik nije pronađen.'
+      )
+    }
+
+    if (
+      !Number.isSafeInteger(
+        Number(salonId)
+      ) ||
+      Number(salonId) <= 0
+    ) {
+      throw new Error(
+        'Salon nije spreman za promjenu statusa zaposlenika.'
+      )
+    }
+
+    await updateEmployeeActiveRequest(
+      employeeId,
+      {
+        salonId:
+          Number(salonId),
+
+        active:
+          !employee.active,
+      }
+    )
+
+    const backendEmployees =
+      await fetchEmployees({
+        salonId:
+          Number(salonId),
+      })
+
+    const mappedEmployees =
+      mapEmployeesToFrontend(
+        backendEmployees
+      )
+
+    setEmployeeList(
+      mappedEmployees
     )
 
     if (
-      editingEmployee?.id === employeeId
+      editingEmployee?.id ===
+      employeeId
     ) {
       setEditingEmployee(null)
       setIsFormOpen(false)
     }
+
+    return true
+  } catch (error) {
+    console.error(
+      'Neuspješna promjena statusa zaposlenika:',
+      error
+    )
+
+    window.alert(
+      error.message ||
+        'Status zaposlenika trenutno nije moguće promijeniti.'
+    )
+
+    return false
   }
+}
 
   return (
     <div className="employees-page">

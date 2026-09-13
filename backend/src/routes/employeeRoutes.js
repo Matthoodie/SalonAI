@@ -4,6 +4,7 @@ import {
   getEmployees,
   createEmployee,
   updateEmployee,
+  updateEmployeeActive,
 } from '../controllers/employeeController.js'
 
 const router = Router()
@@ -21,6 +22,11 @@ router.post(
 router.patch(
   '/:id',
   updateEmployee
+)
+
+router.patch(
+  '/:id/active',
+  updateEmployeeActive
 )
 
 export default router

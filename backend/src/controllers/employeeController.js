@@ -2,6 +2,7 @@ import {
   getEmployeesForSalon,
   createEmployeeForSalon,
   updateEmployeeForSalon,
+  updateEmployeeActiveForSalon,
 } from '../services/employeeService.js'
 
 export async function getEmployees(
@@ -103,6 +104,33 @@ export async function updateEmployee(
           req.body.time_off ?? [],
         blockedTimes:
           req.body.blocked_times ?? [],
+      })
+
+    res.status(200).json({
+      data: employee,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function updateEmployeeActive(
+  req,
+  res,
+  next
+) {
+  try {
+    const employeeId =
+      Number(req.params.id)
+
+    const salonId =
+      Number(req.body.salon_id)
+
+    const employee =
+      await updateEmployeeActiveForSalon({
+        employeeId,
+        salonId,
+        active: req.body.active,
       })
 
     res.status(200).json({

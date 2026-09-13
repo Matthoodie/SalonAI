@@ -100,3 +100,46 @@ export async function updateEmployee(
 
   return responseBody.data
 }
+
+export async function updateEmployeeActive(
+  employeeId,
+  {
+    salonId,
+    active,
+  }
+) {
+  const response = await fetch(
+    `/api/employees/${employeeId}/active`,
+    {
+      method: 'PATCH',
+
+      headers: {
+        'Content-Type':
+          'application/json',
+      },
+
+      body: JSON.stringify({
+        salon_id: salonId,
+        active,
+      }),
+    }
+  )
+
+  const responseBody =
+    await response.json()
+
+  if (!response.ok) {
+    const error = new Error(
+      responseBody?.error?.message ||
+        'Failed to update employee status.'
+    )
+
+    error.code =
+      responseBody?.error?.code ||
+      'EMPLOYEE_ACTIVE_UPDATE_FAILED'
+
+    throw error
+  }
+
+  return responseBody.data
+}
