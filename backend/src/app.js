@@ -5,6 +5,7 @@ import availabilityRoutes from './routes/availabilityRoutes.js'
 import bookingRoutes from './routes/bookingRoutes.js'
 import calendarRoutes from './routes/calendarRoutes.js'
 import serviceRoutes from './routes/serviceRoutes.js'
+import employeeRoutes from './routes/employeeRoutes.js'
 
 import healthRoutes from './routes/healthRoutes.js'
 
@@ -23,6 +24,10 @@ app.use('/api/availability', availabilityRoutes)
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/calendar', calendarRoutes)
 app.use('/api/services', serviceRoutes)
+app.use(
+  '/api/employees',
+  employeeRoutes
+)
 
 app.use(notFoundHandler)
 app.use(errorHandler)

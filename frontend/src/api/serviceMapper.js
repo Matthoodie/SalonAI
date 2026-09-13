@@ -2,10 +2,11 @@ export function mapServiceToFrontend(
   service
 ) {
   return {
-    id: service.id,
+    id:
+      Number(service.id),
 
     salonId:
-      service.salon_id,
+      Number(service.salon_id),
 
     name:
       service.name,

@@ -4,7 +4,6 @@ import { Route, Routes } from 'react-router-dom'
 import { appointments } from './data/appointments'
 import { clients } from './data/clients'
 import { services } from './data/services'
-import { employees } from './data/employees'
 
 import {
   fetchCalendar,
@@ -17,6 +16,14 @@ import {
 import {
   fetchServices,
 } from './api/serviceApi'
+
+import {
+  fetchEmployees,
+} from './api/employeeApi'
+
+import {
+  mapEmployeesToFrontend,
+} from './api/employeeMapper'
 
 import {
   mapServicesToFrontend,
@@ -244,41 +251,17 @@ function App() {
     useState([])
 
   const [employeeList, setEmployeeList] =
-    useState(() => {
-      const savedEmployees =
-        localStorage.getItem(
-          'salonai-employees'
-        )
+    useState([])
 
-      if (savedEmployees) {
-        try {
-          const parsedEmployees =
-            JSON.parse(savedEmployees)
+  const [
+    employeesLoading,
+    setEmployeesLoading,
+  ] = useState(false)
 
-          return migrateEmployees(
-            parsedEmployees
-          )
-
-        } catch (error) {
-          console.error(
-            'Neuspješno učitavanje spremljenih zaposlenika:',
-            error
-          )
-        }
-      }
-
-      return migrateEmployees(
-        employees
-      )
-    })
-
-  useEffect(() => {
-    localStorage.setItem(
-      'salonai-employees',
-      JSON.stringify(employeeList)
-    )
-  }, [employeeList])
-
+  const [
+    employeesLoadError,
+    setEmployeesLoadError,
+  ] = useState(null)
 
   const [clientList, setClientList] =
     useState(() => {
@@ -448,6 +431,59 @@ function App() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+  let cancelled = false
+
+  async function loadEmployeesFromBackend() {
+    try {
+      setEmployeesLoading(true)
+      setEmployeesLoadError(null)
+
+      const backendEmployees =
+        await fetchEmployees({
+          salonId: 1,
+        })
+
+      if (cancelled) {
+        return
+      }
+
+      const mappedEmployees =
+        mapEmployeesToFrontend(
+          backendEmployees
+        )
+
+      setEmployeeList(
+        mappedEmployees
+      )
+    } catch (error) {
+      if (cancelled) {
+        return
+      }
+
+      console.error(
+        'Neuspješno učitavanje zaposlenika:',
+        error
+      )
+
+      setEmployeesLoadError(
+        error.message ||
+          'Zaposlenike trenutno nije moguće učitati.'
+      )
+    } finally {
+      if (!cancelled) {
+        setEmployeesLoading(false)
+      }
+    }
+  }
+
+  loadEmployeesFromBackend()
+
+  return () => {
+    cancelled = true
+  }
+}, [])
 
   useEffect(() => {
     localStorage.setItem(
