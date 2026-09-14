@@ -72,7 +72,7 @@ export function mapEmployeeToFrontend(
     const workingHour of
     employee.working_hours ?? []
   ) {
-    const dayKey =
+       const dayKey =
       dayKeyByNumber[
         workingHour.day_of_week
       ]
@@ -91,6 +91,30 @@ export function mapEmployeeToFrontend(
       ),
     }
   }
+    const dateOverrides =
+    (employee.date_overrides ?? []).map(
+      (override) => ({
+        date:
+          override.date,
+
+        enabled:
+          override.enabled,
+
+        startTime:
+          override.enabled
+            ? normalizeTime(
+                override.start_time
+              )
+            : '',
+
+        endTime:
+          override.enabled
+            ? normalizeTime(
+                override.end_time
+              )
+            : '',
+      })
+    )
 
   return {
     id: Number(employee.id),
@@ -110,6 +134,7 @@ export function mapEmployeeToFrontend(
       ),
 
     workingHours,
+    dateOverrides,
   }
 }
 
@@ -153,8 +178,8 @@ export function mapEmployeeToCreatePayload(
         schedule.endTime,
     }))
 
-  const dateOverrides =
-    (employee.dateOverrides ?? []).map(
+    const dateOverrides =
+    (employee.date_overrides ?? []).map(
       (override) => ({
         date:
           override.date,

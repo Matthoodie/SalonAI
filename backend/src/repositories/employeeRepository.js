@@ -43,7 +43,28 @@ export async function findEmployeesBySalonId(
             WHERE ewh.employee_id = e.id
           ),
           '[]'::json
-        ) AS working_hours
+        ) AS working_hours,
+
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'date',
+                edo.date,
+                'enabled',
+                edo.enabled,
+                'start_time',
+                edo.start_time,
+                'end_time',
+                edo.end_time
+              )
+              ORDER BY edo.date
+            )
+            FROM employee_date_overrides edo
+            WHERE edo.employee_id = e.id
+          ),
+          '[]'::json
+        ) AS date_overrides
 
       FROM employees e
       WHERE e.salon_id = $1
@@ -108,6 +129,45 @@ export async function insertEmployeeServices(
       ]
     )
   }
+}
+
+export async function findEmployeeServiceIds(
+  client,
+  employeeId
+) {
+  const result = await client.query(
+    `
+      SELECT service_id
+      FROM employee_services
+      WHERE employee_id = $1
+      ORDER BY service_id
+    `,
+    [employeeId]
+  )
+
+  return result.rows.map(
+    (row) => Number(row.service_id)
+  )
+}
+
+export async function deleteEmployeeService(
+  client,
+  {
+    employeeId,
+    serviceId,
+  }
+) {
+  await client.query(
+    `
+      DELETE FROM employee_services
+      WHERE employee_id = $1
+        AND service_id = $2
+    `,
+    [
+      employeeId,
+      serviceId,
+    ]
+  )
 }
 
 export async function insertEmployeeWorkingHours(

@@ -9,12 +9,13 @@ import {
   insertEmployeeTimeOff,
   insertEmployeeBlockedTimes,
   updateEmployee,
-  deleteEmployeeServices,
   deleteEmployeeWorkingHours,
   deleteEmployeeDateOverrides,
   deleteEmployeeTimeOff,
   deleteEmployeeBlockedTimes,
   updateEmployeeActive,
+  findEmployeeServiceIds,
+  deleteEmployeeService,
 } from '../repositories/employeeRepository.js'
 
 export async function getEmployeesForSalon(
@@ -215,9 +216,45 @@ export async function updateEmployeeForSalon({
       throw error
     }
 
-    await deleteEmployeeServices(
+    const currentServiceIds =
+      await findEmployeeServiceIds(
+        client,
+        employeeId
+      )
+
+    const serviceIdsToRemove =
+      currentServiceIds.filter(
+        (serviceId) =>
+          !serviceIds.includes(serviceId)
+      )
+
+    const serviceIdsToAdd =
+      serviceIds.filter(
+        (serviceId) =>
+          !currentServiceIds.includes(serviceId)
+      )
+
+    for (
+      const serviceId of
+      serviceIdsToRemove
+    ) {
+      await deleteEmployeeService(
+        client,
+        {
+          employeeId,
+          serviceId,
+        }
+      )
+    }
+
+    await insertEmployeeServices(
       client,
-      employeeId
+      {
+        employeeId,
+        salonId,
+        serviceIds:
+          serviceIdsToAdd,
+      }
     )
 
     await deleteEmployeeWorkingHours(
@@ -238,15 +275,6 @@ export async function updateEmployeeForSalon({
     await deleteEmployeeBlockedTimes(
       client,
       employeeId
-    )
-
-    await insertEmployeeServices(
-      client,
-      {
-        employeeId,
-        salonId,
-        serviceIds,
-      }
     )
 
     await insertEmployeeWorkingHours(
