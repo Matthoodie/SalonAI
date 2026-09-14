@@ -116,6 +116,26 @@ export function mapEmployeeToFrontend(
       })
     )
 
+      const timeOff =
+       (employee.time_off ?? []).map(
+        (item) => ({
+          id:
+             Number(item.id),
+
+          startDate:
+             item.start_date,
+
+          endDate:
+             item.end_date,
+
+          type:
+             String(item.type).toUpperCase(),
+
+          note:
+             item.note ?? '',
+      })
+    )
+
   return {
     id: Number(employee.id),
 
@@ -135,6 +155,7 @@ export function mapEmployeeToFrontend(
 
     workingHours,
     dateOverrides,
+    timeOff,
   }
 }
 

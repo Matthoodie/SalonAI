@@ -64,7 +64,30 @@ export async function findEmployeesBySalonId(
             WHERE edo.employee_id = e.id
           ),
           '[]'::json
-        ) AS date_overrides
+        ) AS date_overrides,
+
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id',
+                eto.id,
+                'start_date',
+                eto.start_date,
+                'end_date',
+                eto.end_date,
+                'type',
+                eto.type,
+                'note',
+                eto.note
+              )
+              ORDER BY eto.start_date
+            )
+            FROM employee_time_off eto
+            WHERE eto.employee_id = e.id
+          ),
+          '[]'::json
+        ) AS time_off
 
       FROM employees e
       WHERE e.salon_id = $1
