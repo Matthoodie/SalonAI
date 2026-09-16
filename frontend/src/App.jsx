@@ -433,57 +433,62 @@ function App() {
   }, [])
 
   useEffect(() => {
+  if (!salonTimezone) {
+    return
+  }
+
   let cancelled = false
 
   async function loadEmployeesFromBackend() {
-    try {
-      setEmployeesLoading(true)
-      setEmployeesLoadError(null)
+      try {
+        setEmployeesLoading(true)
+        setEmployeesLoadError(null)
 
-      const backendEmployees =
-        await fetchEmployees({
-          salonId: 1,
-        })
+        const backendEmployees =
+          await fetchEmployees({
+            salonId: 1,
+          })
 
-      if (cancelled) {
-        return
-      }
+        if (cancelled) {
+          return
+        }
 
-      const mappedEmployees =
-        mapEmployeesToFrontend(
-          backendEmployees
+        const mappedEmployees =
+          mapEmployeesToFrontend(
+            backendEmployees,
+            salonTimezone
+          )
+
+        setEmployeeList(
+          mappedEmployees
+        )
+      } catch (error) {
+        if (cancelled) {
+          return
+        }
+
+        console.error(
+          'Neuspješno učitavanje zaposlenika:',
+          error
         )
 
-      setEmployeeList(
-        mappedEmployees
-      )
-    } catch (error) {
-      if (cancelled) {
-        return
-      }
-
-      console.error(
-        'Neuspješno učitavanje zaposlenika:',
-        error
-      )
-
-      setEmployeesLoadError(
-        error.message ||
+        setEmployeesLoadError(
+          error.message ||
           'Zaposlenike trenutno nije moguće učitati.'
-      )
-    } finally {
-      if (!cancelled) {
-        setEmployeesLoading(false)
+        )
+      } finally {
+        if (!cancelled) {
+          setEmployeesLoading(false)
+        }
       }
     }
-  }
 
-  loadEmployeesFromBackend()
+    loadEmployeesFromBackend()
 
-  return () => {
-    cancelled = true
-  }
-}, [])
+    return () => {
+      cancelled = true
+    }
+  }, [salonTimezone])
 
   useEffect(() => {
     localStorage.setItem(
@@ -699,6 +704,7 @@ function App() {
               setEmployeeList={setEmployeeList}
               serviceList={serviceList}
               salonId={salonId}
+              salonTimezone={salonTimezone}
             />
           }
         />

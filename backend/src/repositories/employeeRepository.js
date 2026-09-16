@@ -87,8 +87,30 @@ export async function findEmployeesBySalonId(
             WHERE eto.employee_id = e.id
           ),
           '[]'::json
-        ) AS time_off
+        ) AS time_off,
 
+              COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id',
+                ebt.id,
+                'starts_at',
+                ebt.starts_at,
+                'ends_at',
+                ebt.ends_at,
+                'type',
+                ebt.type,
+                'reason',
+                ebt.reason
+              )
+              ORDER BY ebt.starts_at
+            )
+            FROM employee_blocked_times ebt
+            WHERE ebt.employee_id = e.id
+          ),
+          '[]'::json
+        ) AS blocked_times
       FROM employees e
       WHERE e.salon_id = $1
       ORDER BY e.name ASC
@@ -290,22 +312,24 @@ export async function insertEmployeeBlockedTimes(
 ) {
   for (const item of blockedTimes) {
     await client.query(
-      `
-        INSERT INTO employee_blocked_times (
-          employee_id,
-          starts_at,
-          ends_at,
-          reason
-        )
-        VALUES ($1, $2, $3, $4)
-      `,
-      [
-        employeeId,
-        item.starts_at,
-        item.ends_at,
-        item.reason ?? null,
-      ]
+  `
+    INSERT INTO employee_blocked_times (
+      employee_id,
+      starts_at,
+      ends_at,
+      type,
+      reason
     )
+    VALUES ($1, $2, $3, $4, $5)
+  `,
+  [
+    employeeId,
+    item.starts_at,
+    item.ends_at,
+    item.type,
+    item.reason ?? null,
+  ]
+)
   }
 }
 

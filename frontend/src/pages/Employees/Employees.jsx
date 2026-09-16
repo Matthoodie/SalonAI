@@ -26,6 +26,7 @@ function Employees({
   setEmployeeList,
   serviceList = [],
   salonId,
+  salonTimezone,
 }) {
   const [editingEmployee, setEditingEmployee] =
     useState(null)
@@ -72,121 +73,125 @@ function Employees({
   }
 
   async function addEmployee(
-  newEmployee
-) {
-  try {
-    if (
-      !Number.isSafeInteger(
-        Number(salonId)
-      ) ||
-      Number(salonId) <= 0
-    ) {
-      throw new Error(
-        'Salon nije spreman za dodavanje zaposlenika.'
-      )
-    }
-
-    const employeePayload =
-      mapEmployeeToCreatePayload(
-        newEmployee,
-        Number(salonId)
-      )
-
-    await createEmployeeRequest(
-      employeePayload
-    )
-
-    const backendEmployees =
-      await fetchEmployees({
-        salonId: Number(salonId),
-      })
-
-    const mappedEmployees =
-      mapEmployeesToFrontend(
-        backendEmployees
-      )
-
-    setEmployeeList(
-      mappedEmployees
-    )
-
-    setEditingEmployee(null)
-    setIsFormOpen(false)
-
-    return true
-  } catch (error) {
-    console.error(
-      'Neuspješno kreiranje zaposlenika:',
-      error
-    )
-
-    window.alert(
-      error.message ||
-        'Zaposlenika trenutno nije moguće dodati.'
-    )
-
-    return false
-  }
- }
-
- async function updateEmployee(
-  updatedEmployee
+    newEmployee
   ) {
-  try {
-    if (
-      !Number.isSafeInteger(
-        Number(salonId)
-      ) ||
-      Number(salonId) <= 0
-    ) {
-      throw new Error(
-        'Salon nije spreman za uređivanje zaposlenika.'
+    try {
+      if (
+        !Number.isSafeInteger(
+          Number(salonId)
+        ) ||
+        Number(salonId) <= 0
+      ) {
+        throw new Error(
+          'Salon nije spreman za dodavanje zaposlenika.'
+        )
+      }
+
+      const employeePayload =
+        mapEmployeeToCreatePayload(
+          newEmployee,
+          Number(salonId),
+          salonTimezone
+        )
+
+      await createEmployeeRequest(
+        employeePayload
       )
+
+      const backendEmployees =
+        await fetchEmployees({
+          salonId: Number(salonId),
+        })
+
+      const mappedEmployees =
+        mapEmployeesToFrontend(
+          backendEmployees,
+          salonTimezone
+        )
+
+      setEmployeeList(
+        mappedEmployees
+      )
+
+      setEditingEmployee(null)
+      setIsFormOpen(false)
+
+      return true
+    } catch (error) {
+      console.error(
+        'Neuspješno kreiranje zaposlenika:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Zaposlenika trenutno nije moguće dodati.'
+      )
+
+      return false
     }
-
-    const employeePayload =
-      mapEmployeeToCreatePayload(
-        updatedEmployee,
-        Number(salonId)
-      )
-
-    await updateEmployeeRequest(
-      updatedEmployee.id,
-      employeePayload
-    )
-
-    const backendEmployees =
-      await fetchEmployees({
-        salonId: Number(salonId),
-      })
-
-    const mappedEmployees =
-      mapEmployeesToFrontend(
-        backendEmployees
-      )
-
-    setEmployeeList(
-      mappedEmployees
-    )
-
-    setEditingEmployee(null)
-    setIsFormOpen(false)
-
-    return true
-  } catch (error) {
-    console.error(
-      'Neuspješno uređivanje zaposlenika:',
-      error
-    )
-
-    window.alert(
-      error.message ||
-        'Zaposlenika trenutno nije moguće urediti.'
-    )
-
-    return false
   }
-}
+
+  async function updateEmployee(
+    updatedEmployee
+  ) {
+    try {
+      if (
+        !Number.isSafeInteger(
+          Number(salonId)
+        ) ||
+        Number(salonId) <= 0
+      ) {
+        throw new Error(
+          'Salon nije spreman za uređivanje zaposlenika.'
+        )
+      }
+
+      const employeePayload =
+        mapEmployeeToCreatePayload(
+          updatedEmployee,
+          Number(salonId),
+          salonTimezone
+        )
+
+      await updateEmployeeRequest(
+        updatedEmployee.id,
+        employeePayload
+      )
+
+      const backendEmployees =
+        await fetchEmployees({
+          salonId: Number(salonId),
+        })
+
+      const mappedEmployees =
+        mapEmployeesToFrontend(
+          backendEmployees,
+          salonTimezone
+        )
+
+      setEmployeeList(
+        mappedEmployees
+      )
+
+      setEditingEmployee(null)
+      setIsFormOpen(false)
+
+      return true
+    } catch (error) {
+      console.error(
+        'Neuspješno uređivanje zaposlenika:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Zaposlenika trenutno nije moguće urediti.'
+      )
+
+      return false
+    }
+  }
 
   function cancelEmployeeForm() {
     setEditingEmployee(null)
@@ -194,81 +199,82 @@ function Employees({
   }
 
   async function toggleEmployeeActive(
-  employeeId
-) {
-  try {
-    const employee =
-      employeeList.find(
-        (item) =>
-          item.id === employeeId
-      )
+    employeeId
+  ) {
+    try {
+      const employee =
+        employeeList.find(
+          (item) =>
+            item.id === employeeId
+        )
 
-    if (!employee) {
-      throw new Error(
-        'Zaposlenik nije pronađen.'
-      )
-    }
-
-    if (
-      !Number.isSafeInteger(
-        Number(salonId)
-      ) ||
-      Number(salonId) <= 0
-    ) {
-      throw new Error(
-        'Salon nije spreman za promjenu statusa zaposlenika.'
-      )
-    }
-
-    await updateEmployeeActiveRequest(
-      employeeId,
-      {
-        salonId:
-          Number(salonId),
-
-        active:
-          !employee.active,
+      if (!employee) {
+        throw new Error(
+          'Zaposlenik nije pronađen.'
+        )
       }
-    )
 
-    const backendEmployees =
-      await fetchEmployees({
-        salonId:
-          Number(salonId),
-      })
+      if (
+        !Number.isSafeInteger(
+          Number(salonId)
+        ) ||
+        Number(salonId) <= 0
+      ) {
+        throw new Error(
+          'Salon nije spreman za promjenu statusa zaposlenika.'
+        )
+      }
 
-    const mappedEmployees =
-      mapEmployeesToFrontend(
-        backendEmployees
+      await updateEmployeeActiveRequest(
+        employeeId,
+        {
+          salonId:
+            Number(salonId),
+
+          active:
+            !employee.active,
+        }
       )
 
-    setEmployeeList(
-      mappedEmployees
-    )
+      const backendEmployees =
+        await fetchEmployees({
+          salonId:
+            Number(salonId),
+        })
 
-    if (
-      editingEmployee?.id ===
-      employeeId
-    ) {
-      setEditingEmployee(null)
-      setIsFormOpen(false)
-    }
+      const mappedEmployees =
+        mapEmployeesToFrontend(
+          backendEmployees,
+          salonTimezone
+        )
 
-    return true
-  } catch (error) {
-    console.error(
-      'Neuspješna promjena statusa zaposlenika:',
-      error
-    )
+      setEmployeeList(
+        mappedEmployees
+      )
 
-    window.alert(
-      error.message ||
+      if (
+        editingEmployee?.id ===
+        employeeId
+      ) {
+        setEditingEmployee(null)
+        setIsFormOpen(false)
+      }
+
+      return true
+    } catch (error) {
+      console.error(
+        'Neuspješna promjena statusa zaposlenika:',
+        error
+      )
+
+      window.alert(
+        error.message ||
         'Status zaposlenika trenutno nije moguće promijeniti.'
-    )
+      )
 
-    return false
+      return false
+    }
   }
-}
 
   return (
     <div className="employees-page">

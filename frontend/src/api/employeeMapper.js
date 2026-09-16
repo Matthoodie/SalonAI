@@ -1,3 +1,11 @@
+import {
+  getSalonLocalDateParts,
+} from './salonDateTime'
+
+import {
+  salonDateTimeToUtcIso,
+} from './appointmentDateTime'
+
 const dayKeyByNumber = {
   1: 'monday',
   2: 'tuesday',
@@ -63,7 +71,8 @@ function normalizeTime(time) {
 }
 
 export function mapEmployeeToFrontend(
-  employee
+  employee,
+  salonTimezone
 ) {
   const workingHours =
     createEmptyWorkingHours()
@@ -72,9 +81,9 @@ export function mapEmployeeToFrontend(
     const workingHour of
     employee.working_hours ?? []
   ) {
-       const dayKey =
+    const dayKey =
       dayKeyByNumber[
-        workingHour.day_of_week
+      workingHour.day_of_week
       ]
 
     if (!dayKey) {
@@ -91,7 +100,7 @@ export function mapEmployeeToFrontend(
       ),
     }
   }
-    const dateOverrides =
+  const dateOverrides =
     (employee.date_overrides ?? []).map(
       (override) => ({
         date:
@@ -103,37 +112,75 @@ export function mapEmployeeToFrontend(
         startTime:
           override.enabled
             ? normalizeTime(
-                override.start_time
-              )
+              override.start_time
+            )
             : '',
 
         endTime:
           override.enabled
             ? normalizeTime(
-                override.end_time
-              )
+              override.end_time
+            )
             : '',
       })
     )
 
-      const timeOff =
-       (employee.time_off ?? []).map(
-        (item) => ({
+  const timeOff =
+    (employee.time_off ?? []).map(
+      (item) => ({
+        id:
+          Number(item.id),
+
+        startDate:
+          item.start_date,
+
+        endDate:
+          item.end_date,
+
+        type:
+          String(item.type).toUpperCase(),
+
+        note:
+          item.note ?? '',
+      })
+    )
+
+
+  const blockedTimes =
+    (employee.blocked_times ?? []).map(
+      (item) => {
+        const start =
+          getSalonLocalDateParts(
+            item.starts_at,
+            salonTimezone
+          )
+
+        const end =
+          getSalonLocalDateParts(
+            item.ends_at,
+            salonTimezone
+          )
+
+        return {
           id:
-             Number(item.id),
+            Number(item.id),
 
-          startDate:
-             item.start_date,
+          date:
+            start.date,
 
-          endDate:
-             item.end_date,
+          startTime:
+            start.time,
+
+          endTime:
+            end.time,
 
           type:
-             String(item.type).toUpperCase(),
+            item.type,
 
           note:
-             item.note ?? '',
-      })
+            item.reason ?? '',
+        }
+      }
     )
 
   return {
@@ -156,14 +203,20 @@ export function mapEmployeeToFrontend(
     workingHours,
     dateOverrides,
     timeOff,
+    blockedTimes,
   }
 }
 
 export function mapEmployeesToFrontend(
-  employees
+  employees,
+  salonTimezone
 ) {
   return employees.map(
-    mapEmployeeToFrontend
+    (employee) =>
+      mapEmployeeToFrontend(
+        employee,
+        salonTimezone
+      )
   )
 }
 
@@ -179,7 +232,8 @@ const dayNumberByKey = {
 
 export function mapEmployeeToCreatePayload(
   employee,
-  salonId
+  salonId,
+  salonTimezone
 ) {
   const workingHours = Object.entries(
     employee.workingHours ?? {}
@@ -199,7 +253,7 @@ export function mapEmployeeToCreatePayload(
         schedule.endTime,
     }))
 
-    const dateOverrides =
+  const dateOverrides =
     (employee.date_overrides ?? []).map(
       (override) => ({
         date:
@@ -238,6 +292,31 @@ export function mapEmployeeToCreatePayload(
       })
     )
 
+  const blockedTimes =
+  (employee.blockedTimes ?? []).map(
+    (item) => ({
+      starts_at:
+        salonDateTimeToUtcIso(
+          item.date,
+          item.startTime,
+          salonTimezone
+        ),
+
+      ends_at:
+        salonDateTimeToUtcIso(
+          item.date,
+          item.endTime,
+          salonTimezone
+        ),
+
+      type:
+        item.type,
+
+      reason:
+        item.note || null,
+    })
+  )
+
   return {
     salon_id:
       salonId,
@@ -257,9 +336,10 @@ export function mapEmployeeToCreatePayload(
     date_overrides:
       dateOverrides,
 
-    time_off:
-      timeOff,
+  time_off:
+     timeOff,
 
-    blocked_times: [],
+  blocked_times:
+     blockedTimes,
   }
 }
