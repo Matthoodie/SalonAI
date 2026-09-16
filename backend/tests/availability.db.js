@@ -244,6 +244,420 @@ test(
 )
 
 test(
+    'availability respects blocked time boundaries',
+    async () => {
+        const fixture =
+            await getSeedFixture()
+
+        const blockedTimeResult =
+            await pool.query(
+                `
+                    INSERT INTO employee_blocked_times (
+                        employee_id,
+                        starts_at,
+                        ends_at,
+                        type,
+                        reason
+                    )
+                    VALUES (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5
+                    )
+                    RETURNING id
+                `,
+                [
+                    fixture.employee_id,
+                    '2030-01-08T10:00:00.000Z',
+                    '2030-01-08T11:00:00.000Z',
+                    'BREAK',
+                    'Blocked time boundary test',
+                ]
+            )
+
+        const blockedTimeId =
+            blockedTimeResult.rows[0].id
+
+        try {
+            const result =
+                await getAvailabilityDayContext({
+                    employeeId:
+                        fixture.employee_id,
+                    serviceId:
+                        fixture.service_id,
+                    date: '2030-01-08',
+                })
+
+            assert.equal(
+                result.error,
+                undefined
+            )
+
+            assert.ok(result.data)
+
+            assert.ok(
+                result.data.slotsWithoutBlockedTime.includes(
+                    '10:30'
+                )
+            )
+
+            assert.ok(
+                !result.data.slotsWithoutBlockedTime.includes(
+                    '11:00'
+                )
+            )
+
+            assert.ok(
+                !result.data.slotsWithoutBlockedTime.includes(
+                    '11:30'
+                )
+            )
+
+            assert.ok(
+                result.data.slotsWithoutBlockedTime.includes(
+                    '12:00'
+                )
+            )
+        } finally {
+            await pool.query(
+                `
+                    DELETE FROM employee_blocked_times
+                    WHERE id = $1
+                `,
+                [blockedTimeId]
+            )
+        }
+    }
+)
+
+test(
+    'availability removes slots that partially overlap blocked time',
+    async () => {
+        const fixture =
+            await getSeedFixture()
+
+        const blockedTimeResult =
+            await pool.query(
+                `
+                    INSERT INTO employee_blocked_times (
+                        employee_id,
+                        starts_at,
+                        ends_at,
+                        type,
+                        reason
+                    )
+                    VALUES (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5
+                    )
+                    RETURNING id
+                `,
+                [
+                    fixture.employee_id,
+                    '2030-01-08T10:15:00.000Z',
+                    '2030-01-08T10:45:00.000Z',
+                    'BREAK',
+                    'Partial overlap regression test',
+                ]
+            )
+
+        const blockedTimeId =
+            blockedTimeResult.rows[0].id
+
+        try {
+            const result =
+                await getAvailabilityDayContext({
+                    employeeId:
+                        fixture.employee_id,
+                    serviceId:
+                        fixture.service_id,
+                    date: '2030-01-08',
+                })
+
+            assert.equal(
+                result.error,
+                undefined
+            )
+
+            assert.ok(result.data)
+
+            assert.ok(
+                result.data.slotsWithoutBlockedTime.includes(
+                    '10:30'
+                )
+            )
+
+            assert.ok(
+                !result.data.slotsWithoutBlockedTime.includes(
+                    '11:00'
+                )
+            )
+
+            assert.ok(
+                !result.data.slotsWithoutBlockedTime.includes(
+                    '11:30'
+                )
+            )
+
+            assert.ok(
+                result.data.slotsWithoutBlockedTime.includes(
+                    '12:00'
+                )
+            )
+        } finally {
+            await pool.query(
+                `
+                    DELETE FROM employee_blocked_times
+                    WHERE id = $1
+                `,
+                [blockedTimeId]
+            )
+        }
+    }
+)
+
+test(
+    'availability treats every blocked time type as unavailable',
+    async () => {
+        const fixture =
+            await getSeedFixture()
+
+        const blockedTimeTypes = [
+            'BREAK',
+            'PRIVATE',
+            'MEETING',
+            'TRAINING',
+            'OTHER',
+        ]
+
+        for (
+            const blockedTimeType of
+            blockedTimeTypes
+        ) {
+            const blockedTimeResult =
+                await pool.query(
+                    `
+                        INSERT INTO employee_blocked_times (
+                            employee_id,
+                            starts_at,
+                            ends_at,
+                            type,
+                            reason
+                        )
+                        VALUES (
+                            $1,
+                            $2,
+                            $3,
+                            $4,
+                            $5
+                        )
+                        RETURNING id
+                    `,
+                    [
+                        fixture.employee_id,
+                        '2030-01-08T10:00:00.000Z',
+                        '2030-01-08T11:00:00.000Z',
+                        blockedTimeType,
+                        `Blocked type ${blockedTimeType} test`,
+                    ]
+                )
+
+            const blockedTimeId =
+                blockedTimeResult.rows[0].id
+
+            try {
+                const result =
+                    await getAvailabilityDayContext({
+                        employeeId:
+                            fixture.employee_id,
+                        serviceId:
+                            fixture.service_id,
+                        date:
+                            '2030-01-08',
+                    })
+
+                assert.equal(
+                    result.error,
+                    undefined
+                )
+
+                assert.ok(result.data)
+
+                assert.ok(
+                    !result.data
+                        .slotsWithoutBlockedTime
+                        .includes('11:00'),
+                    `Expected ${blockedTimeType} to block 11:00`
+                )
+
+                assert.ok(
+                    !result.data
+                        .availableSlots
+                        .includes('11:00'),
+                    `Expected ${blockedTimeType} to remove 11:00 from available slots`
+                )
+
+                const blockedTime =
+                    result.data.blockedTimes.find(
+                        (item) =>
+                            Number(item.id) ===
+                            Number(blockedTimeId)
+                    )
+
+                assert.ok(
+                    blockedTime,
+                    `Expected ${blockedTimeType} blocked time in availability context`
+                )
+
+                assert.equal(
+                    blockedTime.type,
+                    blockedTimeType
+                )
+            } finally {
+                await pool.query(
+                    `
+                        DELETE FROM employee_blocked_times
+                        WHERE id = $1
+                    `,
+                    [blockedTimeId]
+                )
+            }
+        }
+    }
+)
+
+test(
+    'availability respects blocked time in salon timezone during daylight saving time',
+    async () => {
+        const fixture =
+            await getSeedFixture()
+
+        const blockedTimeResult =
+            await pool.query(
+                `
+                    INSERT INTO employee_blocked_times (
+                        employee_id,
+                        starts_at,
+                        ends_at,
+                        type,
+                        reason
+                    )
+                    VALUES (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5
+                    )
+                    RETURNING id
+                `,
+                [
+                    fixture.employee_id,
+                    '2030-07-10T09:00:00.000Z',
+                    '2030-07-10T10:00:00.000Z',
+                    'BREAK',
+                    'DST blocked time regression test',
+                ]
+            )
+
+        const blockedTimeId =
+            blockedTimeResult.rows[0].id
+
+        try {
+            const result =
+                await getAvailabilityDayContext({
+                    employeeId:
+                        fixture.employee_id,
+                    serviceId:
+                        fixture.service_id,
+                    date:
+                        '2030-07-10',
+                })
+
+            assert.equal(
+                result.error,
+                undefined
+            )
+
+            assert.ok(result.data)
+
+            assert.equal(
+                result.data.salon.timezone,
+                'Europe/Zagreb'
+            )
+
+            assert.ok(
+                result.data
+                    .slotsWithoutBlockedTime
+                    .includes('10:30')
+            )
+
+            assert.ok(
+                !result.data
+                    .slotsWithoutBlockedTime
+                    .includes('11:00')
+            )
+
+            assert.ok(
+                !result.data
+                    .slotsWithoutBlockedTime
+                    .includes('11:30')
+            )
+
+            assert.ok(
+                result.data
+                    .slotsWithoutBlockedTime
+                    .includes('12:00')
+            )
+
+            const blockedTime =
+                result.data.blockedTimes.find(
+                    (item) =>
+                        Number(item.id) ===
+                        Number(blockedTimeId)
+                )
+
+            assert.ok(
+                blockedTime,
+                'Expected DST blocked time in availability context'
+            )
+
+            assert.equal(
+                new Date(
+                    blockedTime.starts_at
+                ).toISOString(),
+                '2030-07-10T09:00:00.000Z'
+            )
+
+            assert.equal(
+                new Date(
+                    blockedTime.ends_at
+                ).toISOString(),
+                '2030-07-10T10:00:00.000Z'
+            )
+
+            assert.equal(
+                blockedTime.type,
+                'BREAK'
+            )
+        } finally {
+            await pool.query(
+                `
+                    DELETE FROM employee_blocked_times
+                    WHERE id = $1
+                `,
+                [blockedTimeId]
+            )
+        }
+    }
+)
+
+test(
     'availability removes slots that overlap existing appointment',
     async () => {
         const fixture =

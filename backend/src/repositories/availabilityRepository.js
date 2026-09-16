@@ -1,17 +1,18 @@
 import pool from '../database/pool.js'
 
 export async function findEmployeeBlockedTimesForRange(
-    employeeId,
-    rangeStart,
-    rangeEnd
+  employeeId,
+  rangeStart,
+  rangeEnd
 ) {
-    const result = await pool.query(
-        `
+  const result = await pool.query(
+    `
       SELECT
         id,
         employee_id,
         starts_at,
         ends_at,
+        type,
         reason
       FROM employee_blocked_times
       WHERE employee_id = $1
@@ -19,23 +20,23 @@ export async function findEmployeeBlockedTimesForRange(
         AND ends_at > $2
       ORDER BY starts_at
     `,
-        [
-            employeeId,
-            rangeStart,
-            rangeEnd,
-        ]
-    )
+    [
+      employeeId,
+      rangeStart,
+      rangeEnd,
+    ]
+  )
 
-    return result.rows
+  return result.rows
 }
 
 export async function findEmployeeAppointmentsForRange(
-    employeeId,
-    rangeStart,
-    rangeEnd
+  employeeId,
+  rangeStart,
+  rangeEnd
 ) {
-    const result = await pool.query(
-        `
+  const result = await pool.query(
+    `
       SELECT
         id,
         employee_id,
@@ -50,23 +51,23 @@ export async function findEmployeeAppointmentsForRange(
         AND ends_at > $2
       ORDER BY starts_at
     `,
-        [
-            employeeId,
-            rangeStart,
-            rangeEnd,
-        ]
-    )
+    [
+      employeeId,
+      rangeStart,
+      rangeEnd,
+    ]
+  )
 
-    return result.rows
+  return result.rows
 }
 
 export async function findEmployeeServiceQualification(
-    employeeId,
-    serviceId,
-    salonId
+  employeeId,
+  serviceId,
+  salonId
 ) {
-    const result = await pool.query(
-        `
+  const result = await pool.query(
+    `
       SELECT
         employee_id,
         service_id,
@@ -77,12 +78,12 @@ export async function findEmployeeServiceQualification(
         AND salon_id = $3
       LIMIT 1
     `,
-        [
-            employeeId,
-            serviceId,
-            salonId,
-        ]
-    )
+    [
+      employeeId,
+      serviceId,
+      salonId,
+    ]
+  )
 
-    return result.rows[0] ?? null
+  return result.rows[0] ?? null
 }

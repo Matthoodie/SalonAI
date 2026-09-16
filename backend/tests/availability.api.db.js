@@ -127,6 +127,128 @@ test(
 )
 
 test(
+    'GET /api/availability removes slots blocked by employee blocked time',
+    async () => {
+        const fixture =
+            await getSeedFixture()
+
+        const blockedTimeResult =
+            await pool.query(
+                `
+                    INSERT INTO employee_blocked_times (
+                        employee_id,
+                        starts_at,
+                        ends_at,
+                        type,
+                        reason
+                    )
+                    VALUES (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5
+                    )
+                    RETURNING id
+                `,
+                [
+                    fixture.employee_id,
+                    '2030-01-07T10:00:00.000Z',
+                    '2030-01-07T11:00:00.000Z',
+                    'BREAK',
+                    'Availability API blocked time regression test',
+                ]
+            )
+
+        const blockedTimeId =
+            blockedTimeResult.rows[0].id
+
+        const server =
+            app.listen(0)
+
+        try {
+            await new Promise((resolve) => {
+                server.once(
+                    'listening',
+                    resolve
+                )
+            })
+
+            const address =
+                server.address()
+
+            const response = await fetch(
+                `http://127.0.0.1:${address.port}/api/availability?employeeId=${fixture.employee_id}&serviceId=${fixture.service_id}&date=2030-01-07`
+            )
+
+            const body =
+                await response.json()
+
+            assert.equal(
+                response.status,
+                200
+            )
+
+            assert.equal(
+                body.data.timezone,
+                'Europe/Zagreb'
+            )
+
+            assert.ok(
+                Array.isArray(
+                    body.data.availableSlots
+                )
+            )
+
+            assert.ok(
+                body.data.availableSlots.includes(
+                    '10:30'
+                )
+            )
+
+            assert.ok(
+                !body.data.availableSlots.includes(
+                    '11:00'
+                )
+            )
+
+            assert.ok(
+                !body.data.availableSlots.includes(
+                    '11:30'
+                )
+            )
+
+            assert.ok(
+                body.data.availableSlots.includes(
+                    '12:00'
+                )
+            )
+        } finally {
+            await pool.query(
+                `
+                    DELETE FROM employee_blocked_times
+                    WHERE id = $1
+                `,
+                [blockedTimeId]
+            )
+
+            await new Promise(
+                (resolve, reject) => {
+                    server.close((error) => {
+                        if (error) {
+                            reject(error)
+                            return
+                        }
+
+                        resolve()
+                    })
+                }
+            )
+        }
+    }
+)
+
+test(
     'GET /api/availability rejects invalid employeeId',
     async () => {
         const server = app.listen(0)
