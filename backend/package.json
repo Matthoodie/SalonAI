@@ -7,8 +7,10 @@
   "dev": "node src/server.js",
   "migrate:up": "node --env-file=.env ./node_modules/node-pg-migrate/bin/node-pg-migrate up",
   "migrate:down": "node --env-file=.env ./node_modules/node-pg-migrate/bin/node-pg-migrate down",
-  "test": "node --test",
-  "test:db": "node --env-file=.env.test --test --test-concurrency=1 tests/appointments.db.js tests/availability.db.js tests/availability.api.db.js tests/booking.db.js tests/booking.api.db.js tests/calendar.api.db.js tests/employees.db.js"
+  "test": "npm run test:all",
+  "test:utils": "node --test --test-reporter=spec tests/time.utils.test.js tests/date.utils.test.js tests/dateTime.utils.test.js",
+  "test:db": "node --env-file=.env.test --test --test-concurrency=1 tests/appointments.db.js tests/availability.db.js tests/availability.api.db.js tests/booking.db.js tests/booking.api.db.js tests/calendar.api.db.js tests/employees.db.js",
+  "test:all": "npm run test:utils && npm run test:db"
 },
   "keywords": [],
   "author": "",

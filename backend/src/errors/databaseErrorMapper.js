@@ -24,6 +24,14 @@ export function mapDatabaseError(error) {
           'Service does not belong to the selected salon.',
       }
 
+    case 'employee_services_service_same_salon_fkey':
+      return {
+        status: 400,
+        code: 'SERVICE_SALON_MISMATCH',
+        message:
+          'Service does not belong to the selected salon.',
+      }
+
     case 'appointments_employee_service_qualified_fkey':
       return {
         status: 400,

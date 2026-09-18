@@ -2,57 +2,13 @@ import {
     createBooking as createBookingService,
 } from '../services/bookingService.js'
 
-function isValidDate(date) {
-    if (
-        typeof date !== 'string' ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(date)
-    ) {
-        return false
-    }
+import {
+    isValidTime,
+} from '../utils/time.js'
 
-    const [
-        year,
-        month,
-        day,
-    ] = date.split('-').map(Number)
-
-    const parsedDate = new Date(
-        Date.UTC(
-            year,
-            month - 1,
-            day
-        )
-    )
-
-    return (
-        parsedDate.getUTCFullYear() === year &&
-        parsedDate.getUTCMonth() === month - 1 &&
-        parsedDate.getUTCDate() === day
-    )
-}
-
-function isValidStartTime(startTime) {
-    if (
-        typeof startTime !== 'string' ||
-        !/^\d{2}:\d{2}$/.test(startTime)
-    ) {
-        return false
-    }
-
-    const [
-        hours,
-        minutes,
-    ] = startTime.split(':').map(Number)
-
-    return (
-        Number.isInteger(hours) &&
-        Number.isInteger(minutes) &&
-        hours >= 0 &&
-        hours <= 23 &&
-        minutes >= 0 &&
-        minutes <= 59
-    )
-}
+import {
+    isValidDateKey,
+} from '../utils/date.js'
 
 export function validateBookingRequestBody(body) {
     if (
@@ -112,7 +68,7 @@ export function validateBookingRequestBody(body) {
         }
     }
 
-    if (!isValidDate(date)) {
+    if (!isValidDateKey(date)) {
         return {
             error: {
                 status: 400,
@@ -123,7 +79,7 @@ export function validateBookingRequestBody(body) {
         }
     }
 
-    if (!isValidStartTime(start_time)) {
+    if (!isValidTime(start_time)) {
         return {
             error: {
                 status: 400,
