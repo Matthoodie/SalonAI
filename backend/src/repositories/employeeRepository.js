@@ -1,5 +1,33 @@
 import pool from '../database/pool.js'
 
+export async function findEmployeeForUpdate(
+  client,
+  {
+    employeeId,
+    salonId,
+  }
+) {
+  const result = await client.query(
+    `
+      SELECT
+        id,
+        salon_id,
+        name,
+        active
+      FROM employees
+      WHERE id = $1
+        AND salon_id = $2
+      FOR UPDATE
+    `,
+    [
+      employeeId,
+      salonId,
+    ]
+  )
+
+  return result.rows[0] ?? null
+}
+
 export async function findEmployeesBySalonId(
   salonId
 ) {

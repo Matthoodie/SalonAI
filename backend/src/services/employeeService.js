@@ -14,6 +14,7 @@ import {
 } from '../utils/dateTime.js'
 
 import {
+  findEmployeeForUpdate,
   findEmployeesBySalonId,
   insertEmployee,
   insertEmployeeServices,
@@ -770,12 +771,12 @@ export async function updateEmployeeForSalon({
   employeeId,
   salonId,
   name,
-  active = true,
-  serviceIds = [],
-  workingHours = [],
-  dateOverrides = [],
-  timeOff = [],
-  blockedTimes = [],
+  active,
+  serviceIds,
+  workingHours,
+  dateOverrides,
+  timeOff,
+  blockedTimes,
 }) {
   if (
     !Number.isSafeInteger(employeeId) ||
@@ -806,9 +807,14 @@ export async function updateEmployeeForSalon({
   }
 
   const trimmedName =
-    String(name || '').trim()
+    name === undefined
+      ? undefined
+      : String(name || '').trim()
 
-  if (!trimmedName) {
+  if (
+    name !== undefined &&
+    !trimmedName
+  ) {
     const error = new Error(
       'Employee name is required.'
     )
@@ -819,7 +825,10 @@ export async function updateEmployeeForSalon({
     throw error
   }
 
-  if (typeof active !== 'boolean') {
+  if (
+    active !== undefined &&
+    typeof active !== 'boolean'
+  ) {
     const error = new Error(
       'active must be a boolean.'
     )
@@ -830,25 +839,25 @@ export async function updateEmployeeForSalon({
     throw error
   }
 
-  validateServiceIds(
-    serviceIds
-  )
+  if (serviceIds !== undefined) {
+    validateServiceIds(serviceIds)
+  }
 
-  validateWorkingHours(
-    workingHours
-  )
+  if (workingHours !== undefined) {
+    validateWorkingHours(workingHours)
+  }
 
-  validateDateOverrides(
-    dateOverrides
-  )
+  if (dateOverrides !== undefined) {
+    validateDateOverrides(dateOverrides)
+  }
 
-  validateTimeOff(
-    timeOff
-  )
+  if (timeOff !== undefined) {
+    validateTimeOff(timeOff)
+  }
 
-  validateBlockedTimes(
-    blockedTimes
-  )
+  if (blockedTimes !== undefined) {
+    validateBlockedTimes(blockedTimes)
+  }
 
   const client =
     await pool.connect()
@@ -856,18 +865,16 @@ export async function updateEmployeeForSalon({
   try {
     await client.query('BEGIN')
 
-    const employee =
-      await updateEmployee(
+    const existingEmployee =
+      await findEmployeeForUpdate(
         client,
         {
           employeeId,
           salonId,
-          name: trimmedName,
-          active,
         }
       )
 
-    if (!employee) {
+    if (!existingEmployee) {
       const error = new Error(
         'Employee was not found.'
       )
@@ -880,98 +887,121 @@ export async function updateEmployeeForSalon({
       throw error
     }
 
-    const currentServiceIds =
-      await findEmployeeServiceIds(
-        client,
-        employeeId
-      )
-
-    const serviceIdsToRemove =
-      currentServiceIds.filter(
-        (serviceId) =>
-          !serviceIds.includes(serviceId)
-      )
-
-    const serviceIdsToAdd =
-      serviceIds.filter(
-        (serviceId) =>
-          !currentServiceIds.includes(serviceId)
-      )
-
-    for (
-      const serviceId of
-      serviceIdsToRemove
-    ) {
-      await deleteEmployeeService(
+    const employee =
+      await updateEmployee(
         client,
         {
           employeeId,
-          serviceId,
+          salonId,
+          name:
+            trimmedName === undefined
+              ? existingEmployee.name
+              : trimmedName,
+          active:
+            active === undefined
+              ? existingEmployee.active
+              : active,
+        }
+      )
+
+    if (serviceIds !== undefined) {
+      const currentServiceIds =
+        await findEmployeeServiceIds(
+          client,
+          employeeId
+        )
+
+      const serviceIdsToRemove =
+        currentServiceIds.filter(
+          (serviceId) =>
+            !serviceIds.includes(serviceId)
+        )
+
+      const serviceIdsToAdd =
+        serviceIds.filter(
+          (serviceId) =>
+            !currentServiceIds.includes(serviceId)
+        )
+
+      for (const serviceId of serviceIdsToRemove) {
+        await deleteEmployeeService(
+          client,
+          {
+            employeeId,
+            serviceId,
+          }
+        )
+      }
+
+      await insertEmployeeServices(
+        client,
+        {
+          employeeId,
+          salonId,
+          serviceIds: serviceIdsToAdd,
         }
       )
     }
 
-    await insertEmployeeServices(
-      client,
-      {
-        employeeId,
-        salonId,
-        serviceIds:
-          serviceIdsToAdd,
-      }
-    )
+    if (workingHours !== undefined) {
+      await deleteEmployeeWorkingHours(
+        client,
+        employeeId
+      )
 
-    await deleteEmployeeWorkingHours(
-      client,
-      employeeId
-    )
+      await insertEmployeeWorkingHours(
+        client,
+        {
+          employeeId,
+          workingHours,
+        }
+      )
+    }
 
-    await deleteEmployeeDateOverrides(
-      client,
-      employeeId
-    )
+    if (dateOverrides !== undefined) {
+      await deleteEmployeeDateOverrides(
+        client,
+        employeeId
+      )
 
-    await deleteEmployeeTimeOff(
-      client,
-      employeeId
-    )
+      await insertEmployeeDateOverrides(
+        client,
+        {
+          employeeId,
+          dateOverrides,
+        }
+      )
+    }
 
-    await deleteEmployeeBlockedTimes(
-      client,
-      employeeId
-    )
+    if (timeOff !== undefined) {
+      await deleteEmployeeTimeOff(
+        client,
+        employeeId
+      )
 
-    await insertEmployeeWorkingHours(
-      client,
-      {
-        employeeId,
-        workingHours,
-      }
-    )
+      await insertEmployeeTimeOff(
+        client,
+        {
+          employeeId,
+          timeOff,
+        }
+      )
+    }
 
-    await insertEmployeeDateOverrides(
-      client,
-      {
-        employeeId,
-        dateOverrides,
-      }
-    )
+    if (blockedTimes !== undefined) {
+      await deleteEmployeeBlockedTimes(
+        client,
+        employeeId
+      )
 
-    await insertEmployeeTimeOff(
-      client,
-      {
-        employeeId,
-        timeOff,
-      }
-    )
-
-    await insertEmployeeBlockedTimes(
-      client,
-      {
-        employeeId,
-        blockedTimes,
-      }
-    )
+      await insertEmployeeBlockedTimes(
+        client,
+        {
+          employeeId,
+          blockedTimes,
+        }
+      )
+    }
 
     await client.query('COMMIT')
 

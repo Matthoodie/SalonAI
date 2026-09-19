@@ -92,18 +92,12 @@ export async function updateEmployee(
         employeeId,
         salonId,
         name: req.body.name,
-        active:
-          req.body.active ?? true,
-        serviceIds:
-          req.body.service_ids ?? [],
-        workingHours:
-          req.body.working_hours ?? [],
-        dateOverrides:
-          req.body.date_overrides ?? [],
-        timeOff:
-          req.body.time_off ?? [],
-        blockedTimes:
-          req.body.blocked_times ?? [],
+        active: req.body.active,
+        serviceIds: req.body.service_ids,
+        workingHours: req.body.working_hours,
+        dateOverrides: req.body.date_overrides,
+        timeOff: req.body.time_off,
+        blockedTimes: req.body.blocked_times,
       })
 
     res.status(200).json({
