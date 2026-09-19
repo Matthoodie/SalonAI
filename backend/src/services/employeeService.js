@@ -778,6 +778,26 @@ export async function updateEmployeeForSalon({
   timeOff,
   blockedTimes,
 }) {
+  const hasFieldsToUpdate =
+    name !== undefined ||
+    active !== undefined ||
+    serviceIds !== undefined ||
+    workingHours !== undefined ||
+    dateOverrides !== undefined ||
+    timeOff !== undefined ||
+    blockedTimes !== undefined
+
+  if (!hasFieldsToUpdate) {
+    const error = new Error(
+      'At least one employee field must be provided for update.'
+    )
+
+    error.code = 'EMPLOYEE_UPDATE_FIELDS_REQUIRED'
+    error.statusCode = 400
+
+    throw error
+  }
+
   if (
     !Number.isSafeInteger(employeeId) ||
     employeeId <= 0

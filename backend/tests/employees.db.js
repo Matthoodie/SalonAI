@@ -5032,3 +5032,523 @@ test(
     }
   }
 )
+
+test(
+  'PATCH /api/employees/:id rejects null working_hours and preserves existing data',
+  async () => {
+    const fixture =
+      await getEmployeeTestFixture()
+
+    let employeeId = null
+    const server = app.listen(0)
+
+    try {
+      await waitForServer(server)
+
+      const baseUrl =
+        `http://127.0.0.1:${server.address().port}`
+
+      // 1. Create an inactive employee with working hours.
+      const createResponse =
+        await fetch(
+          `${baseUrl}/api/employees`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              salon_id: Number(fixture.salon_id),
+              name: 'Employee Null Working Hours Test',
+              active: false,
+              service_ids: [
+                Number(fixture.service_id),
+              ],
+              working_hours: [
+                {
+                  day_of_week: 3,
+                  start_time: '09:00',
+                  end_time: '17:00',
+                },
+              ],
+              date_overrides: [],
+              time_off: [],
+              blocked_times: [],
+            }),
+          }
+        )
+
+      const createBody =
+        await createResponse.json()
+
+      assert.equal(createResponse.status, 201)
+
+      employeeId =
+        createBody.data?.id ?? null
+
+      assert.ok(employeeId)
+
+      // 2. Capture persisted data before PATCH.
+      async function readSnapshot() {
+        const employeeResult =
+          await pool.query(
+            `
+              SELECT id, salon_id, name, active
+              FROM employees
+              WHERE id = $1
+            `,
+            [employeeId]
+          )
+
+        const workingHoursResult =
+          await pool.query(
+            `
+              SELECT
+                day_of_week,
+                start_time,
+                end_time
+              FROM employee_working_hours
+              WHERE employee_id = $1
+              ORDER BY day_of_week
+            `,
+            [employeeId]
+          )
+
+        assert.equal(
+          employeeResult.rows.length,
+          1
+        )
+
+        return {
+          employee: employeeResult.rows[0],
+          workingHours: workingHoursResult.rows,
+        }
+      }
+
+      const before =
+        await readSnapshot()
+
+      assert.equal(before.employee.active, false)
+      assert.equal(before.workingHours.length, 1)
+
+      // 3. Send an invalid value alongside valid changes.
+      const updateResponse =
+        await fetch(
+          `${baseUrl}/api/employees/${employeeId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              salon_id: Number(fixture.salon_id),
+              name: 'This Name Must Not Be Saved',
+              active: true,
+              working_hours: null,
+            }),
+          }
+        )
+
+      const updateBody =
+        await updateResponse.json()
+
+      assert.equal(updateResponse.status, 400)
+
+      assert.equal(
+        updateBody.error?.message,
+        'working_hours must be an array.'
+      )
+
+      // 4. Rejecting PATCH must preserve all previous data.
+      const after =
+        await readSnapshot()
+
+      assert.deepEqual(
+        after,
+        before,
+        'Invalid working_hours must not change employee data.'
+      )
+    } finally {
+      try {
+        if (employeeId !== null) {
+          await pool.query(
+            `
+              DELETE FROM employees
+              WHERE id = $1
+                AND salon_id = $2
+            `,
+            [
+              employeeId,
+              fixture.salon_id,
+            ]
+          )
+        }
+      } finally {
+        await closeServer(server)
+      }
+    }
+  }
+)
+
+test(
+  'PATCH /api/employees/:id rejects request without fields to update',
+  async () => {
+    const fixture =
+      await getEmployeeTestFixture()
+
+    let employeeId = null
+    const server = app.listen(0)
+
+    try {
+      await waitForServer(server)
+
+      const baseUrl =
+        `http://127.0.0.1:${server.address().port}`
+
+      // 1. Create an employee for this test.
+      const createResponse =
+        await fetch(
+          `${baseUrl}/api/employees`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              salon_id: Number(fixture.salon_id),
+              name: 'Employee Empty PATCH Test',
+              active: false,
+              service_ids: [
+                Number(fixture.service_id),
+              ],
+              working_hours: [],
+              date_overrides: [],
+              time_off: [],
+              blocked_times: [],
+            }),
+          }
+        )
+
+      const createBody =
+        await createResponse.json()
+
+      assert.equal(createResponse.status, 201)
+
+      employeeId =
+        createBody.data?.id ?? null
+
+      assert.ok(employeeId)
+
+      // 2. Capture the employee's existing data.
+      async function readEmployee() {
+        const result =
+          await pool.query(
+            `
+              SELECT id, salon_id, name, active
+              FROM employees
+              WHERE id = $1
+            `,
+            [employeeId]
+          )
+
+        assert.equal(result.rows.length, 1)
+
+        return result.rows[0]
+      }
+
+      const before =
+        await readEmployee()
+
+      // 3. PATCH contains salon_id but no editable fields.
+      const updateResponse =
+        await fetch(
+          `${baseUrl}/api/employees/${employeeId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              salon_id: Number(fixture.salon_id),
+            }),
+          }
+        )
+
+      const updateBody =
+        await updateResponse.json()
+
+      assert.equal(
+        updateResponse.status,
+        400,
+        'PATCH without editable fields must be rejected.'
+      )
+
+      assert.equal(
+        updateBody.error?.code,
+        'EMPLOYEE_UPDATE_FIELDS_REQUIRED'
+      )
+
+      // 4. A rejected request must not change the employee.
+      const after =
+        await readEmployee()
+
+      assert.deepEqual(
+        after,
+        before,
+        'Empty PATCH must preserve existing employee data.'
+      )
+    } finally {
+      try {
+        if (employeeId !== null) {
+          await pool.query(
+            `
+              DELETE FROM employees
+              WHERE id = $1
+                AND salon_id = $2
+            `,
+            [
+              employeeId,
+              fixture.salon_id,
+            ]
+          )
+        }
+      } finally {
+        await closeServer(server)
+      }
+    }
+  }
+)
+
+test(
+  'PATCH /api/employees/:id rolls back all changes when service belongs to another salon',
+  async () => {
+    const fixture =
+      await getEmployeeTestFixture()
+
+    let employeeId = null
+    let otherSalonId = null
+    let otherServiceId = null
+    let server = null
+
+    try {
+      // 1. Create a separate salon and a service that belongs to it.
+      const otherSalonResult =
+        await pool.query(
+          `
+            INSERT INTO salons (
+              name,
+              timezone,
+              active
+            )
+            VALUES ($1, $2, $3)
+            RETURNING id
+          `,
+          [
+            'Employee PATCH Rollback Test Salon',
+            'Europe/Zagreb',
+            true,
+          ]
+        )
+
+      otherSalonId =
+        Number(otherSalonResult.rows[0].id)
+
+      const otherServiceResult =
+        await pool.query(
+          `
+            INSERT INTO services (
+              salon_id,
+              name,
+              category,
+              price_cents,
+              default_duration_minutes,
+              active
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id
+          `,
+          [
+            otherSalonId,
+            'Employee PATCH Rollback Test Service',
+            'test',
+            1000,
+            30,
+            true,
+          ]
+        )
+
+      otherServiceId =
+        Number(otherServiceResult.rows[0].id)
+
+      server = app.listen(0)
+
+      await waitForServer(server)
+
+      const baseUrl =
+        `http://127.0.0.1:${server.address().port}`
+
+      // 2. Create an inactive employee in the original salon.
+      const createResponse =
+        await fetch(
+          `${baseUrl}/api/employees`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              salon_id: Number(fixture.salon_id),
+              name: 'Employee Before PATCH Rollback',
+              active: false,
+              service_ids: [
+                Number(fixture.service_id),
+              ],
+              working_hours: [],
+              date_overrides: [],
+              time_off: [],
+              blocked_times: [],
+            }),
+          }
+        )
+
+      const createBody =
+        await createResponse.json()
+
+      assert.equal(createResponse.status, 201)
+
+      employeeId =
+        createBody.data?.id ?? null
+
+      assert.ok(employeeId)
+
+      // 3. Read persisted employee data and assigned services.
+      async function readSnapshot() {
+        const employeeResult =
+          await pool.query(
+            `
+              SELECT id, salon_id, name, active
+              FROM employees
+              WHERE id = $1
+            `,
+            [employeeId]
+          )
+
+        const servicesResult =
+          await pool.query(
+            `
+              SELECT salon_id, service_id
+              FROM employee_services
+              WHERE employee_id = $1
+              ORDER BY service_id
+            `,
+            [employeeId]
+          )
+
+        assert.equal(
+          employeeResult.rows.length,
+          1
+        )
+
+        return {
+          employee: employeeResult.rows[0],
+          services: servicesResult.rows,
+        }
+      }
+
+      const before =
+        await readSnapshot()
+
+      assert.equal(before.employee.active, false)
+      assert.equal(before.services.length, 1)
+
+      // 4. Attempt valid employee changes together with
+      // an invalid service assignment.
+      const updateResponse =
+        await fetch(
+          `${baseUrl}/api/employees/${employeeId}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              salon_id: Number(fixture.salon_id),
+              name: 'Employee Name Must Roll Back',
+              active: true,
+              service_ids: [
+                otherServiceId,
+              ],
+            }),
+          }
+        )
+
+      const updateBody =
+        await updateResponse.json()
+
+      assert.equal(
+        updateResponse.status,
+        400
+      )
+
+      assert.equal(
+        updateBody.error?.code,
+        'SERVICE_SALON_MISMATCH'
+      )
+
+      // 5. All changes must be rolled back:
+      // name, active status and assigned services.
+      const after =
+        await readSnapshot()
+
+      assert.deepEqual(
+        after,
+        before,
+        'Failed service assignment must roll back all employee changes.'
+      )
+    } finally {
+      try {
+        if (employeeId !== null) {
+          await pool.query(
+            `
+              DELETE FROM employees
+              WHERE id = $1
+                AND salon_id = $2
+            `,
+            [
+              employeeId,
+              fixture.salon_id,
+            ]
+          )
+        }
+      } finally {
+        try {
+          if (otherServiceId !== null) {
+            await pool.query(
+              `
+                DELETE FROM services
+                WHERE id = $1
+              `,
+              [otherServiceId]
+            )
+          }
+        } finally {
+          try {
+            if (otherSalonId !== null) {
+              await pool.query(
+                `
+                  DELETE FROM salons
+                  WHERE id = $1
+                `,
+                [otherSalonId]
+              )
+            }
+          } finally {
+            if (server !== null) {
+              await closeServer(server)
+            }
+          }
+        }
+      }
+    }
+  }
+)
