@@ -2650,3 +2650,428 @@ test('PATCH /api/appointments/:id/status rejects invalid appointment ID', async 
     })
   }
 })
+
+test(
+  'POST /api/appointments rejects inactive employee without creating an appointment',
+  async () => {
+    const fixture =
+      await getSeedFixture()
+
+    const employeeId =
+      fixture.employee_id
+
+    const testNotes =
+      'Inactive employee direct appointment regression test'
+
+    const employeeResult =
+      await pool.query(
+        `
+          SELECT active
+          FROM employees
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [
+          employeeId,
+          fixture.salon_id,
+        ]
+      )
+
+    assert.equal(
+      employeeResult.rows.length,
+      1
+    )
+
+    const originalActive =
+      employeeResult.rows[0].active
+
+    async function countAppointments() {
+      const result =
+        await pool.query(
+          `
+            SELECT COUNT(*)::integer AS appointment_count
+            FROM appointments
+            WHERE employee_id = $1
+              AND salon_id = $2
+          `,
+          [
+            employeeId,
+            fixture.salon_id,
+          ]
+        )
+
+      return result.rows[0]
+        .appointment_count
+    }
+
+    const appointmentsBefore =
+      await countAppointments()
+
+    const server =
+      app.listen(0)
+
+    try {
+      await pool.query(
+        `
+          UPDATE employees
+          SET active = false
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [
+          employeeId,
+          fixture.salon_id,
+        ]
+      )
+
+      await new Promise(
+        (resolve) => {
+          if (server.listening) {
+            resolve()
+            return
+          }
+
+          server.once(
+            'listening',
+            resolve
+          )
+        }
+      )
+
+      const address =
+        server.address()
+
+      const response =
+        await fetch(
+          `http://127.0.0.1:${address.port}/api/appointments`,
+          {
+            method: 'POST',
+            headers: {
+              'content-type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              salon_id:
+                fixture.salon_id,
+              client_id:
+                fixture.client_id,
+              employee_id:
+                employeeId,
+              service_id:
+                fixture.service_id,
+              starts_at:
+                '2030-01-09T09:30:00.000Z',
+              notes:
+                testNotes,
+            }),
+          }
+        )
+
+      const body =
+        await response.json()
+
+      assert.equal(
+        response.status,
+        400
+      )
+
+      assert.equal(
+        body.error?.code,
+        'EMPLOYEE_INACTIVE'
+      )
+
+      const appointmentsAfter =
+        await countAppointments()
+
+      assert.equal(
+        appointmentsAfter,
+        appointmentsBefore,
+        'Rejected appointment request must not create an appointment.'
+      )
+    } finally {
+      try {
+        await pool.query(
+          `
+            UPDATE employees
+            SET active = $3
+            WHERE id = $1
+              AND salon_id = $2
+          `,
+          [
+            employeeId,
+            fixture.salon_id,
+            originalActive,
+          ]
+        )
+
+        // Safety cleanup if an unexpected appointment
+        // was created before the test failed.
+        await pool.query(
+          `
+            DELETE FROM appointments
+            WHERE salon_id = $1
+              AND employee_id = $2
+              AND notes = $3
+          `,
+          [
+            fixture.salon_id,
+            employeeId,
+            testNotes,
+          ]
+        )
+      } finally {
+        await new Promise(
+          (resolve, reject) => {
+            server.close(
+              (error) => {
+                if (error) {
+                  reject(error)
+                  return
+                }
+
+                resolve()
+              }
+            )
+          }
+        )
+      }
+    }
+  }
+)
+
+test(
+  'PATCH /api/appointments/:id/schedule rejects reschedule for inactive employee',
+  async () => {
+    const fixture = await getSeedFixture()
+
+    const employeeResult = await pool.query(
+      `
+        SELECT active
+        FROM employees
+        WHERE id = $1
+          AND salon_id = $2
+      `,
+      [
+        fixture.employee_id,
+        fixture.salon_id,
+      ]
+    )
+
+    assert.equal(employeeResult.rows.length, 1)
+
+    const originalActive =
+      employeeResult.rows[0].active
+
+    assert.equal(
+      originalActive,
+      true,
+      'Seed employee must be active before creating the test appointment.'
+    )
+
+    const server = app.listen(0)
+
+    let createdAppointmentId = null
+
+    try {
+      await new Promise((resolve) => {
+        if (server.listening) {
+          resolve()
+          return
+        }
+
+        server.once('listening', resolve)
+      })
+
+      const address = server.address()
+
+      const baseUrl =
+        `http://127.0.0.1:${address.port}`
+
+      // 1. Create an appointment while
+      // the employee is still active.
+
+      const createResponse = await fetch(
+        `${baseUrl}/api/appointments`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: fixture.salon_id,
+            client_id: fixture.client_id,
+            employee_id: fixture.employee_id,
+            service_id: fixture.service_id,
+            starts_at:
+              '2030-01-14T10:00:00+01:00',
+            notes:
+              'Inactive employee reschedule lifecycle regression test',
+          }),
+        }
+      )
+
+      const createBody =
+        await createResponse.json()
+
+      createdAppointmentId =
+        createBody.data?.id ?? null
+
+      assert.equal(createResponse.status, 201)
+
+      assert.ok(
+        createdAppointmentId,
+        'Expected the initial appointment to be created.'
+      )
+
+      // 2. Save the original appointment
+      // data before attempting reschedule.
+
+      const originalResult = await pool.query(
+        `
+          SELECT
+            starts_at,
+            ends_at,
+            duration_minutes,
+            status,
+            employee_id
+          FROM appointments
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [
+          createdAppointmentId,
+          fixture.salon_id,
+        ]
+      )
+
+      assert.equal(originalResult.rows.length, 1)
+
+      const originalAppointment =
+        originalResult.rows[0]
+
+      // 3. Deactivate the employee.
+
+      await pool.query(
+        `
+          UPDATE employees
+          SET active = false
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [
+          fixture.employee_id,
+          fixture.salon_id,
+        ]
+      )
+
+      // 4. Attempt to move the existing
+      // appointment to another valid time.
+
+      const rescheduleResponse = await fetch(
+        `${baseUrl}/api/appointments/${createdAppointmentId}/schedule`,
+        {
+          method: 'PATCH',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            starts_at:
+              '2030-01-14T11:00:00+01:00',
+          }),
+        }
+      )
+
+      const rescheduleBody =
+        await rescheduleResponse.json()
+
+      assert.equal(
+        rescheduleResponse.status,
+        400,
+        'Rescheduling an inactive employee appointment must be rejected.'
+      )
+
+      assert.equal(
+        rescheduleBody.error?.code,
+        'EMPLOYEE_INACTIVE'
+      )
+
+      // 5. A rejected reschedule must leave
+      // the appointment unchanged in the DB.
+
+      const afterResult = await pool.query(
+        `
+          SELECT
+            starts_at,
+            ends_at,
+            duration_minutes,
+            status,
+            employee_id
+          FROM appointments
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [
+          createdAppointmentId,
+          fixture.salon_id,
+        ]
+      )
+
+      assert.equal(afterResult.rows.length, 1)
+
+      assert.deepEqual(
+        afterResult.rows[0],
+        originalAppointment,
+        'Rejected reschedule must not modify the existing appointment.'
+      )
+    } finally {
+      try {
+        // Restore the employee even when
+        // the RED assertion fails.
+
+        await pool.query(
+          `
+            UPDATE employees
+            SET active = $3
+            WHERE id = $1
+              AND salon_id = $2
+          `,
+          [
+            fixture.employee_id,
+            fixture.salon_id,
+            originalActive,
+          ]
+        )
+      } finally {
+        try {
+          // Remove only the appointment
+          // created by this test.
+
+          if (createdAppointmentId !== null) {
+            await pool.query(
+              `
+                DELETE FROM appointments
+                WHERE id = $1
+                  AND salon_id = $2
+              `,
+              [
+                createdAppointmentId,
+                fixture.salon_id,
+              ]
+            )
+          }
+        } finally {
+          await new Promise((resolve, reject) => {
+            server.close((error) => {
+              if (error) {
+                reject(error)
+                return
+              }
+
+              resolve()
+            })
+          })
+        }
+      }
+    }
+  }
+)

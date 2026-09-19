@@ -730,3 +730,224 @@ test(
         }
     }
 )
+
+test(
+    'GET /api/calendar preserves existing appointments after employee deactivation',
+    async () => {
+        const fixtureResult =
+            await pool.query(
+                `
+                    SELECT
+                        a.id AS appointment_id,
+                        a.salon_id,
+                        a.employee_id,
+                        e.active AS employee_active
+                    FROM appointments a
+                    JOIN employees e
+                        ON e.id = a.employee_id
+                       AND e.salon_id = a.salon_id
+                    JOIN salons s
+                        ON s.id = a.salon_id
+                    WHERE a.notes =
+                        'SalonAI development seed appointment'
+                      AND s.name =
+                        'SalonAI Demo Salon'
+                      AND e.name =
+                        'Demo Employee'
+                    ORDER BY a.id
+                    LIMIT 1
+                `
+            )
+
+        const fixture =
+            fixtureResult.rows[0]
+
+        assert.ok(
+            fixture,
+            'Expected seeded appointment to exist.'
+        )
+
+        assert.equal(
+            fixture.employee_active,
+            true,
+            'Seed employee must be active before this test.'
+        )
+
+        const originalActive =
+            fixture.employee_active
+
+        const server =
+            app.listen(0)
+
+        try {
+            await new Promise(
+                (resolve) => {
+                    if (server.listening) {
+                        resolve()
+                        return
+                    }
+
+                    server.once(
+                        'listening',
+                        resolve
+                    )
+                }
+            )
+
+            const address =
+                server.address()
+
+            const baseUrl =
+                `http://127.0.0.1:${address.port}`
+
+            const calendarUrl =
+                `${baseUrl}/api/calendar` +
+                `?salonId=${fixture.salon_id}` +
+                '&from=2026-10-05' +
+                '&to=2026-10-05'
+
+            // 1. Read the existing appointment
+            // before deactivating the employee.
+
+            const beforeResponse =
+                await fetch(calendarUrl)
+
+            const beforeBody =
+                await beforeResponse.json()
+
+            assert.equal(
+                beforeResponse.status,
+                200
+            )
+
+            const originalAppointment =
+                beforeBody.data.appointments.find(
+                    (appointment) =>
+                        Number(appointment.id) ===
+                        Number(fixture.appointment_id)
+                )
+
+            assert.ok(
+                originalAppointment,
+                'Seed appointment must be visible before deactivation.'
+            )
+
+            // 2. Deactivate the employee.
+
+            await pool.query(
+                `
+                    UPDATE employees
+                    SET active = false
+                    WHERE id = $1
+                      AND salon_id = $2
+                `,
+                [
+                    fixture.employee_id,
+                    fixture.salon_id,
+                ]
+            )
+
+            // 3. The appointment must remain
+            // visible in the unfiltered calendar.
+
+            const afterResponse =
+                await fetch(calendarUrl)
+
+            const afterBody =
+                await afterResponse.json()
+
+            assert.equal(
+                afterResponse.status,
+                200
+            )
+
+            const appointmentAfter =
+                afterBody.data.appointments.find(
+                    (appointment) =>
+                        Number(appointment.id) ===
+                        Number(fixture.appointment_id)
+                )
+
+            assert.ok(
+                appointmentAfter,
+                'Existing appointment must remain visible after deactivation.'
+            )
+
+            assert.deepEqual(
+                appointmentAfter,
+                originalAppointment,
+                'Deactivation must not change existing appointment data.'
+            )
+
+            // 4. Filtering by the inactive
+            // employee must still show the appointment.
+
+            const filteredUrl =
+                calendarUrl +
+                `&employeeId=${fixture.employee_id}`
+
+            const filteredResponse =
+                await fetch(filteredUrl)
+
+            const filteredBody =
+                await filteredResponse.json()
+
+            assert.equal(
+                filteredResponse.status,
+                200
+            )
+
+            const filteredAppointment =
+                filteredBody.data.appointments.find(
+                    (appointment) =>
+                        Number(appointment.id) ===
+                        Number(fixture.appointment_id)
+                )
+
+            assert.ok(
+                filteredAppointment,
+                'Inactive employee appointment must remain visible when filtered by employeeId.'
+            )
+
+            assert.deepEqual(
+                filteredAppointment,
+                originalAppointment,
+                'Employee filtering must preserve existing appointment data.'
+            )
+        } finally {
+            try {
+                // Restore the original employee state
+                // even if an assertion fails.
+
+                await pool.query(
+                    `
+                        UPDATE employees
+                        SET active = $3
+                        WHERE id = $1
+                          AND salon_id = $2
+                    `,
+                    [
+                        fixture.employee_id,
+                        fixture.salon_id,
+                        originalActive,
+                    ]
+                )
+            } finally {
+                await new Promise(
+                    (resolve, reject) => {
+                        server.close(
+                            (error) => {
+                                if (error) {
+                                    reject(error)
+                                    return
+                                }
+
+                                resolve()
+                            }
+                        )
+                    }
+                )
+            }
+        }
+    }
+)

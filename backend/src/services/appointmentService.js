@@ -310,6 +310,29 @@ export async function rescheduleAppointment(
         }
     }
 
+    const employee =
+        await findEmployeeById(appointment.employee_id)
+
+    if (!employee) {
+        return {
+            error: {
+                status: 404,
+                code: 'EMPLOYEE_NOT_FOUND',
+                message: 'Employee was not found.',
+            },
+        }
+    }
+
+    if (!employee.active) {
+        return {
+            error: {
+                status: 400,
+                code: 'EMPLOYEE_INACTIVE',
+                message: 'Employee is not active.',
+            },
+        }
+    }
+
     const salon =
         await findSalonById(appointment.salon_id)
 

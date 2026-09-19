@@ -738,3 +738,433 @@ test(
         }
     }
 )
+
+test(
+    'POST /api/bookings rejects inactive employee without creating an appointment',
+    async () => {
+        const fixture =
+            await getSeedFixture()
+
+        const employeeId =
+            fixture.employee_id
+
+        const employeeResult =
+            await pool.query(
+                `
+                    SELECT active
+                    FROM employees
+                    WHERE id = $1
+                      AND salon_id = $2
+                `,
+                [
+                    employeeId,
+                    fixture.salon_id,
+                ]
+            )
+
+        assert.equal(
+            employeeResult.rows.length,
+            1
+        )
+
+        const originalActive =
+            employeeResult.rows[0].active
+
+        const countAppointments =
+            async () => {
+                const result =
+                    await pool.query(
+                        `
+                            SELECT COUNT(*)::integer
+                                AS appointment_count
+                            FROM appointments
+                            WHERE employee_id = $1
+                              AND salon_id = $2
+                        `,
+                        [
+                            employeeId,
+                            fixture.salon_id,
+                        ]
+                    )
+
+                return result.rows[0]
+                    .appointment_count
+            }
+
+        const appointmentsBefore =
+            await countAppointments()
+
+        const server =
+            app.listen(0)
+
+        try {
+            await pool.query(
+                `
+                    UPDATE employees
+                    SET active = false
+                    WHERE id = $1
+                      AND salon_id = $2
+                `,
+                [
+                    employeeId,
+                    fixture.salon_id,
+                ]
+            )
+
+            await new Promise(
+                (resolve) => {
+                    if (server.listening) {
+                        resolve()
+                        return
+                    }
+
+                    server.once(
+                        'listening',
+                        resolve
+                    )
+                }
+            )
+
+            const address =
+                server.address()
+
+            const response =
+                await fetch(
+                    `http://127.0.0.1:${address.port}/api/bookings`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'content-type':
+                                'application/json',
+                        },
+                        body: JSON.stringify({
+                            salon_id:
+                                fixture.salon_id,
+                            client_id:
+                                fixture.client_id,
+                            employee_id:
+                                employeeId,
+                            service_id:
+                                fixture.service_id,
+                            date:
+                                '2030-01-09',
+                            start_time:
+                                '10:30',
+                            notes:
+                                'Inactive employee booking regression test',
+                        }),
+                    }
+                )
+
+            const body =
+                await response.json()
+
+            assert.equal(
+                response.status,
+                400
+            )
+
+            assert.equal(
+                body.error?.code,
+                'EMPLOYEE_INACTIVE'
+            )
+
+            const appointmentsAfter =
+                await countAppointments()
+
+            assert.equal(
+                appointmentsAfter,
+                appointmentsBefore,
+                'Rejected booking must not create an appointment.'
+            )
+        } finally {
+            await pool.query(
+                `
+                    UPDATE employees
+                    SET active = $3
+                    WHERE id = $1
+                      AND salon_id = $2
+                `,
+                [
+                    employeeId,
+                    fixture.salon_id,
+                    originalActive,
+                ]
+            )
+
+            await new Promise(
+                (resolve, reject) => {
+                    server.close((error) => {
+                        if (error) {
+                            reject(error)
+                            return
+                        }
+
+                        resolve()
+                    })
+                }
+            )
+        }
+    }
+)
+
+test(
+    'POST /api/bookings allows booking after employee reactivation',
+    async () => {
+        const fixture =
+            await getSeedFixture()
+
+        const employeeResult =
+            await pool.query(
+                `
+                    SELECT active
+                    FROM employees
+                    WHERE id = $1
+                      AND salon_id = $2
+                `,
+                [
+                    fixture.employee_id,
+                    fixture.salon_id,
+                ]
+            )
+
+        assert.equal(
+            employeeResult.rows.length,
+            1
+        )
+
+        const originalActive =
+            employeeResult.rows[0].active
+
+        const testNotes =
+            'Employee reactivation booking lifecycle regression test'
+
+        const server =
+            app.listen(0)
+
+        try {
+            await new Promise(
+                (resolve) => {
+                    if (server.listening) {
+                        resolve()
+                        return
+                    }
+
+                    server.once(
+                        'listening',
+                        resolve
+                    )
+                }
+            )
+
+            const address =
+                server.address()
+
+            const baseUrl =
+                `http://127.0.0.1:${address.port}`
+
+            async function changeEmployeeActive(
+                active
+            ) {
+                const response =
+                    await fetch(
+                        `${baseUrl}/api/employees/${fixture.employee_id}/active`,
+                        {
+                            method: 'PATCH',
+                            headers: {
+                                'content-type':
+                                    'application/json',
+                            },
+                            body: JSON.stringify({
+                                salon_id:
+                                    fixture.salon_id,
+                                active,
+                            }),
+                        }
+                    )
+
+                return {
+                    status:
+                        response.status,
+
+                    body:
+                        await response.json(),
+                }
+            }
+
+            // 1. Deactivate the employee
+            // through the Employee API.
+
+            const deactivation =
+                await changeEmployeeActive(
+                    false
+                )
+
+            assert.equal(
+                deactivation.status,
+                200
+            )
+
+            assert.equal(
+                deactivation.body.data?.active,
+                false
+            )
+
+            // 2. Reactivate the same employee
+            // through the Employee API.
+
+            const reactivation =
+                await changeEmployeeActive(
+                    true
+                )
+
+            assert.equal(
+                reactivation.status,
+                200
+            )
+
+            assert.equal(
+                reactivation.body.data?.active,
+                true
+            )
+
+            // 3. The reactivated employee
+            // must accept a new booking.
+
+            const bookingResponse =
+                await fetch(
+                    `${baseUrl}/api/bookings`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'content-type':
+                                'application/json',
+                        },
+                        body: JSON.stringify({
+                            salon_id:
+                                fixture.salon_id,
+                            client_id:
+                                fixture.client_id,
+                            employee_id:
+                                fixture.employee_id,
+                            service_id:
+                                fixture.service_id,
+                            date:
+                                '2030-01-09',
+                            start_time:
+                                '10:30',
+                            notes:
+                                testNotes,
+                        }),
+                    }
+                )
+
+            const bookingBody =
+                await bookingResponse.json()
+
+            assert.equal(
+                bookingResponse.status,
+                201
+            )
+
+            assert.ok(
+                bookingBody.data?.id,
+                'Expected a newly created appointment.'
+            )
+
+            // 4. Verify that the booking
+            // was actually persisted.
+
+            const persistedResult =
+                await pool.query(
+                    `
+                        SELECT
+                            id,
+                            employee_id,
+                            notes
+                        FROM appointments
+                        WHERE id = $1
+                          AND salon_id = $2
+                    `,
+                    [
+                        bookingBody.data.id,
+                        fixture.salon_id,
+                    ]
+                )
+
+            assert.equal(
+                persistedResult.rows.length,
+                1
+            )
+
+            assert.equal(
+                Number(
+                    persistedResult.rows[0]
+                        .employee_id
+                ),
+                Number(
+                    fixture.employee_id
+                )
+            )
+
+            assert.equal(
+                persistedResult.rows[0].notes,
+                testNotes
+            )
+        } finally {
+            try {
+                // Remove the test appointment,
+                // including if an assertion failed
+                // after it was created.
+
+                await pool.query(
+                    `
+                        DELETE FROM appointments
+                        WHERE salon_id = $1
+                          AND employee_id = $2
+                          AND notes = $3
+                    `,
+                    [
+                        fixture.salon_id,
+                        fixture.employee_id,
+                        testNotes,
+                    ]
+                )
+            } finally {
+                try {
+                    // Restore the employee's
+                    // original active state.
+
+                    await pool.query(
+                        `
+                            UPDATE employees
+                            SET active = $3
+                            WHERE id = $1
+                              AND salon_id = $2
+                        `,
+                        [
+                            fixture.employee_id,
+                            fixture.salon_id,
+                            originalActive,
+                        ]
+                    )
+                } finally {
+                    await new Promise(
+                        (resolve, reject) => {
+                            server.close(
+                                (error) => {
+                                    if (error) {
+                                        reject(error)
+                                        return
+                                    }
+
+                                    resolve()
+                                }
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    }
+)
