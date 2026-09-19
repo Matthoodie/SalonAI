@@ -46,18 +46,21 @@ function ClientForm({
     phone: '',
   })
 
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+
   useEffect(() => {
     if (editingClient) {
       setName(editingClient.name)
 
       setPhoneCountryCode(
         editingClient.phoneCountryCode ||
-          '+385'
+        '+385'
       )
 
       setPhoneNumber(
         editingClient.phoneNumber ||
-          ''
+        ''
       )
     } else {
       setName('')
@@ -90,7 +93,13 @@ function ClientForm({
     return `${countryCode}${withoutLeadingZero}`
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (isSaving) {
+      return
+    }
+
+    setSaveError('')
+
     const digitsOnly = phoneNumber.replace(
       /\D/g,
       ''
@@ -131,32 +140,32 @@ function ClientForm({
         phoneNumber
       )
 
-const duplicateClient = clientList.find(
-  (client) => {
-    const hasSamePhone =
-      client.phoneNormalized ===
-      phoneNormalized
+    const duplicateClient = clientList.find(
+      (client) => {
+        const hasSamePhone =
+          client.phoneNormalized ===
+          phoneNormalized
 
-    const isDifferentClient =
-      !editingClient ||
-      client.id !== editingClient.id
+        const isDifferentClient =
+          !editingClient ||
+          client.id !== editingClient.id
 
-    return (
-      hasSamePhone &&
-      isDifferentClient
+        return (
+          hasSamePhone &&
+          isDifferentClient
+        )
+      }
     )
-  }
-)
 
-if (duplicateClient) {
-  setErrors((currentErrors) => ({
-    ...currentErrors,
-    phone:
-      `Klijent s ovim brojem već postoji: ${duplicateClient.name}.`,
-  }))
+    if (duplicateClient) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        phone:
+          `Klijent s ovim brojem već postoji: ${duplicateClient.name}.`,
+      }))
 
-  return
-}
+      return
+    }
 
     const cleanedPhoneNumber =
       phoneNormalized.replace(
@@ -178,20 +187,30 @@ if (duplicateClient) {
         phoneNormalized,
       })
     } else {
-      onAddClient({
-        id: Date.now(),
-        name: name.trim(),
+      setIsSaving(true)
 
-        phone:
-          `${phoneCountryCode} ${cleanedPhoneNumber}`,
+      try {
+        await onAddClient({
+          name: name.trim(),
 
-        phoneCountryCode,
-        phoneNumber:
-          cleanedPhoneNumber,
-        phoneNormalized,
+          phone:
+            `${phoneCountryCode} ${cleanedPhoneNumber}`,
 
-        visits: 0,
-      })
+          phoneCountryCode,
+          phoneNumber:
+            cleanedPhoneNumber,
+          phoneNormalized,
+        })
+      } catch (error) {
+        setSaveError(
+          error?.message ||
+          'Klijenta nije moguće spremiti. Pokušajte ponovno.'
+        )
+
+        return
+      } finally {
+        setIsSaving(false)
+      }
     }
 
     setName('')
@@ -311,14 +330,23 @@ if (duplicateClient) {
         </p>
       </div>
 
+      {saveError && (
+        <p className="client-form-error" role="alert">
+          {saveError}
+        </p>
+      )}
+
       <div className="client-form-actions">
         <button
           type="button"
           onClick={handleSubmit}
+          disabled={isSaving}
         >
-          {editingClient
-            ? 'Spremi promjene'
-            : 'Dodaj klijenta'}
+          {isSaving
+            ? 'Spremanje...'
+            : editingClient
+              ? 'Spremi promjene'
+              : 'Dodaj klijenta'}
         </button>
 
         {editingClient && (

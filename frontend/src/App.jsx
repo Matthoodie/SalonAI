@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
-import { appointments } from './data/appointments'
-import { clients } from './data/clients'
-import { services } from './data/services'
-
 import {
   fetchCalendar,
 } from './api/calendarApi'
@@ -20,6 +16,10 @@ import {
 import {
   fetchEmployees,
 } from './api/employeeApi'
+
+import {
+  fetchClients,
+} from './api/clientApi'
 
 import {
   mapEmployeesToFrontend,
@@ -263,72 +263,7 @@ function App() {
     setEmployeesLoadError,
   ] = useState(null)
 
-  const [clientList, setClientList] =
-    useState(() => {
-      const savedClients =
-        localStorage.getItem(
-          'salonai-clients'
-        )
-
-      if (savedClients) {
-        try {
-          const parsedClients =
-            JSON.parse(savedClients)
-
-          return parsedClients.map(
-            (client) => {
-              if (
-                client.phoneCountryCode &&
-                client.phoneNumber &&
-                client.phoneNormalized
-              ) {
-                return client
-              }
-
-              const digitsOnly = String(
-                client.phone || ''
-              ).replace(/\D/g, '')
-
-              let phoneNumber = digitsOnly
-
-              if (
-                phoneNumber.startsWith('0')
-              ) {
-                phoneNumber =
-                  phoneNumber.slice(1)
-              }
-
-              return {
-                ...client,
-
-                phoneCountryCode:
-                  client.phoneCountryCode ||
-                  '+385',
-
-                phoneNumber:
-                  client.phoneNumber ||
-                  phoneNumber,
-
-                phoneNormalized:
-                  client.phoneNormalized ||
-                  (
-                    phoneNumber
-                      ? `+385${phoneNumber}`
-                      : ''
-                  ),
-              }
-            }
-          )
-        } catch (error) {
-          console.error(
-            'Neuspješno učitavanje spremljenih klijenata:',
-            error
-          )
-        }
-      }
-
-      return clients
-    })
+  const [clientList, setClientList] = useState([])
 
   const [
     appointmentList,
@@ -491,11 +426,63 @@ function App() {
   }, [salonTimezone])
 
   useEffect(() => {
-    localStorage.setItem(
-      'salonai-clients',
-      JSON.stringify(clientList)
-    )
-  }, [clientList])
+    if (!salonId) {
+      return
+    }
+
+    let cancelled = false
+
+    async function loadClientsFromBackend() {
+      try {
+        const backendClients = await fetchClients({
+          salonId,
+        })
+
+        if (cancelled) {
+          return
+        }
+
+        const mappedClients = backendClients.map(
+          (client) => ({
+            ...client,
+
+            phoneCountryCode:
+              client.phone_country_code,
+
+            phoneNumber:
+              client.phone_number,
+
+            phoneNormalized:
+              client.phone_normalized,
+
+            phone:
+              `${client.phone_country_code} ${client.phone_number}`,
+
+            visits: 0,
+          })
+        )
+
+        setClientList(mappedClients)
+      } catch (error) {
+        if (cancelled) {
+          return
+        }
+
+        console.error(
+          'Neuspješno učitavanje klijenata iz baze:',
+          error
+        )
+
+        setClientList([])
+      }
+    }
+
+    loadClientsFromBackend()
+
+    return () => {
+      cancelled = true
+    }
+  }, [salonId])
 
   function exportSalonData() {
     const salonData = {
@@ -636,11 +623,12 @@ function App() {
         </button>
 
         <label>
-          Import podataka
+          Import podataka (privremeno nedostupno)
 
           <input
             type="file"
             accept="application/json,.json"
+            disabled
             onChange={(event) => {
               const file =
                 event.target.files?.[0]
@@ -675,6 +663,7 @@ function App() {
               appointmentList={
                 appointmentList
               }
+              salonId={salonId}
             />
           }
         />

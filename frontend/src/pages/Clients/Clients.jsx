@@ -5,6 +5,7 @@ import {
 } from 'react'
 import ClientForm from '../../components/ClientForm/ClientForm'
 import ClientCard from '../../components/ClientCard/ClientCard'
+import { createClient } from '../../api/clientApi'
 import './Clients.css'
 
 function formatClientAppointmentDate(date) {
@@ -35,6 +36,7 @@ function Clients({
   clientList,
   setClientList,
   appointmentList = [],
+  salonId,
 }) {
   const [editingClient, setEditingClient] =
     useState(null)
@@ -84,10 +86,29 @@ useEffect(() => {
   }
 }, [selectedClientId])
 
-  function addClient(newClient) {
-    setClientList([
-      ...clientList,
-      newClient,
+  async function addClient(newClient) {
+    if (!salonId) {
+      throw new Error(
+        'Salon još nije učitan. Pokušajte ponovno.'
+      )
+    }
+
+    const savedClient = await createClient({
+      salon_id: salonId,
+      name: newClient.name,
+      phone_country_code: newClient.phoneCountryCode,
+      phone_number: newClient.phoneNumber,
+      phone_normalized: newClient.phoneNormalized,
+    })
+
+    setClientList((currentClients) => [
+      ...currentClients,
+      {
+        ...newClient,
+        id: savedClient.id,
+        active: savedClient.active,
+        visits: 0,
+      },
     ])
   }
 
