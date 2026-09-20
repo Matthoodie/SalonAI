@@ -87,6 +87,34 @@ function getInitialCalendarRange() {
   }
 }
 
+function getCalendarGridRange(displayedDate) {
+  const firstDayOfMonth = new Date(
+    displayedDate.getFullYear(),
+    displayedDate.getMonth(),
+    1
+  )
+
+  const daysBeforeMonday =
+    (firstDayOfMonth.getDay() + 6) % 7
+
+  const gridStart = new Date(
+    firstDayOfMonth.getFullYear(),
+    firstDayOfMonth.getMonth(),
+    1 - daysBeforeMonday
+  )
+
+  const gridEnd = new Date(
+    gridStart.getFullYear(),
+    gridStart.getMonth(),
+    gridStart.getDate() + 41
+  )
+
+  return {
+    from: formatDateKey(gridStart),
+    to: formatDateKey(gridEnd),
+  }
+}
+
 function migrateAppointments(
   appointmentsToMigrate,
   serviceList,
@@ -366,6 +394,58 @@ function App() {
       cancelled = true
     }
   }, [])
+
+  async function loadCalendarMonth(displayedDate) {
+    if (!salonId) {
+      return
+    }
+
+    const { from, to } =
+      getCalendarGridRange(displayedDate)
+
+    try {
+      const calendarData = await fetchCalendar({
+        salonId,
+        from,
+        to,
+      })
+
+      const fetchedAppointments =
+        mapCalendarResponseToAppointments(calendarData)
+
+      setAppointmentList((currentAppointments) => {
+        const appointmentsById = new Map(
+          currentAppointments.map((appointment) => [
+            String(appointment.id),
+            appointment,
+          ])
+        )
+
+        for (const appointment of fetchedAppointments) {
+          const appointmentId = String(appointment.id)
+
+          if (!appointmentsById.has(appointmentId)) {
+            appointmentsById.set(
+              appointmentId,
+              appointment
+            )
+          }
+        }
+
+        return [...appointmentsById.values()]
+      })
+    } catch (error) {
+      console.error(
+        'Neuspješno učitavanje odabranog mjeseca:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+        'Nije moguće učitati termine za odabrani mjesec.'
+      )
+    }
+  }
 
   useEffect(() => {
   if (!salonTimezone) {
@@ -760,6 +840,9 @@ function App() {
               }
               onRequestEditAppointment={
                 setAppointmentFormEditingId
+              }
+              onRequestMonthChange={
+                loadCalendarMonth
               }
             />
           }

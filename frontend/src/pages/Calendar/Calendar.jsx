@@ -73,6 +73,7 @@ function Calendar({
   appointmentList = [],
   onRequestNewAppointment,
   onRequestEditAppointment,
+  onRequestMonthChange,
   appointmentsLoading,
   appointmentsLoadError,
 }) {
@@ -115,23 +116,25 @@ function Calendar({
   }
 
   function showPreviousMonth() {
-    setDisplayedDate((currentDate) => {
-      return new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() - 1,
-        1
-      )
-    })
+    const previousMonth = new Date(
+      displayedDate.getFullYear(),
+      displayedDate.getMonth() - 1,
+      1
+    )
+
+    setDisplayedDate(previousMonth)
+    onRequestMonthChange?.(previousMonth)
   }
 
   function showNextMonth() {
-    setDisplayedDate((currentDate) => {
-      return new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        1
-      )
-    })
+    const nextMonth = new Date(
+      displayedDate.getFullYear(),
+      displayedDate.getMonth() + 1,
+      1
+    )
+
+    setDisplayedDate(nextMonth)
+    onRequestMonthChange?.(nextMonth)
   }
 
   function showCurrentMonth() {
@@ -139,19 +142,21 @@ function Calendar({
 
     setDisplayedDate(currentDate)
     setSelectedDate(currentDate)
+    onRequestMonthChange?.(currentDate)
   }
 
   function selectCalendarDay(calendarDay) {
     setSelectedDate(calendarDay.date)
 
     if (!calendarDay.isCurrentMonth) {
-      setDisplayedDate(
-        new Date(
-          calendarDay.date.getFullYear(),
-          calendarDay.date.getMonth(),
-          1
-        )
+      const selectedMonth = new Date(
+        calendarDay.date.getFullYear(),
+        calendarDay.date.getMonth(),
+        1
       )
+
+      setDisplayedDate(selectedMonth)
+      onRequestMonthChange?.(selectedMonth)
     }
   }
   
