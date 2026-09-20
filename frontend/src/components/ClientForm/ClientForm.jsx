@@ -174,18 +174,31 @@ function ClientForm({
       )
 
     if (editingClient) {
-      onUpdateClient({
-        ...editingClient,
-        name: name.trim(),
+      setIsSaving(true)
 
-        phone:
-          `${phoneCountryCode} ${cleanedPhoneNumber}`,
+      try {
+        await onUpdateClient({
+          ...editingClient,
+          name: name.trim(),
 
-        phoneCountryCode,
-        phoneNumber:
-          cleanedPhoneNumber,
-        phoneNormalized,
-      })
+          phone:
+            `${phoneCountryCode} ${cleanedPhoneNumber}`,
+
+          phoneCountryCode,
+          phoneNumber:
+            cleanedPhoneNumber,
+          phoneNormalized,
+        })
+      } catch (error) {
+        setSaveError(
+          error?.message ||
+            'Promjene nije moguće spremiti. Pokušajte ponovno.'
+        )
+
+        return
+      } finally {
+        setIsSaving(false)
+      }
     } else {
       setIsSaving(true)
 

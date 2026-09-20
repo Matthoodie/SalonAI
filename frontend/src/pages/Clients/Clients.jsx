@@ -5,7 +5,10 @@ import {
 } from 'react'
 import ClientForm from '../../components/ClientForm/ClientForm'
 import ClientCard from '../../components/ClientCard/ClientCard'
-import { createClient } from '../../api/clientApi'
+import {
+  createClient,
+  updateClient as updateClientApi,
+} from '../../api/clientApi'
 import './Clients.css'
 
 function formatClientAppointmentDate(date) {
@@ -112,11 +115,46 @@ useEffect(() => {
     ])
   }
 
-  function updateClient(updatedClient) {
+  async function updateClient(updatedClient) {
+    if (!salonId) {
+      throw new Error(
+        'Salon još nije učitan. Pokušajte ponovno.'
+      )
+    }
+
+    const savedClient = await updateClientApi(
+      updatedClient.id,
+      {
+        salon_id: salonId,
+        name: updatedClient.name,
+        phone_country_code:
+          updatedClient.phoneCountryCode,
+        phone_number:
+          updatedClient.phoneNumber,
+        phone_normalized:
+          updatedClient.phoneNormalized,
+      }
+    )
+
     setClientList((currentClients) =>
       currentClients.map((client) =>
-        client.id === updatedClient.id
-          ? updatedClient
+        String(client.id) === String(savedClient.id)
+          ? {
+              ...client,
+              ...savedClient,
+
+              phoneCountryCode:
+                savedClient.phone_country_code,
+
+              phoneNumber:
+                savedClient.phone_number,
+
+              phoneNormalized:
+                savedClient.phone_normalized,
+
+              phone:
+                `${savedClient.phone_country_code} ${savedClient.phone_number}`,
+            }
           : client
       )
     )

@@ -49,3 +49,38 @@ export async function createClient(clientPayload) {
 
   return responseBody.data
 }
+
+export async function updateClient(
+  clientId,
+  clientPayload
+) {
+  const response = await fetch(
+    `/api/clients/${clientId}`,
+    {
+      method: 'PATCH',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify(clientPayload),
+    }
+  )
+
+  const responseBody = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(
+      responseBody?.error?.message ||
+        'Failed to update client.'
+    )
+
+    error.code =
+      responseBody?.error?.code ||
+      'CLIENT_UPDATE_FAILED'
+
+    throw error
+  }
+
+  return responseBody.data
+}

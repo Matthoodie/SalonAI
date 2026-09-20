@@ -1,6 +1,7 @@
 import {
   getClientsForSalon,
   createClientForSalon,
+  updateClientForSalon,
 } from '../services/clientService.js'
 
 export async function getClients(req, res, next) {
@@ -40,6 +41,25 @@ export async function createClient(req, res, next) {
     })
 
     return res.status(201).json({
+      data: client,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function updateClient(req, res, next) {
+  try {
+    const client = await updateClientForSalon({
+      clientId: req.params.id,
+      salonId: req.body?.salon_id,
+      name: req.body?.name,
+      phoneCountryCode: req.body?.phone_country_code,
+      phoneNumber: req.body?.phone_number,
+      phoneNormalized: req.body?.phone_normalized,
+    })
+
+    return res.status(200).json({
       data: client,
     })
   } catch (error) {

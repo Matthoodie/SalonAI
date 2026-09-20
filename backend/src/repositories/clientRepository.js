@@ -62,3 +62,46 @@ export async function insertClient({
 
   return result.rows[0]
 }
+
+export async function updateClient({
+  clientId,
+  salonId,
+  name,
+  phoneCountryCode,
+  phoneNumber,
+  phoneNormalized,
+}) {
+  const result = await pool.query(
+    `
+      UPDATE clients
+      SET
+        name = $3,
+        phone_country_code = $4,
+        phone_number = $5,
+        phone_normalized = $6,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+        AND salon_id = $2
+      RETURNING
+        id,
+        salon_id,
+        name,
+        phone_country_code,
+        phone_number,
+        phone_normalized,
+        active,
+        created_at,
+        updated_at
+    `,
+    [
+      clientId,
+      salonId,
+      name,
+      phoneCountryCode,
+      phoneNumber,
+      phoneNormalized,
+    ]
+  )
+
+  return result.rows[0] ?? null
+}
