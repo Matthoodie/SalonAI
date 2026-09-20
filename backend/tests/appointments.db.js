@@ -47,6 +47,62 @@ async function getSeedFixture() {
   return result.rows[0]
 }
 
+async function getDevelopmentSeedSalonId() {
+  const result = await pool.query(
+    `
+      SELECT salon_id
+      FROM appointments
+      WHERE notes = $1
+      ORDER BY id
+      LIMIT 1
+    `,
+    ['SalonAI development seed appointment']
+  )
+
+  assert.ok(
+    result.rows[0],
+    'Expected seeded development appointment to exist.'
+  )
+
+  return result.rows[0].salon_id
+}
+
+test('GET /api/appointments requires a valid salonId', async () => {
+  const server = app.listen(0)
+
+  try {
+    await new Promise((resolve) => {
+      server.once('listening', resolve)
+    })
+
+    const address = server.address()
+    const baseUrl = `http://127.0.0.1:${address.port}`
+
+    for (const path of [
+      '/api/appointments',
+      '/api/appointments?salonId=abc',
+      '/api/appointments?salonId=0',
+    ]) {
+      const response = await fetch(`${baseUrl}${path}`)
+      const body = await response.json()
+
+      assert.equal(response.status, 400)
+      assert.equal(body.error.code, 'INVALID_SALON_ID')
+    }
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        resolve()
+      })
+    })
+  }
+})
+
 test('GET /api/appointments reads seeded appointments from test database', async () => {
   const server = app.listen(0)
 
@@ -56,9 +112,10 @@ test('GET /api/appointments reads seeded appointments from test database', async
     })
 
     const address = server.address()
+    const salonId = await getDevelopmentSeedSalonId()
 
     const response = await fetch(
-      `http://127.0.0.1:${address.port}/api/appointments`
+      `http://127.0.0.1:${address.port}/api/appointments?salonId=${salonId}`
     )
 
     const body = await response.json()
@@ -110,9 +167,10 @@ test('GET /api/appointments/:id returns seeded appointment from test database', 
 
     const address = server.address()
     const baseUrl = `http://127.0.0.1:${address.port}`
+    const salonId = await getDevelopmentSeedSalonId()
 
     const listResponse = await fetch(
-      `${baseUrl}/api/appointments`
+      `${baseUrl}/api/appointments?salonId=${salonId}`
     )
 
     const listBody = await listResponse.json()

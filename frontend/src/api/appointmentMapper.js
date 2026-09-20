@@ -134,3 +134,58 @@ export function mapCalendarResponseToAppointments(
       )
   )
 }
+
+export function mapAppointmentRowsToFrontend(
+  appointments,
+  salonTimezone,
+  clientList,
+  employeeList,
+  serviceList
+) {
+  return appointments.map((appointment) => {
+    const client = clientList.find(
+      (item) =>
+        String(item.id) ===
+        String(appointment.client_id)
+    )
+
+    const employee = employeeList.find(
+      (item) =>
+        String(item.id) ===
+        String(appointment.employee_id)
+    )
+
+    const service = serviceList.find(
+      (item) =>
+        String(item.id) ===
+        String(appointment.service_id)
+    )
+
+    return mapCalendarAppointmentToFrontend(
+      {
+        ...appointment,
+
+        client: {
+          id: appointment.client_id,
+          name: client?.name ?? 'Nepoznat klijent',
+        },
+
+        employee: {
+          id: appointment.employee_id,
+          name: employee?.name ?? 'Nepoznat zaposlenik',
+        },
+
+        service: {
+          id: appointment.service_id,
+          name: service?.name ?? 'Nepoznata usluga',
+          category: service?.category ?? 'Ostalo',
+          default_duration_minutes:
+            service?.defaultDurationMinutes ??
+            service?.default_duration_minutes ??
+            appointment.duration_minutes,
+        },
+      },
+      salonTimezone
+    )
+  })
+}

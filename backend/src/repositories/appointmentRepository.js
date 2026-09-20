@@ -1,7 +1,8 @@
 import pool from '../database/pool.js'
 
-export async function findAllAppointments() {
-    const result = await pool.query(`
+export async function findAllAppointments(salonId) {
+    const result = await pool.query(
+        `
     SELECT
       id,
       salon_id,
@@ -18,8 +19,11 @@ export async function findAllAppointments() {
       created_at,
       updated_at
     FROM appointments
+    WHERE salon_id = $1
     ORDER BY starts_at
-  `)
+  `,
+        [salonId]
+    )
 
     return result.rows
 }

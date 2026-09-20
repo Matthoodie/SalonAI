@@ -209,8 +209,8 @@ const APPOINTMENT_STATUS_TRANSITIONS = {
     no_show: [],
 }
 
-export async function getAllAppointments() {
-    return findAllAppointments()
+export async function getAllAppointments(salonId) {
+    return findAllAppointments(salonId)
 }
 
 export async function getAppointmentById(id) {

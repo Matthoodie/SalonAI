@@ -6,8 +6,13 @@ import {
 } from './api/calendarApi'
 
 import {
+  mapAppointmentRowsToFrontend,
   mapCalendarResponseToAppointments,
 } from './api/appointmentMapper'
+
+import {
+  fetchAppointments,
+} from './api/appointmentApi'
 
 import {
   fetchServices,
@@ -364,14 +369,36 @@ function App() {
           )
         )
 
-        const backendAppointments =
-          mapCalendarResponseToAppointments(
-            calendarData
+        const [
+          backendClients,
+          backendEmployees,
+          backendAppointments,
+        ] = await Promise.all([
+          fetchClients({
+            salonId: calendarData.salon.id,
+          }),
+          fetchEmployees({
+            salonId: calendarData.salon.id,
+          }),
+          fetchAppointments(
+            calendarData.salon.id
+          ),
+        ])
+
+        if (cancelled) {
+          return
+        }
+
+        const mappedAppointments =
+          mapAppointmentRowsToFrontend(
+            backendAppointments,
+            calendarData.salon.timezone,
+            backendClients,
+            backendEmployees,
+            backendServices
           )
 
-        setAppointmentList(
-          backendAppointments
-        )
+        setAppointmentList(mappedAppointments)
       } catch (error) {
         console.error(
           'Neuspješno učitavanje termina s backenda:',

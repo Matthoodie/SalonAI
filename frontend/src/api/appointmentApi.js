@@ -120,3 +120,30 @@ export async function createAppointment({
 
   return responseBody.data
 }
+
+export async function fetchAppointments(salonId) {
+  const params = new URLSearchParams({
+    salonId: String(salonId),
+  })
+
+  const response = await fetch(
+    `/api/appointments?${params.toString()}`
+  )
+
+  const responseBody = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(
+      responseBody?.error?.message ||
+        'Failed to fetch appointments.'
+    )
+
+    error.code =
+      responseBody?.error?.code ||
+      'APPOINTMENTS_FETCH_FAILED'
+
+    throw error
+  }
+
+  return responseBody.data
+}

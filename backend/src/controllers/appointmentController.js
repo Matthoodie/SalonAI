@@ -8,7 +8,23 @@ import {
 
 export async function getAppointments(req, res, next) {
     try {
-        const appointments = await getAllAppointments()
+        const salonId = Number(req.query.salonId)
+
+        if (
+            !Number.isSafeInteger(salonId) ||
+            salonId <= 0
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: 'INVALID_SALON_ID',
+                    message:
+                        'salonId must be a positive integer.',
+                },
+            })
+        }
+
+        const appointments =
+            await getAllAppointments(salonId)
 
         res.status(200).json({
             data: appointments,
