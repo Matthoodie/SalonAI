@@ -450,7 +450,9 @@ function Appointments({
     sortedAppointments.filter(
       (appointment) =>
         appointment.date >= todayDate &&
-        appointment.status !== 'Završen'
+        ['pending', 'confirmed'].includes(
+          appointment.statusCode
+        )
     )
 
   const historyAppointments =
@@ -524,10 +526,7 @@ function Appointments({
     )
 
   const scheduledAppointmentsCount =
-    appointmentList.filter(
-      (appointment) =>
-        appointment.status !== 'Završen'
-    ).length
+    upcomingAppointments.length
 
   const completedAppointmentsCount =
     appointmentList.filter(
