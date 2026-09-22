@@ -254,7 +254,7 @@ export function mapEmployeeToCreatePayload(
     }))
 
   const dateOverrides =
-    (employee.date_overrides ?? []).map(
+    (employee.dateOverrides ?? []).map(
       (override) => ({
         date:
           override.date,
