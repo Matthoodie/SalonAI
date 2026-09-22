@@ -290,7 +290,7 @@ const nextTodayAppointment =
         )}
       </section>
       <DashboardCard
-        title={`Termini — ${selectedPeriodLabel}`}
+        title={`Ukupno evidentiranih termina — ${selectedPeriodLabel}`}
         value={`${selectedDateAppointments.length} termina`}
       />
 
