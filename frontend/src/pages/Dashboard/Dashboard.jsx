@@ -163,18 +163,24 @@ function Dashboard({
       }
     )
 
-  const nextTodayAppointment =
-    sortedTodayAppointments.find(
-      (appointment) =>
-        appointment.status !== 'Završen' &&
-        appointment.time >= currentTime
-    ) || null
+const nextTodayAppointment =
+  sortedTodayAppointments.find(
+    (appointment) =>
+      ['pending', 'confirmed'].includes(
+        appointment.statusCode
+      ) &&
+      appointment.time >= currentTime
+  ) || null
 
   const upcomingAppointments = appointmentList
     .filter((appointment) => {
-      if (appointment.status === 'Završen') {
-        return false
-      }
+    if (
+      !['pending', 'confirmed'].includes(
+        appointment.statusCode
+      )
+    ) {
+      return false
+    }
 
       if (appointment.date > todayDate) {
         return true
