@@ -21,6 +21,19 @@
   border-left-color: #22c55e;
 }
 
+.appointment-card-cancelled {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  border-left-color: #94a3b8;
+}
+
+.appointment-card-cancelled .appointment-date strong,
+.appointment-card-cancelled .appointment-time strong,
+.appointment-card-cancelled .appointment-detail h3,
+.appointment-card-cancelled .appointment-detail p {
+  color: #64748b;
+}
+
 .appointment-card-header {
   display: flex;
   align-items: flex-start;
@@ -82,6 +95,12 @@
 .appointment-status-completed {
   color: #15803d;
   background-color: #dcfce7;
+}
+
+.appointment-status-cancelled {
+  color: #475569;
+  background-color: #e2e8f0;
+  border: 1px solid #cbd5e1;
 }
 
 .appointment-info {

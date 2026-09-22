@@ -27,19 +27,27 @@ function AppointmentCard({
   onEdit,
   isUpdating = false,
 }) {
-  const isCompleted = appointment.status === 'Završen'
+  const isCompleted =
+    appointment.statusCode === 'completed'
 
-  const canCancel =
+  const isCancelled =
+    appointment.statusCode === 'cancelled'
+
+  const isActive =
     appointment.statusCode === 'pending' ||
     appointment.statusCode === 'confirmed'
 
+  const canCancel = isActive
+
   return (
     <article
-      className={
-        isCompleted
-          ? 'appointment-card appointment-card-completed'
-          : 'appointment-card'
-      }
+      className={[
+        'appointment-card',
+        isCompleted ? 'appointment-card-completed' : '',
+        isCancelled ? 'appointment-card-cancelled' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <div className="appointment-card-header">
         <div className="appointment-schedule">
@@ -63,11 +71,14 @@ function AppointmentCard({
         </div>
 
         <span
-          className={
+          className={[
+            'appointment-status',
             isCompleted
-              ? 'appointment-status appointment-status-completed'
-              : 'appointment-status appointment-status-scheduled'
-          }
+              ? 'appointment-status-completed'
+              : isCancelled
+                ? 'appointment-status-cancelled'
+                : 'appointment-status-scheduled',
+          ].join(' ')}
         >
           {isCompleted ? '✓ Završen' : appointment.status}
         </span>
@@ -105,7 +116,7 @@ function AppointmentCard({
         </div>
       </div>
       <div className="appointment-actions">
-        {!isCompleted && (
+        {isActive && (
           <button
             type="button"
             className="appointment-button appointment-button-complete"
