@@ -109,6 +109,19 @@ function Dashboard({
         return appointment.date === selectedDate
       }
     )
+  const selectedDateActiveAppointments =
+    selectedDateAppointments.filter(
+      (appointment) =>
+        ['pending', 'confirmed'].includes(
+          appointment.statusCode
+        )
+    )
+
+  const selectedDateCancelledAppointments =
+    selectedDateAppointments.filter(
+      (appointment) =>
+        appointment.statusCode === 'cancelled'
+    )
 
   const selectedDateCompletedAppointments =
     selectedDateAppointments.filter(
@@ -302,6 +315,20 @@ const nextTodayAppointment =
       <DashboardCard
         title="Ukupno klijenata"
         value={clientList.length}
+      />
+      <DashboardCard
+        title={`Aktivni termini — ${selectedPeriodLabel}`}
+        value={`${selectedDateActiveAppointments.length} termina`}
+      />
+
+      <DashboardCard
+        title={`Završeni termini — ${selectedPeriodLabel}`}
+        value={`${selectedDateCompletedAppointments.length} termina`}
+      />
+
+      <DashboardCard
+        title={`Otkazani termini — ${selectedPeriodLabel}`}
+        value={`${selectedDateCancelledAppointments.length} termina`}
       />
 
 
