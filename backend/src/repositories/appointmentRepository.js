@@ -370,3 +370,42 @@ export async function updateAppointmentSchedule(
 
     return result.rows[0] ?? null
 }
+
+export async function updateAppointmentClient(
+    appointmentId,
+    salonId,
+    clientId
+) {
+    const result = await pool.query(
+        `
+      UPDATE appointments
+      SET
+        client_id = $3,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+        AND salon_id = $2
+      RETURNING
+        id,
+        salon_id,
+        client_id,
+        employee_id,
+        service_id,
+        starts_at,
+        ends_at,
+        price_cents,
+        duration_minutes,
+        status,
+        source,
+        notes,
+        created_at,
+        updated_at
+    `,
+        [
+            appointmentId,
+            salonId,
+            clientId,
+        ]
+    )
+
+    return result.rows[0] ?? null
+}

@@ -8,6 +8,7 @@ import AppointmentCard from '../../components/AppointmentCard/AppointmentCard'
 import AppointmentForm from '../../components/AppointmentForm/AppointmentForm'
 
 import {
+  changeAppointmentClient,
   createAppointment,
   rescheduleAppointment,
   updateAppointmentStatus,
@@ -305,65 +306,91 @@ function Appointments({
     }
   }
 
-  async function updateAppointment(
-    updatedAppointment
+async function updateAppointment(
+  updatedAppointment
+) {
+  if (!editingAppointment) {
+    return false
+  }
+
+  const clientChanged =
+    String(updatedAppointment.clientId) !==
+    String(editingAppointment.clientId)
+
+  const employeeChanged =
+    String(updatedAppointment.employeeId) !==
+    String(editingAppointment.employeeId)
+
+  const serviceChanged =
+    String(updatedAppointment.serviceId) !==
+    String(editingAppointment.serviceId)
+
+  const dateChanged =
+    String(updatedAppointment.date) !==
+    String(editingAppointment.date)
+
+  const timeChanged =
+    String(updatedAppointment.time) !==
+    String(editingAppointment.time)
+
+  const scheduleChanged =
+    dateChanged || timeChanged
+
+  if (
+    employeeChanged ||
+    serviceChanged
   ) {
-    if (!editingAppointment) {
-      return false
-    }
-
-    if (!salonTimezone) {
-      window.alert(
-        'Vremenska zona salona nije učitana. Pokušajte ponovno.'
-      )
-
-      return false
-    }
-
-    const clientChanged =
-      String(updatedAppointment.clientId) !==
-      String(editingAppointment.clientId)
-
-    const employeeChanged =
-      String(updatedAppointment.employeeId) !==
-      String(editingAppointment.employeeId)
-
-    const serviceChanged =
-      String(updatedAppointment.serviceId) !==
-      String(editingAppointment.serviceId)
-
-    if (
-      clientChanged ||
-      employeeChanged ||
-      serviceChanged
-    ) {
-      window.alert(
-        'U ovom koraku moguće je mijenjati samo datum i vrijeme termina.'
-      )
-
-      return false
-    }
-
-    if (updatingAppointmentId !== null) {
-      return false
-    }
-
-    setUpdatingAppointmentId(
-      updatedAppointment.id
+    window.alert(
+      'Promjena zaposlenika ili usluge još nije podržana.'
     )
 
-    try {
-      const startsAt =
-        salonDateTimeToUtcIso(
-          updatedAppointment.date,
-          updatedAppointment.time,
-          salonTimezone
-        )
+    return false
+  }
 
+  if (
+    clientChanged &&
+    scheduleChanged
+  ) {
+    window.alert(
+      'Klijenta i datum/vrijeme termina zasad mijenjaj odvojeno.'
+    )
+
+    return false
+  }
+
+  if (
+    !clientChanged &&
+    !scheduleChanged
+  ) {
+    setEditingAppointment(null)
+    return true
+  }
+
+  if (
+    scheduleChanged &&
+    !salonTimezone
+  ) {
+    window.alert(
+      'Vremenska zona salona nije učitana. Pokušajte ponovno.'
+    )
+
+    return false
+  }
+
+  if (updatingAppointmentId !== null) {
+    return false
+  }
+
+  setUpdatingAppointmentId(
+    updatedAppointment.id
+  )
+
+  try {
+    if (clientChanged) {
       const backendAppointment =
-        await rescheduleAppointment(
+        await changeAppointmentClient(
           updatedAppointment.id,
-          startsAt
+          updatedAppointment.clientId
         )
 
       setAppointmentList(
@@ -373,6 +400,43 @@ function Appointments({
               appointment.id ===
                 updatedAppointment.id
                 ? {
+                    ...appointment,
+
+                    clientId:
+                      backendAppointment.client_id,
+
+                    clientName:
+                      updatedAppointment.clientName,
+                  }
+                : appointment
+          )
+      )
+
+      setEditingAppointment(null)
+
+      return true
+    }
+
+    const startsAt =
+      salonDateTimeToUtcIso(
+        updatedAppointment.date,
+        updatedAppointment.time,
+        salonTimezone
+      )
+
+    const backendAppointment =
+      await rescheduleAppointment(
+        updatedAppointment.id,
+        startsAt
+      )
+
+    setAppointmentList(
+      (currentAppointments) =>
+        currentAppointments.map(
+          (appointment) =>
+            appointment.id ===
+              updatedAppointment.id
+              ? {
                   ...appointment,
 
                   date:
@@ -382,36 +446,34 @@ function Appointments({
                     updatedAppointment.time,
 
                   startsAt:
-                    backendAppointment
-                      .starts_at,
+                    backendAppointment.starts_at,
 
                   endsAt:
-                    backendAppointment
-                      .ends_at,
+                    backendAppointment.ends_at,
                 }
-                : appointment
-          )
-      )
+              : appointment
+        )
+    )
 
-      setEditingAppointment(null)
+    setEditingAppointment(null)
 
-      return true
-    } catch (error) {
-      console.error(
-        'Neuspješno premještanje termina:',
-        error
-      )
+    return true
+  } catch (error) {
+    console.error(
+      'Neuspješno ažuriranje termina:',
+      error
+    )
 
-      window.alert(
-        error.message ||
-        'Termin trenutno nije moguće premjestiti.'
-      )
+    window.alert(
+      error.message ||
+        'Termin trenutno nije moguće ažurirati.'
+    )
 
-      return false
-    } finally {
-      setUpdatingAppointmentId(null)
-    }
+    return false
+  } finally {
+    setUpdatingAppointmentId(null)
   }
+}
 
   function cancelEditingAppointment() {
     setEditingAppointment(null)

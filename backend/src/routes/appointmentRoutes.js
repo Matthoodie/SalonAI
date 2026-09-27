@@ -5,6 +5,7 @@ import {
   getAppointment,
   getAppointments,
   rescheduleAppointment,
+  updateAppointmentClient,
   updateAppointmentStatus,
 } from '../controllers/appointmentController.js'
 
@@ -15,6 +16,7 @@ router.get('/:id', getAppointment)
 router.post('/', createAppointment)
 router.patch('/:id/status', updateAppointmentStatus)
 router.patch('/:id/schedule', rescheduleAppointment)
+router.patch('/:id/client', updateAppointmentClient)
 
 
 export default router

@@ -13,9 +13,14 @@ import {
     findSalonById,
     findServiceById,
     insertAppointment,
+    updateAppointmentClient,
     updateAppointmentSchedule,
     updateAppointmentStatus,
 } from '../repositories/appointmentRepository.js'
+
+import {
+    findClientById,
+} from '../repositories/clientRepository.js'
 
 
 function getZonedDateTimeParts(date, timeZone) {
@@ -378,6 +383,84 @@ export async function rescheduleAppointment(
     }
 }
 
+export async function changeAppointmentClient(
+    appointmentId,
+    newClientId
+) {
+    const appointment =
+        await findAppointmentById(appointmentId)
+
+    if (!appointment) {
+        return {
+            error: {
+                status: 404,
+                code: 'APPOINTMENT_NOT_FOUND',
+                message: 'Appointment was not found.',
+            },
+        }
+    }
+
+    if (
+        appointment.status !== 'pending' &&
+        appointment.status !== 'confirmed'
+    ) {
+        return {
+            error: {
+                status: 409,
+                code: 'APPOINTMENT_CLIENT_CHANGE_NOT_ALLOWED',
+                message:
+                    'Client can only be changed on an active appointment.',
+            },
+        }
+    }
+
+    const client = await findClientById(newClientId)
+
+    if (!client) {
+        return {
+            error: {
+                status: 404,
+                code: 'CLIENT_NOT_FOUND',
+                message: 'Client was not found.',
+            },
+        }
+    }
+
+    if (
+        Number(client.salon_id) !==
+        Number(appointment.salon_id)
+    ) {
+        return {
+            error: {
+                status: 400,
+                code: 'CLIENT_SALON_MISMATCH',
+                message:
+                    'Client does not belong to the appointment salon.',
+            },
+        }
+    }
+
+    if (!client.active) {
+        return {
+            error: {
+                status: 400,
+                code: 'CLIENT_INACTIVE',
+                message: 'Client is not active.',
+            },
+        }
+    }
+
+    const updatedAppointment =
+        await updateAppointmentClient(
+            appointment.id,
+            appointment.salon_id,
+            client.id
+        )
+
+    return {
+        data: updatedAppointment,
+    }
+}
 
 export async function prepareAppointmentCreation({
     salon_id,

@@ -23,6 +23,24 @@ export async function findClientsBySalonId(salonId) {
   return result.rows
 }
 
+export async function findClientById(clientId) {
+  const result = await pool.query(
+    `
+      SELECT
+        id,
+        salon_id,
+        name,
+        active
+      FROM clients
+      WHERE id = $1
+      LIMIT 1
+    `,
+    [clientId]
+  )
+
+  return result.rows[0] ?? null
+}
+
 export async function insertClient({
   salonId,
   name,

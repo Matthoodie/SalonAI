@@ -102,7 +102,45 @@ function AppointmentForm({
   const [time, setTime] = useState('')
   const [clientName, setClientName] = useState('')
   const [clientId, setClientId] = useState('')
+  const [clientSearch, setClientSearch] = useState('')
+  const [isClientSearchOpen, setIsClientSearchOpen] =
+    useState(false)
   const [service, setService] = useState('')
+
+  const normalizedClientSearch =
+    clientSearch.trim().toLocaleLowerCase('hr')
+
+  const clientSearchDigits =
+    normalizedClientSearch.replace(/\D/g, '')
+
+  const filteredClientList = clientList
+    .filter((client) => {
+      const clientNameForSearch =
+        String(client.name || '').toLocaleLowerCase('hr')
+
+      const clientPhoneForSearch =
+        String(client.phone || client.phoneNumber || '')
+
+      const clientPhoneDigits =
+        clientPhoneForSearch.replace(/\D/g, '')
+
+      const clientPhoneLocalDigits =
+        clientPhoneDigits.startsWith('385')
+          ? `0${clientPhoneDigits.slice(3)}`
+          : clientPhoneDigits
+
+      return (
+        clientNameForSearch.includes(normalizedClientSearch) ||
+        (
+          clientSearchDigits.length > 0 &&
+          (
+            clientPhoneDigits.includes(clientSearchDigits) ||
+            clientPhoneLocalDigits.includes(clientSearchDigits)
+          )
+        )
+      )
+    })
+    .slice(0, 10)
 
   const [employeeId, setEmployeeId] =
     useState('')
@@ -313,11 +351,32 @@ function AppointmentForm({
       setTime(editingAppointment.time)
       setClientName(editingAppointment.clientName)
 
-      const matchingClient = clientList.find(
-        (client) =>
-          client.id === editingAppointment.clientId ||
-          client.name === editingAppointment.clientName
-      )
+      setClientSearch(editingAppointment.clientName || '')
+      setIsClientSearchOpen(false)
+
+      const matchingClientById =
+        clientList.find(
+          (client) =>
+            String(client.id) ===
+            String(editingAppointment.clientId)
+        )
+
+      const legacyMatchingClients =
+        isLegacyEditingClient
+          ? clientList.filter(
+            (client) =>
+              client.name ===
+              editingAppointment.clientName
+          )
+          : []
+
+      const matchingClient =
+        matchingClientById ??
+        (
+          legacyMatchingClients.length === 1
+            ? legacyMatchingClients[0]
+            : null
+        )
 
       setClientId(
         matchingClient
@@ -341,6 +400,8 @@ function AppointmentForm({
       setTime('')
       setClientName('')
       setClientId('')
+      setClientSearch('')
+      setIsClientSearchOpen(false)
       setService('')
       setEmployeeId('')
     }
@@ -524,6 +585,12 @@ function AppointmentForm({
       const updateSucceeded =
         await onUpdateAppointment({
           ...editingAppointment,
+          clientId:
+            selectedClient?.id ??
+            editingAppointment.clientId,
+          clientName:
+            selectedClient?.name ??
+            editingAppointment.clientName,
           date,
           time,
         })
@@ -652,59 +719,78 @@ function AppointmentForm({
           Klijent
         </label>
 
-        <select
+        <input
           id="appointment-client"
           ref={clientNameInputRef}
+          type="search"
           className={
             errors.clientName
               ? 'input-error'
               : ''
           }
-          value={clientId}
+          value={clientSearch}
+          onFocus={() => setIsClientSearchOpen(true)}
           onChange={(event) => {
-            const newClientId = event.target.value
-
-            setClientId(newClientId)
-
-            const newSelectedClient =
-              clientList.find(
-                (client) =>
-                  String(client.id) ===
-                  newClientId
-              )
-
-            setClientName(
-              newSelectedClient?.name || ''
-            )
-
-            if (errors.clientName) {
-              setErrors((currentErrors) => ({
-                ...currentErrors,
-                clientName: '',
-              }))
+            setClientSearch(event.target.value)
+            setClientId('')
+            setClientName('')
+            setIsClientSearchOpen(true)
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              setIsClientSearchOpen(false)
             }
           }}
-        >
-          <option value="">
-            Odaberite klijenta
-          </option>
+          placeholder="Pretraži po imenu ili telefonu"
+          aria-label="Pretraži klijente po imenu ili telefonu"
+          autoComplete="off"
+        />
 
-          {isLegacyEditingClient &&
-            !clientId && (
-              <option value="">
-                Stari klijent — {editingClientName}
-              </option>
+        {isLegacyEditingClient &&
+          !clientId &&
+          clientName === editingClientName && (
+            <p className="appointment-client-legacy">
+              Stari klijent — {editingClientName}
+            </p>
+          )}
+
+        {isClientSearchOpen && (
+          <ul className="appointment-client-results">
+            {filteredClientList.length === 0 ? (
+              <li className="appointment-client-no-results">
+                Nema pronađenih klijenata.
+              </li>
+            ) : (
+              filteredClientList.map((client) => (
+                <li key={client.id}>
+                  <button
+                    type="button"
+                    className="appointment-client-result"
+                    onClick={() => {
+                      setClientId(String(client.id))
+                      setClientName(client.name)
+                      setClientSearch(client.name)
+                      setIsClientSearchOpen(false)
+
+                      if (errors.clientName) {
+                        setErrors((currentErrors) => ({
+                          ...currentErrors,
+                          clientName: '',
+                        }))
+                      }
+                    }}
+                  >
+                    <span>{client.name}</span>
+
+                    {client.phone && (
+                      <small>{client.phone}</small>
+                    )}
+                  </button>
+                </li>
+              ))
             )}
-
-          {clientList.map((client) => (
-            <option
-              key={client.id}
-              value={String(client.id)}
-            >
-              {client.name}
-            </option>
-          ))}
-        </select>
+          </ul>
+        )}
 
         <p
           className={
@@ -830,54 +916,36 @@ function AppointmentForm({
           Vrijeme
         </label>
 
-        {editingAppointment ? (
-          <input
-            id="appointment-time"
-            ref={timeInputRef}
-            className={
-              errors.time
-                ? 'input-error'
-                : ''
-            }
-            type="time"
-            value={time}
-            step="60"
-            onChange={handleTimeChange}
-          />
-        ) : (
-          <select
-            id="appointment-time"
-            ref={timeInputRef}
-            className={
-              errors.time
-                ? 'input-error'
-                : ''
-            }
-            value={time}
-            onChange={handleTimeChange}
-            disabled={
-              !selectedServiceForEmployee ||
-              !employeeId
-            }
-          >
+<select
+  id="appointment-time"
+  ref={timeInputRef}
+  className={
+    errors.time
+      ? 'input-error'
+      : ''
+  }
+  value={time}
+  onChange={handleTimeChange}
+  disabled={
+    !selectedServiceForEmployee ||
+    !employeeId
+  }
+>
+  <option value="">
+    {timeOptionsMessage}
+  </option>
 
-            <option value="">
-              {timeOptionsMessage}
-            </option>
-
-            {availableTimeOptions.map(
-              (timeOption) => (
-                <option
-                  key={timeOption}
-                  value={timeOption}
-                >
-                  {timeOption}
-                </option>
-              )
-            )}
-          </select>
-        )}
-
+  {availableTimeOptions.map(
+    (timeOption) => (
+      <option
+        key={timeOption}
+        value={timeOption}
+      >
+        {timeOption}
+      </option>
+    )
+  )}
+</select>
         <p
           className={
             errors.time

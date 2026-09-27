@@ -74,6 +74,44 @@ export async function rescheduleAppointment(
   return responseBody.data
 }
 
+export async function changeAppointmentClient(
+  appointmentId,
+  clientId
+) {
+  const response = await fetch(
+    `/api/appointments/${appointmentId}/client`,
+    {
+      method: 'PATCH',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify({
+        client_id: clientId,
+      }),
+    }
+  )
+
+  const responseBody =
+    await response.json()
+
+  if (!response.ok) {
+    const error = new Error(
+      responseBody?.error?.message ||
+        'Failed to change appointment client.'
+    )
+
+    error.code =
+      responseBody?.error?.code ||
+      'APPOINTMENT_CLIENT_CHANGE_FAILED'
+
+    throw error
+  }
+
+  return responseBody.data
+}
+
 export async function createAppointment({
   salonId,
   clientId,

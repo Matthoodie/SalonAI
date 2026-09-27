@@ -3133,3 +3133,191 @@ test(
     }
   }
 )
+
+test(
+  'PATCH /api/appointments/:id/client changes appointment client successfully',
+  async () => {
+    const fixture = await getSeedFixture()
+
+    const server = app.listen(0)
+
+    let createdClientId = null
+    let createdAppointmentId = null
+
+    try {
+      await new Promise((resolve) => {
+        server.once('listening', resolve)
+      })
+
+      const address = server.address()
+      const baseUrl =
+        `http://127.0.0.1:${address.port}`
+
+      const phoneNumber =
+        `97${Date.now()}`
+
+      const phoneNormalized =
+        `+385${phoneNumber}`
+
+      const createClientResponse = await fetch(
+        `${baseUrl}/api/clients`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: fixture.salon_id,
+            name: 'Appointment Client Change Test',
+            phone_country_code: '+385',
+            phone_number: phoneNumber,
+            phone_normalized: phoneNormalized,
+          }),
+        }
+      )
+
+      const createClientBody =
+        await createClientResponse.json()
+
+      assert.equal(
+        createClientResponse.status,
+        201
+      )
+
+      createdClientId =
+        createClientBody.data.id
+
+      const createAppointmentResponse =
+        await fetch(
+          `${baseUrl}/api/appointments`,
+          {
+            method: 'POST',
+            headers: {
+              'content-type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              salon_id:
+                fixture.salon_id,
+              client_id:
+                fixture.client_id,
+              employee_id:
+                fixture.employee_id,
+              service_id:
+                fixture.service_id,
+              starts_at:
+                '2030-01-14T14:00:00+01:00',
+              notes:
+                'SalonAI regression client change test',
+            }),
+          }
+        )
+
+      const createAppointmentBody =
+        await createAppointmentResponse.json()
+
+      assert.equal(
+        createAppointmentResponse.status,
+        201
+      )
+
+      createdAppointmentId =
+        createAppointmentBody.data.id
+
+      assert.equal(
+        String(
+          createAppointmentBody.data.client_id
+        ),
+        String(fixture.client_id)
+      )
+
+      const changeClientResponse =
+        await fetch(
+          `${baseUrl}/api/appointments/${createdAppointmentId}/client`,
+          {
+            method: 'PATCH',
+            headers: {
+              'content-type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              client_id: createdClientId,
+            }),
+          }
+        )
+
+      const changeClientBody =
+        await changeClientResponse.json()
+
+      assert.equal(
+        changeClientResponse.status,
+        200
+      )
+
+      assert.equal(
+        String(
+          changeClientBody.data.client_id
+        ),
+        String(createdClientId)
+      )
+
+      const databaseResult =
+        await pool.query(
+          `
+            SELECT
+              client_id
+            FROM appointments
+            WHERE id = $1
+          `,
+          [createdAppointmentId]
+        )
+
+      assert.equal(
+        databaseResult.rows.length,
+        1
+      )
+
+      assert.equal(
+        String(
+          databaseResult.rows[0].client_id
+        ),
+        String(createdClientId)
+      )
+    } finally {
+      if (createdAppointmentId) {
+        await pool.query(
+          `
+            DELETE FROM appointments
+            WHERE id = $1
+          `,
+          [createdAppointmentId]
+        )
+      }
+
+      if (createdClientId) {
+        await pool.query(
+          `
+            DELETE FROM clients
+            WHERE id = $1
+              AND salon_id = $2
+          `,
+          [
+            createdClientId,
+            fixture.salon_id,
+          ]
+        )
+      }
+
+      await new Promise((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          resolve()
+        })
+      })
+    }
+  }
+)

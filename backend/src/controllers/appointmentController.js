@@ -1,4 +1,5 @@
 import {
+  changeAppointmentClient,
   changeAppointmentStatus,
   getAllAppointments,
   getAppointmentById,
@@ -269,6 +270,61 @@ export async function rescheduleAppointment(
         }
 
         res.status(200).json({
+            data: result.data,
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+export async function updateAppointmentClient(req, res, next) {
+    try {
+        const appointmentId = Number(req.params.id)
+        const clientId = Number(req.body?.client_id)
+
+        if (
+            !Number.isSafeInteger(appointmentId) ||
+            appointmentId <= 0
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: 'INVALID_APPOINTMENT_ID',
+                    message:
+                        'Appointment ID must be a positive integer.',
+                },
+            })
+        }
+
+        if (
+            req.body?.client_id === undefined ||
+            req.body?.client_id === null ||
+            !Number.isSafeInteger(clientId) ||
+            clientId <= 0
+        ) {
+            return res.status(400).json({
+                error: {
+                    code: 'INVALID_CLIENT_ID',
+                    message:
+                        'client_id must be a positive integer.',
+                },
+            })
+        }
+
+        const result = await changeAppointmentClient(
+            appointmentId,
+            clientId
+        )
+
+        if (result.error) {
+            return res.status(result.error.status).json({
+                error: {
+                    code: result.error.code,
+                    message: result.error.message,
+                },
+            })
+        }
+
+        return res.status(200).json({
             data: result.data,
         })
     } catch (error) {
