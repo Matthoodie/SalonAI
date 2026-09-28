@@ -14,19 +14,26 @@
 .clients-header h1 {
   margin: 4px 0 8px;
   color: #0f172a;
+  font-size: 36px;
+  line-height: 1.08;
+  letter-spacing: -0.8px;
+  text-align: left;
 }
 
 .clients-header p {
   margin: 0;
   max-width: 620px;
   color: #64748b;
+  line-height: 1.5;
 }
 
 .clients-eyebrow {
   display: inline-block;
+  margin-bottom: 2px;
   color: #6366f1;
   font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

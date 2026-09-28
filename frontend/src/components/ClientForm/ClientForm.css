@@ -15,10 +15,43 @@
 }
 
 .client-form input {
+  width: 100%;
+  min-height: 46px;
   padding: 12px 14px;
   border: 1px solid #d7dce2;
   border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
   font: inherit;
+  box-sizing: border-box;
+}
+
+.client-form select {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 36px 12px 14px;
+  border: 1px solid #d7dce2;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font: inherit;
+  box-sizing: border-box;
+  outline: none;
+  cursor: pointer;
+}
+
+.client-form select:focus {
+  border-color: #6c63ff;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+}
+
+.client-phone-field {
+  display: grid;
+  grid-template-columns:
+    minmax(150px, 0.9fr)
+    minmax(0, 1.5fr);
+  gap: 10px;
+  align-items: center;
 }
 
 .client-form input:focus {

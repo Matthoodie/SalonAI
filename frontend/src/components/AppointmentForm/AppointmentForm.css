@@ -185,3 +185,64 @@
   color: var(--text-h);
   font-size: 13px;
 }
+
+/* Quick add klijenta unutar forme termina */
+
+.appointment-client-quick-add {
+  margin-top: 8px;
+}
+
+.appointment-client-quick-add-toggle {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.appointment-client-quick-add-toggle:hover {
+  text-decoration: underline;
+}
+
+.appointment-client-quick-add-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.appointment-client-quick-add-form {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.appointment-client-quick-add-form .client-form {
+  margin: 0;
+}
+
+.appointment-client-quick-add-cancel {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.appointment-client-quick-add-cancel:hover {
+  background: var(--accent-bg);
+}
+
+.appointment-client-quick-add-cancel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

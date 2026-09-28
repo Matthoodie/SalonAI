@@ -15,6 +15,10 @@ import {
 } from '../../api/appointmentApi'
 
 import {
+  createClient,
+} from '../../api/clientApi'
+
+import {
   salonDateTimeToUtcIso,
 } from '../../api/appointmentDateTime'
 
@@ -35,6 +39,7 @@ function Appointments({
   salonId,
   serviceList,
   clientList,
+  setClientList,
   initialAppointmentDate,
   clearInitialAppointmentDate,
   initialEditingAppointmentId,
@@ -216,6 +221,41 @@ function Appointments({
       })
     })
   }
+
+async function quickAddClient(newClient) {
+  if (!salonId) {
+    throw new Error(
+      'Salon još nije učitan. Pokušajte ponovno.'
+    )
+  }
+
+  const savedClient = await createClient({
+    salon_id: salonId,
+    name: newClient.name,
+    phone_country_code:
+      newClient.phoneCountryCode,
+    phone_number:
+      newClient.phoneNumber,
+    phone_normalized:
+      newClient.phoneNormalized,
+  })
+
+  const createdClient = {
+    ...newClient,
+    id: savedClient.id,
+    active: savedClient.active,
+    visits: 0,
+    phone:
+      `${newClient.phoneCountryCode} ${newClient.phoneNumber}`.trim(),
+  }
+
+  setClientList((currentClients) => [
+    ...currentClients,
+    createdClient,
+  ])
+
+  return createdClient
+}
 
   async function addAppointment(newAppointment) {
     if (!salonId || !salonTimezone) {
@@ -748,6 +788,7 @@ async function updateAppointment(
           appointments={appointmentList}
           serviceList={serviceList}
           clientList={clientList}
+          onQuickAddClient={quickAddClient}
           employeeList={employeeList}
           onAddAppointment={addAppointment}
           onUpdateAppointment={updateAppointment}

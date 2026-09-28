@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ClientForm from '../ClientForm/ClientForm'
 import {
   AVAILABILITY_REASONS,
   checkEmployeeAvailability,
@@ -59,6 +60,7 @@ function AppointmentForm({
   appointments = [],
   serviceList = [],
   clientList = [],
+  onQuickAddClient,
   employeeList = [],
   onAddAppointment,
   onUpdateAppointment,
@@ -105,6 +107,10 @@ function AppointmentForm({
   const [clientSearch, setClientSearch] = useState('')
   const [isClientSearchOpen, setIsClientSearchOpen] =
     useState(false)
+  const [
+    isQuickAddClientOpen,
+    setIsQuickAddClientOpen,
+  ] = useState(false)
   const [service, setService] = useState('')
 
   const normalizedClientSearch =
@@ -414,6 +420,32 @@ function AppointmentForm({
       employee: '',
     })
   }, [editingAppointment, initialDate])
+
+  async function handleQuickAddClient(newClient) {
+    if (!onQuickAddClient) {
+      throw new Error(
+        'Dodavanje novog klijenta trenutno nije dostupno.'
+      )
+    }
+
+    const createdClient =
+      await onQuickAddClient(newClient)
+
+    setClientId(String(createdClient.id))
+    setClientName(createdClient.name)
+    setClientSearch(createdClient.name)
+    setIsClientSearchOpen(false)
+    setIsQuickAddClientOpen(false)
+
+    if (errors.clientName) {
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        clientName: '',
+      }))
+    }
+
+    return createdClient
+  }
 
   async function handleSubmit() {
 
@@ -791,7 +823,42 @@ function AppointmentForm({
             )}
           </ul>
         )}
+        <div className="appointment-client-quick-add">
+          <button
+            type="button"
+            className="appointment-client-quick-add-toggle"
+            onClick={() => {
+              setIsClientSearchOpen(false)
 
+              setIsQuickAddClientOpen(
+                (currentValue) => !currentValue
+              )
+            }}
+          >
+            {isQuickAddClientOpen
+              ? 'Zatvori dodavanje klijenta'
+              : '+ Novi klijent'}
+          </button>
+
+          {isQuickAddClientOpen && (
+            <div className="appointment-client-quick-add-form">
+              <ClientForm
+                clientList={clientList}
+                onAddClient={handleQuickAddClient}
+              />
+
+              <button
+                type="button"
+                className="appointment-client-quick-add-cancel"
+                onClick={() =>
+                  setIsQuickAddClientOpen(false)
+                }
+              >
+                Odustani
+              </button>
+            </div>
+          )}
+        </div>
         <p
           className={
             errors.clientName
@@ -916,36 +983,36 @@ function AppointmentForm({
           Vrijeme
         </label>
 
-<select
-  id="appointment-time"
-  ref={timeInputRef}
-  className={
-    errors.time
-      ? 'input-error'
-      : ''
-  }
-  value={time}
-  onChange={handleTimeChange}
-  disabled={
-    !selectedServiceForEmployee ||
-    !employeeId
-  }
->
-  <option value="">
-    {timeOptionsMessage}
-  </option>
+        <select
+          id="appointment-time"
+          ref={timeInputRef}
+          className={
+            errors.time
+              ? 'input-error'
+              : ''
+          }
+          value={time}
+          onChange={handleTimeChange}
+          disabled={
+            !selectedServiceForEmployee ||
+            !employeeId
+          }
+        >
+          <option value="">
+            {timeOptionsMessage}
+          </option>
 
-  {availableTimeOptions.map(
-    (timeOption) => (
-      <option
-        key={timeOption}
-        value={timeOption}
-      >
-        {timeOption}
-      </option>
-    )
-  )}
-</select>
+          {availableTimeOptions.map(
+            (timeOption) => (
+              <option
+                key={timeOption}
+                value={timeOption}
+              >
+                {timeOption}
+              </option>
+            )
+          )}
+        </select>
         <p
           className={
             errors.time

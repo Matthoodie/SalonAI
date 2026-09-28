@@ -827,6 +827,9 @@ function App() {
               clientList={
                 clientList
               }
+              setClientList={
+                setClientList
+              }
               employeeList={employeeList}
 
               initialAppointmentDate={
