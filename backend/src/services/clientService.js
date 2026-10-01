@@ -2,6 +2,7 @@ import {
   findClientsBySalonId,
   insertClient,
   updateClient,
+  updateClientActive,
 } from '../repositories/clientRepository.js'
 
 function createClientValidationError(message) {
@@ -159,6 +160,57 @@ export async function updateClientForSalon({
       'Client not found for the selected salon.'
     )
 
+    error.code = 'CLIENT_NOT_FOUND'
+    error.statusCode = 404
+
+    throw error
+  }
+
+  return updatedClient
+}
+
+export async function updateClientActiveForSalon({
+  clientId,
+  salonId,
+  active,
+}) {
+  const normalizedClientId = Number(clientId)
+  const normalizedSalonId = Number(salonId)
+
+  if (
+    !Number.isSafeInteger(normalizedClientId) ||
+    normalizedClientId <= 0
+  ) {
+    throw createClientValidationError(
+      'A valid client ID is required.'
+    )
+  }
+
+  if (
+    !Number.isSafeInteger(normalizedSalonId) ||
+    normalizedSalonId <= 0
+  ) {
+    throw createClientValidationError(
+      'A valid salon ID is required.'
+    )
+  }
+
+  if (typeof active !== 'boolean') {
+    throw createClientValidationError(
+      'active must be a boolean.'
+    )
+  }
+
+  const updatedClient = await updateClientActive({
+    clientId: normalizedClientId,
+    salonId: normalizedSalonId,
+    active,
+  })
+
+  if (!updatedClient) {
+    const error = new Error(
+      'Client not found for the selected salon.'
+    )
     error.code = 'CLIENT_NOT_FOUND'
     error.statusCode = 404
 

@@ -119,8 +119,9 @@ function AppointmentForm({
   const clientSearchDigits =
     normalizedClientSearch.replace(/\D/g, '')
 
-  const filteredClientList = clientList
-    .filter((client) => {
+const filteredClientList = clientList
+  .filter((client) => client.active !== false)
+  .filter((client) => {
       const clientNameForSearch =
         String(client.name || '').toLocaleLowerCase('hr')
 

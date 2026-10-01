@@ -15,9 +15,18 @@ function ClientCard({
   client,
   onEdit,
   onSelect,
+  onToggleActive,
 }) {
+  const isArchived = client.active === false
+
   return (
-    <div className="client-card">
+    <div
+      className={
+        isArchived
+          ? 'client-card client-card-archived'
+          : 'client-card'
+      }
+    >
       <div className="client-card-person">
         <div className="client-avatar">
           {getInitials(client.name)}
@@ -27,7 +36,9 @@ function ClientCard({
           <h3>{client.name}</h3>
 
           <span>
-            Klijent
+            {isArchived
+              ? 'Arhiviran'
+              : 'Klijent'}
           </span>
         </div>
       </div>
@@ -53,14 +64,13 @@ function ClientCard({
       </div>
 
       <div className="client-card-actions">
-
-      <button
-  type="button"
-  className="client-details-button"
-  onClick={() => onSelect(client.id)}
->
-  Detalji
-</button>
+        <button
+          type="button"
+          className="client-details-button"
+          onClick={() => onSelect(client.id)}
+        >
+          Detalji
+        </button>
 
         <button
           type="button"
@@ -69,9 +79,22 @@ function ClientCard({
         >
           Uredi
         </button>
+
+        <button
+          type="button"
+          className={
+            isArchived
+              ? 'client-reactivate-button'
+              : 'client-archive-button'
+          }
+          onClick={() => onToggleActive(client)}
+        >
+          {isArchived
+            ? 'Ponovno aktiviraj'
+            : 'Arhiviraj'}
+        </button>
       </div>
     </div>
   )
 }
-
 export default ClientCard

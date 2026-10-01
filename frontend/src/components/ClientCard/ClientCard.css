@@ -71,6 +71,8 @@
 .client-card-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .client-edit-button {
@@ -117,6 +119,54 @@
   background: #e0e7ff;
   border-color: #a5b4fc;
   color: #4338ca;
+}
+
+.client-card-archived {
+  background: #f8fafc;
+  opacity: 0.78;
+}
+
+.client-card-archived .client-avatar {
+  background: #e2e8f0;
+  color: #64748b;
+}
+
+.client-card-archived .client-card-name span {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.client-archive-button,
+.client-reactivate-button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.client-archive-button {
+  border: 1px solid #fecaca;
+  background: #fff7f7;
+  color: #b91c1c;
+}
+
+.client-archive-button:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.client-reactivate-button {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.client-reactivate-button:hover {
+  background: #dcfce7;
+  border-color: #86efac;
 }
 
 @media (max-width: 760px) {

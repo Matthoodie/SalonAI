@@ -444,3 +444,341 @@ test(
     }
   }
 )
+
+test(
+  'PATCH /api/clients/:id/active deactivates and reactivates a client',
+  async () => {
+    const server = app.listen(0)
+    let createdClientId = null
+
+    try {
+      await new Promise((resolve) => {
+        server.once('listening', resolve)
+      })
+
+      const { port } = server.address()
+      const baseUrl = `http://127.0.0.1:${port}`
+
+      const phoneNumber = `95${Date.now()}`
+      const phoneNormalized = `+385${phoneNumber}`
+
+      const createResponse = await fetch(
+        `${baseUrl}/api/clients`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: 1,
+            name: 'Client Active Lifecycle Test',
+            phone_country_code: '+385',
+            phone_number: phoneNumber,
+            phone_normalized: phoneNormalized,
+          }),
+        }
+      )
+
+      const createBody = await createResponse.json()
+
+      assert.equal(createResponse.status, 201)
+
+      createdClientId = createBody.data.id
+
+      assert.ok(createdClientId)
+      assert.equal(createBody.data.active, true)
+
+      const deactivateResponse = await fetch(
+        `${baseUrl}/api/clients/${createdClientId}/active`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: 1,
+            active: false,
+          }),
+        }
+      )
+
+      const deactivateBody =
+        await deactivateResponse.json()
+
+      assert.equal(deactivateResponse.status, 200)
+      assert.equal(
+        String(deactivateBody.data.id),
+        String(createdClientId)
+      )
+      assert.equal(
+        deactivateBody.data.active,
+        false
+      )
+
+      const inactiveResult = await pool.query(
+        `
+          SELECT active
+          FROM clients
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [createdClientId, 1]
+      )
+
+      assert.equal(inactiveResult.rows.length, 1)
+      assert.equal(
+        inactiveResult.rows[0].active,
+        false
+      )
+
+      const reactivateResponse = await fetch(
+        `${baseUrl}/api/clients/${createdClientId}/active`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: 1,
+            active: true,
+          }),
+        }
+      )
+
+      const reactivateBody =
+        await reactivateResponse.json()
+
+      assert.equal(reactivateResponse.status, 200)
+      assert.equal(
+        String(reactivateBody.data.id),
+        String(createdClientId)
+      )
+      assert.equal(
+        reactivateBody.data.active,
+        true
+      )
+
+      const activeResult = await pool.query(
+        `
+          SELECT active
+          FROM clients
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [createdClientId, 1]
+      )
+
+      assert.equal(activeResult.rows.length, 1)
+      assert.equal(
+        activeResult.rows[0].active,
+        true
+      )
+    } finally {
+      try {
+        if (createdClientId !== null) {
+          await pool.query(
+            'DELETE FROM clients WHERE id = $1 AND salon_id = $2',
+            [createdClientId, 1]
+          )
+        }
+      } finally {
+        await new Promise((resolve) => {
+          server.close(resolve)
+        })
+      }
+    }
+  }
+)
+
+test(
+  'PATCH /api/clients/:id/active rejects non-boolean active without changing client',
+  async () => {
+    const server = app.listen(0)
+    let createdClientId = null
+
+    try {
+      await new Promise((resolve) => {
+        server.once('listening', resolve)
+      })
+
+      const { port } = server.address()
+      const baseUrl = `http://127.0.0.1:${port}`
+
+      const phoneNumber = `94${Date.now()}`
+      const phoneNormalized = `+385${phoneNumber}`
+
+      const createResponse = await fetch(
+        `${baseUrl}/api/clients`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: 1,
+            name: 'Client Invalid Active Test',
+            phone_country_code: '+385',
+            phone_number: phoneNumber,
+            phone_normalized: phoneNormalized,
+          }),
+        }
+      )
+
+      const createBody = await createResponse.json()
+
+      assert.equal(createResponse.status, 201)
+
+      createdClientId = createBody.data.id
+
+      const updateResponse = await fetch(
+        `${baseUrl}/api/clients/${createdClientId}/active`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: 1,
+            active: 'false',
+          }),
+        }
+      )
+
+      const updateBody = await updateResponse.json()
+
+      assert.equal(updateResponse.status, 400)
+      assert.equal(
+        updateBody.error.code,
+        'INVALID_CLIENT_INPUT'
+      )
+
+      const savedClientResult = await pool.query(
+        `
+          SELECT active
+          FROM clients
+          WHERE id = $1
+            AND salon_id = $2
+        `,
+        [createdClientId, 1]
+      )
+
+      assert.equal(savedClientResult.rows.length, 1)
+      assert.equal(
+        savedClientResult.rows[0].active,
+        true
+      )
+    } finally {
+      try {
+        if (createdClientId !== null) {
+          await pool.query(
+            'DELETE FROM clients WHERE id = $1 AND salon_id = $2',
+            [createdClientId, 1]
+          )
+        }
+      } finally {
+        await new Promise((resolve) => {
+          server.close(resolve)
+        })
+      }
+    }
+  }
+)
+
+test(
+  'PATCH /api/clients/:id/active rejects a client from another salon without changing client',
+  async () => {
+    const server = app.listen(0)
+    let createdClientId = null
+
+    try {
+      await new Promise((resolve) => {
+        server.once('listening', resolve)
+      })
+
+      const { port } = server.address()
+      const baseUrl = `http://127.0.0.1:${port}`
+
+      const phoneNumber = `93${Date.now()}`
+      const phoneNormalized = `+385${phoneNumber}`
+
+      const createResponse = await fetch(
+        `${baseUrl}/api/clients`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: 1,
+            name: 'Client Active Wrong Salon Test',
+            phone_country_code: '+385',
+            phone_number: phoneNumber,
+            phone_normalized: phoneNormalized,
+          }),
+        }
+      )
+
+      const createBody = await createResponse.json()
+
+      assert.equal(createResponse.status, 201)
+
+      createdClientId = createBody.data.id
+
+      const updateResponse = await fetch(
+        `${baseUrl}/api/clients/${createdClientId}/active`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            salon_id: 999999,
+            active: false,
+          }),
+        }
+      )
+
+      const updateBody = await updateResponse.json()
+
+      assert.equal(updateResponse.status, 404)
+      assert.equal(
+        updateBody.error.code,
+        'CLIENT_NOT_FOUND'
+      )
+
+      const savedClientResult = await pool.query(
+        `
+          SELECT
+            salon_id,
+            active
+          FROM clients
+          WHERE id = $1
+        `,
+        [createdClientId]
+      )
+
+      assert.equal(savedClientResult.rows.length, 1)
+      assert.equal(
+        String(savedClientResult.rows[0].salon_id),
+        '1'
+      )
+      assert.equal(
+        savedClientResult.rows[0].active,
+        true
+      )
+    } finally {
+      try {
+        if (createdClientId !== null) {
+          await pool.query(
+            'DELETE FROM clients WHERE id = $1 AND salon_id = $2',
+            [createdClientId, 1]
+          )
+        }
+      } finally {
+        await new Promise((resolve) => {
+          server.close(resolve)
+        })
+      }
+    }
+  }
+)

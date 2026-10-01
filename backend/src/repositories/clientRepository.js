@@ -123,3 +123,37 @@ export async function updateClient({
 
   return result.rows[0] ?? null
 }
+
+export async function updateClientActive({
+  clientId,
+  salonId,
+  active,
+}) {
+  const result = await pool.query(
+    `
+      UPDATE clients
+      SET
+        active = $3,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+        AND salon_id = $2
+      RETURNING
+        id,
+        salon_id,
+        name,
+        phone_country_code,
+        phone_number,
+        phone_normalized,
+        active,
+        created_at,
+        updated_at
+    `,
+    [
+      clientId,
+      salonId,
+      active,
+    ]
+  )
+
+  return result.rows[0] ?? null
+}

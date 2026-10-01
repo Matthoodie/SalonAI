@@ -84,3 +84,42 @@ export async function updateClient(
 
   return responseBody.data
 }
+
+export async function updateClientActive(
+  clientId,
+  salonId,
+  active
+) {
+  const response = await fetch(
+    `/api/clients/${clientId}/active`,
+    {
+      method: 'PATCH',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify({
+        salon_id: salonId,
+        active,
+      }),
+    }
+  )
+
+  const responseBody = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(
+      responseBody?.error?.message ||
+        'Failed to update client active status.'
+    )
+
+    error.code =
+      responseBody?.error?.code ||
+      'CLIENT_ACTIVE_UPDATE_FAILED'
+
+    throw error
+  }
+
+  return responseBody.data
+}

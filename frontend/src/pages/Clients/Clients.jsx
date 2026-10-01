@@ -8,6 +8,7 @@ import ClientCard from '../../components/ClientCard/ClientCard'
 import {
   createClient,
   updateClient as updateClientApi,
+  updateClientActive,
 } from '../../api/clientApi'
 import './Clients.css'
 
@@ -160,6 +161,68 @@ useEffect(() => {
     )
 
     setEditingClient(null)
+  }
+
+  async function changeClientActive(client) {
+    if (!salonId) {
+      throw new Error(
+        'Salon još nije učitan. Pokušajte ponovno.'
+      )
+    }
+
+    const nextActive = client.active === false
+
+    if (!nextActive) {
+      const confirmed = window.confirm(
+        `Arhivirati klijenta "${client.name}"?`
+      )
+
+      if (!confirmed) {
+        return
+      }
+    }
+
+    try {
+      const savedClient = await updateClientActive(
+        client.id,
+        salonId,
+        nextActive
+      )
+
+      setClientList((currentClients) =>
+        currentClients.map((currentClient) =>
+          String(currentClient.id) ===
+          String(savedClient.id)
+            ? {
+                ...currentClient,
+                ...savedClient,
+
+                phoneCountryCode:
+                  savedClient.phone_country_code,
+
+                phoneNumber:
+                  savedClient.phone_number,
+
+                phoneNormalized:
+                  savedClient.phone_normalized,
+
+                phone:
+                  `${savedClient.phone_country_code} ${savedClient.phone_number}`,
+              }
+            : currentClient
+        )
+      )
+    } catch (error) {
+      console.error(
+        'Neuspješna promjena statusa klijenta:',
+        error
+      )
+
+      window.alert(
+        error.message ||
+          'Status klijenta nije moguće promijeniti.'
+      )
+    }
   }
 
   function cancelEdit() {
@@ -827,6 +890,7 @@ const selectedClientUpcomingAppointments =
                 client={client}
                 onEdit={startEditingClient}
                 onSelect={setSelectedClientId}
+                onToggleActive={changeClientActive}
               />
             ))}
           </div>
