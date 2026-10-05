@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "node src/server.js",
+    "seed:demo": "node --env-file=.env src/database/seedDemo.js",
     "migrate:up": "node --env-file=.env ./node_modules/node-pg-migrate/bin/node-pg-migrate up",
     "migrate:down": "node --env-file=.env ./node_modules/node-pg-migrate/bin/node-pg-migrate down",
     "test": "npm run test:all",
