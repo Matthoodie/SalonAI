@@ -1,6 +1,10 @@
 import express from 'express'
+import {
+  clerkMiddleware,
+} from '@clerk/express'
 
 import appointmentRoutes from './routes/appointmentRoutes.js'
+import authRoutes from './routes/authRoutes.js'
 import availabilityRoutes from './routes/availabilityRoutes.js'
 import bookingRoutes from './routes/bookingRoutes.js'
 import calendarRoutes from './routes/calendarRoutes.js'
@@ -20,6 +24,13 @@ const app = express()
 app.use(express.json())
 
 app.use('/api/health', healthRoutes)
+
+app.use(
+  '/api/auth',
+  clerkMiddleware(),
+  authRoutes
+)
+
 app.use('/api/appointments', appointmentRoutes)
 app.use('/api/availability', availabilityRoutes)
 app.use('/api/bookings', bookingRoutes)
