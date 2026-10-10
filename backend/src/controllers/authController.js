@@ -5,6 +5,12 @@ export function getCurrentAuth(
   const currentUser =
     req.currentUser
 
+  const currentSalon =
+    req.currentSalon
+
+  const currentMembership =
+    req.currentMembership
+
   return res.status(200).json({
     data: {
       authenticated: true,
@@ -16,6 +22,23 @@ export function getCurrentAuth(
           currentUser.display_name,
         active:
           currentUser.active,
+      },
+
+      current_salon: {
+        id: currentSalon.id,
+        name: currentSalon.name,
+        timezone:
+          currentSalon.timezone,
+        active:
+          currentSalon.active,
+      },
+
+      membership: {
+        id: currentMembership.id,
+        role:
+          currentMembership.role,
+        active:
+          currentMembership.active,
       },
     },
   })
