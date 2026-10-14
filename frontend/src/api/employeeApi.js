@@ -1,8 +1,6 @@
-export async function fetchEmployees({
-  salonId,
-}) {
+export async function fetchEmployees() {
   const response = await fetch(
-    `/api/employees?salon_id=${salonId}`
+    '/api/employees'
   )
 
   const responseBody =
@@ -104,7 +102,6 @@ export async function updateEmployee(
 export async function updateEmployeeActive(
   employeeId,
   {
-    salonId,
     active,
   }
 ) {
@@ -119,9 +116,8 @@ export async function updateEmployeeActive(
       },
 
       body: JSON.stringify({
-        salon_id: salonId,
-        active,
-      }),
+  active,
+}),
     }
   )
 

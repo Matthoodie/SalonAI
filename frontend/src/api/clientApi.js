@@ -1,6 +1,6 @@
-export async function fetchClients({ salonId }) {
+export async function fetchClients() {
   const response = await fetch(
-    `/api/clients?salon_id=${encodeURIComponent(salonId)}`
+    '/api/clients'
   )
 
   const responseBody = await response.json()
@@ -87,7 +87,6 @@ export async function updateClient(
 
 export async function updateClientActive(
   clientId,
-  salonId,
   active
 ) {
   const response = await fetch(
@@ -100,9 +99,8 @@ export async function updateClientActive(
       },
 
       body: JSON.stringify({
-        salon_id: salonId,
-        active,
-      }),
+  active,
+}),
     }
   )
 

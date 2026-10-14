@@ -1,8 +1,6 @@
-export async function fetchServices(
-  salonId
-) {
+export async function fetchServices() {
   const response = await fetch(
-    `/api/services?salon_id=${salonId}`
+    '/api/services'
   )
 
   const responseBody =
@@ -25,7 +23,6 @@ export async function fetchServices(
 }
 
 export async function createService({
-  salonId,
   name,
   category,
   priceCents,
@@ -41,13 +38,12 @@ export async function createService({
       },
 
       body: JSON.stringify({
-        salon_id: salonId,
-        name,
-        category,
-        price_cents: priceCents,
-        default_duration_minutes:
-          defaultDurationMinutes,
-      }),
+  name,
+  category,
+  price_cents: priceCents,
+  default_duration_minutes:
+    defaultDurationMinutes,
+}),
     }
   )
 
@@ -72,7 +68,6 @@ export async function createService({
 
 export async function updateService({
   serviceId,
-  salonId,
   name,
   category,
   priceCents,
@@ -88,7 +83,6 @@ export async function updateService({
       },
 
       body: JSON.stringify({
-        salon_id: salonId,
         name,
         category,
         price_cents: priceCents,
@@ -119,7 +113,6 @@ export async function updateService({
 
 export async function updateServiceActive({
   serviceId,
-  salonId,
   active,
 }) {
   const response = await fetch(
@@ -132,9 +125,8 @@ export async function updateServiceActive({
       },
 
       body: JSON.stringify({
-        salon_id: salonId,
-        active,
-      }),
+  active,
+}),
     }
   )
 

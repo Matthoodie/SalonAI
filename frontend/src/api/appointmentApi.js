@@ -113,7 +113,6 @@ export async function changeAppointmentClient(
 }
 
 export async function createAppointment({
-  salonId,
   clientId,
   employeeId,
   serviceId,
@@ -129,14 +128,13 @@ export async function createAppointment({
         'Content-Type': 'application/json',
       },
 
-      body: JSON.stringify({
-        salon_id: salonId,
-        client_id: clientId,
-        employee_id: employeeId,
-        service_id: serviceId,
-        starts_at: startsAt,
-        notes,
-      }),
+body: JSON.stringify({
+  client_id: clientId,
+  employee_id: employeeId,
+  service_id: serviceId,
+  starts_at: startsAt,
+  notes,
+}),
     }
   )
 
@@ -159,13 +157,9 @@ export async function createAppointment({
   return responseBody.data
 }
 
-export async function fetchAppointments(salonId) {
-  const params = new URLSearchParams({
-    salonId: String(salonId),
-  })
-
+export async function fetchAppointments() {
   const response = await fetch(
-    `/api/appointments?${params.toString()}`
+    '/api/appointments'
   )
 
   const responseBody = await response.json()

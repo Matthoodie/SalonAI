@@ -98,12 +98,11 @@ useEffect(() => {
     }
 
     const savedClient = await createClient({
-      salon_id: salonId,
-      name: newClient.name,
-      phone_country_code: newClient.phoneCountryCode,
-      phone_number: newClient.phoneNumber,
-      phone_normalized: newClient.phoneNormalized,
-    })
+  name: newClient.name,
+  phone_country_code: newClient.phoneCountryCode,
+  phone_number: newClient.phoneNumber,
+  phone_normalized: newClient.phoneNormalized,
+})
 
     setClientList((currentClients) => [
       ...currentClients,
@@ -126,15 +125,14 @@ useEffect(() => {
     const savedClient = await updateClientApi(
       updatedClient.id,
       {
-        salon_id: salonId,
-        name: updatedClient.name,
-        phone_country_code:
-          updatedClient.phoneCountryCode,
-        phone_number:
-          updatedClient.phoneNumber,
-        phone_normalized:
-          updatedClient.phoneNormalized,
-      }
+  name: updatedClient.name,
+  phone_country_code:
+    updatedClient.phoneCountryCode,
+  phone_number:
+    updatedClient.phoneNumber,
+  phone_normalized:
+    updatedClient.phoneNormalized,
+     }
     )
 
     setClientList((currentClients) =>
@@ -184,10 +182,9 @@ useEffect(() => {
 
     try {
       const savedClient = await updateClientActive(
-        client.id,
-        salonId,
-        nextActive
-      )
+  client.id,
+  nextActive
+)
 
       setClientList((currentClients) =>
         currentClients.map((currentClient) =>

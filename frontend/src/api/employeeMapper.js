@@ -232,7 +232,6 @@ const dayNumberByKey = {
 
 export function mapEmployeeToCreatePayload(
   employee,
-  salonId,
   salonTimezone
 ) {
   const workingHours = Object.entries(
@@ -318,9 +317,6 @@ export function mapEmployeeToCreatePayload(
   )
 
   return {
-    salon_id:
-      salonId,
-
     name:
       employee.name,
 

@@ -229,16 +229,15 @@ async function quickAddClient(newClient) {
     )
   }
 
-  const savedClient = await createClient({
-    salon_id: salonId,
-    name: newClient.name,
-    phone_country_code:
-      newClient.phoneCountryCode,
-    phone_number:
-      newClient.phoneNumber,
-    phone_normalized:
-      newClient.phoneNormalized,
-  })
+const savedClient = await createClient({
+  name: newClient.name,
+  phone_country_code:
+    newClient.phoneCountryCode,
+  phone_number:
+    newClient.phoneNumber,
+  phone_normalized:
+    newClient.phoneNormalized,
+})
 
   const createdClient = {
     ...newClient,
@@ -281,14 +280,13 @@ async function quickAddClient(newClient) {
         )
 
       const backendAppointment =
-        await createAppointment({
-          salonId,
-          clientId: newAppointment.clientId,
-          employeeId: newAppointment.employeeId,
-          serviceId: newAppointment.serviceId,
-          startsAt,
-          notes: newAppointment.notes ?? null,
-        })
+  await createAppointment({
+    clientId: newAppointment.clientId,
+    employeeId: newAppointment.employeeId,
+    serviceId: newAppointment.serviceId,
+    startsAt,
+    notes: newAppointment.notes ?? null,
+  })
 
       const createdAppointment = {
         ...newAppointment,

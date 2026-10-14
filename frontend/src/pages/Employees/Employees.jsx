@@ -88,20 +88,17 @@ function Employees({
       }
 
       const employeePayload =
-        mapEmployeeToCreatePayload(
-          newEmployee,
-          Number(salonId),
-          salonTimezone
-        )
+  mapEmployeeToCreatePayload(
+    newEmployee,
+    salonTimezone
+  )
 
       await createEmployeeRequest(
         employeePayload
       )
 
       const backendEmployees =
-        await fetchEmployees({
-          salonId: Number(salonId),
-        })
+        await fetchEmployees()
 
       const mappedEmployees =
         mapEmployeesToFrontend(
@@ -148,11 +145,10 @@ function Employees({
       }
 
       const employeePayload =
-        mapEmployeeToCreatePayload(
-          updatedEmployee,
-          Number(salonId),
-          salonTimezone
-        )
+  mapEmployeeToCreatePayload(
+    updatedEmployee,
+    salonTimezone
+  )
 
       await updateEmployeeRequest(
         updatedEmployee.id,
@@ -160,9 +156,7 @@ function Employees({
       )
 
       const backendEmployees =
-        await fetchEmployees({
-          salonId: Number(salonId),
-        })
+        await fetchEmployees()
 
       const mappedEmployees =
         mapEmployeesToFrontend(
@@ -226,21 +220,15 @@ function Employees({
       }
 
       await updateEmployeeActiveRequest(
-        employeeId,
-        {
-          salonId:
-            Number(salonId),
-
-          active:
-            !employee.active,
-        }
-      )
+  employeeId,
+  {
+    active:
+      !employee.active,
+  }
+)
 
       const backendEmployees =
-        await fetchEmployees({
-          salonId:
-            Number(salonId),
-        })
+        await fetchEmployees()
 
       const mappedEmployees =
         mapEmployeesToFrontend(

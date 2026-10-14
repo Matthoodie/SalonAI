@@ -1,12 +1,10 @@
 export async function fetchCalendar({
-  salonId,
   from,
   to,
   employeeId = null,
   status = null,
 }) {
   const params = new URLSearchParams({
-    salonId: String(salonId),
     from,
     to,
   })

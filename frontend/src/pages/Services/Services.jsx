@@ -99,7 +99,6 @@ function Services({
     try {
       const backendService =
         await createService({
-          salonId,
           name: newService.name,
           category: newService.category,
           priceCents:
@@ -167,7 +166,6 @@ function Services({
       const backendService =
         await updateServiceApi({
           serviceId: updatedService.id,
-          salonId,
           name: updatedService.name,
           category: updatedService.category,
           priceCents:
@@ -249,12 +247,11 @@ function Services({
 
     try {
       const backendService =
-        await updateServiceActive({
-          serviceId,
-          salonId,
-          active:
-            !serviceToUpdate.active,
-        })
+  await updateServiceActive({
+    serviceId,
+    active:
+      !serviceToUpdate.active,
+  })
 
       const mappedService =
         mapServiceToFrontend(

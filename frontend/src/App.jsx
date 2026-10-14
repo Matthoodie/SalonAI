@@ -336,11 +336,10 @@ function App() {
         } = getInitialCalendarRange()
 
         const calendarData =
-          await fetchCalendar({
-            salonId: 1,
-            from,
-            to,
-          })
+         await fetchCalendar({
+          from,
+          to,
+         })
 
         if (cancelled) {
           return
@@ -355,9 +354,7 @@ function App() {
         )
 
         const backendServices =
-          await fetchServices(
-            calendarData.salon.id
-          )
+         await fetchServices()
 
         if (cancelled) {
           return
@@ -374,15 +371,9 @@ function App() {
           backendEmployees,
           backendAppointments,
         ] = await Promise.all([
-          fetchClients({
-            salonId: calendarData.salon.id,
-          }),
-          fetchEmployees({
-            salonId: calendarData.salon.id,
-          }),
-          fetchAppointments(
-            calendarData.salon.id
-          ),
+          fetchClients(),
+          fetchEmployees(),
+          fetchAppointments(),
         ])
 
         if (cancelled) {
@@ -432,10 +423,9 @@ function App() {
 
     try {
       const calendarData = await fetchCalendar({
-        salonId,
-        from,
-        to,
-      })
+           from,
+           to,
+         })
 
       const fetchedAppointments =
         mapCalendarResponseToAppointments(calendarData)
@@ -486,10 +476,8 @@ function App() {
         setEmployeesLoading(true)
         setEmployeesLoadError(null)
 
-        const backendEmployees =
-          await fetchEmployees({
-            salonId: 1,
-          })
+      const backendEmployees =
+         await fetchEmployees()
 
         if (cancelled) {
           return
@@ -541,9 +529,8 @@ function App() {
 
     async function loadClientsFromBackend() {
       try {
-        const backendClients = await fetchClients({
-          salonId,
-        })
+        const backendClients =
+  await fetchClients()
 
         if (cancelled) {
           return
