@@ -11,8 +11,8 @@ export async function getEmployees(
   next
 ) {
   try {
-    const salonId =
-      Number(req.query.salon_id)
+const salonId =
+      Number(req.currentSalon?.id)
 
     if (
       !Number.isSafeInteger(salonId) ||
@@ -46,8 +46,8 @@ export async function createEmployee(
   next
 ) {
   try {
-    const salonId =
-      Number(req.body.salon_id)
+const salonId =
+      Number(req.currentSalon?.id)
 
     const employee =
       await createEmployeeForSalon({
@@ -84,8 +84,8 @@ export async function updateEmployee(
     const employeeId =
       Number(req.params.id)
 
-    const salonId =
-      Number(req.body.salon_id)
+const salonId =
+      Number(req.currentSalon?.id)
 
     const employee =
       await updateEmployeeForSalon({
@@ -117,8 +117,8 @@ export async function updateEmployeeActive(
     const employeeId =
       Number(req.params.id)
 
-    const salonId =
-      Number(req.body.salon_id)
+const salonId =
+      Number(req.currentSalon?.id)
 
     const employee =
       await updateEmployeeActiveForSalon({

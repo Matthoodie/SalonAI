@@ -7,7 +7,8 @@ import {
 
 export async function getClients(req, res, next) {
   try {
-    const salonId = Number(req.query.salon_id)
+const salonId =
+  Number(req.currentSalon?.id)
 
     if (
       !Number.isSafeInteger(salonId) ||
@@ -34,7 +35,7 @@ export async function getClients(req, res, next) {
 export async function createClient(req, res, next) {
   try {
     const client = await createClientForSalon({
-      salonId: req.body?.salon_id,
+      salonId: req.currentSalon?.id,
       name: req.body?.name,
       phoneCountryCode: req.body?.phone_country_code,
       phoneNumber: req.body?.phone_number,
@@ -51,9 +52,9 @@ export async function createClient(req, res, next) {
 
 export async function updateClient(req, res, next) {
   try {
-    const client = await updateClientForSalon({
+     const client = await updateClientForSalon({
       clientId: req.params.id,
-      salonId: req.body?.salon_id,
+      salonId: req.currentSalon?.id,
       name: req.body?.name,
       phoneCountryCode: req.body?.phone_country_code,
       phoneNumber: req.body?.phone_number,
@@ -74,12 +75,11 @@ export async function updateClientActive(
   next
 ) {
   try {
-    const client = await updateClientActiveForSalon({
-      clientId: req.params.id,
-      salonId: req.body?.salon_id,
-      active: req.body?.active,
-    })
-
+const client = await updateClientActiveForSalon({
+  clientId: req.params.id,
+  salonId: req.currentSalon?.id,
+  active: req.body?.active,
+})
     return res.status(200).json({
       data: client,
     })

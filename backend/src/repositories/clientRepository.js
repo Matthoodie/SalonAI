@@ -23,7 +23,10 @@ export async function findClientsBySalonId(salonId) {
   return result.rows
 }
 
-export async function findClientById(clientId) {
+export async function findClientById(
+  clientId,
+  salonId
+) {
   const result = await pool.query(
     `
       SELECT
@@ -33,9 +36,13 @@ export async function findClientById(clientId) {
         active
       FROM clients
       WHERE id = $1
+        AND salon_id = $2
       LIMIT 1
     `,
-    [clientId]
+    [
+      clientId,
+      salonId,
+    ]
   )
 
   return result.rows[0] ?? null

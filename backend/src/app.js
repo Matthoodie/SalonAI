@@ -1,45 +1,32 @@
-import express from 'express'
 import {
   clerkMiddleware,
 } from '@clerk/express'
 
-import appointmentRoutes from './routes/appointmentRoutes.js'
-import authRoutes from './routes/authRoutes.js'
-import availabilityRoutes from './routes/availabilityRoutes.js'
-import bookingRoutes from './routes/bookingRoutes.js'
-import calendarRoutes from './routes/calendarRoutes.js'
-import serviceRoutes from './routes/serviceRoutes.js'
-import employeeRoutes from './routes/employeeRoutes.js'
-import clientRoutes from './routes/clientRoutes.js'
-
-import healthRoutes from './routes/healthRoutes.js'
+import {
+  createApp,
+} from './createApp.js'
 
 import {
-  errorHandler,
-  notFoundHandler,
-} from './middleware/errorHandler.js'
+  requireAuthenticatedUser,
+} from './middleware/authenticatedUserMiddleware.js'
 
-const app = express()
+import {
+  requireCurrentSalon,
+} from './middleware/currentSalonMiddleware.js'
 
-app.use(express.json())
+const clerkAuthMiddleware =
+  clerkMiddleware()
 
-app.use('/api/health', healthRoutes)
+const app = createApp({
+  authRouteMiddleware: [
+    clerkAuthMiddleware,
+  ],
 
-app.use(
-  '/api/auth',
-  clerkMiddleware(),
-  authRoutes
-)
-
-app.use('/api/appointments', appointmentRoutes)
-app.use('/api/availability', availabilityRoutes)
-app.use('/api/bookings', bookingRoutes)
-app.use('/api/calendar', calendarRoutes)
-app.use('/api/services', serviceRoutes)
-app.use('/api/employees', employeeRoutes)
-app.use('/api/clients', clientRoutes)
-
-app.use(notFoundHandler)
-app.use(errorHandler)
+  privateRouteMiddleware: [
+    clerkAuthMiddleware,
+    requireAuthenticatedUser,
+    requireCurrentSalon,
+  ],
+})
 
 export default app

@@ -9,7 +9,8 @@ import {
 
 export async function getAppointments(req, res, next) {
     try {
-        const salonId = Number(req.query.salonId)
+        const salonId =
+          Number(req.currentSalon?.id)
 
         if (
             !Number.isSafeInteger(salonId) ||
@@ -39,6 +40,9 @@ export async function getAppointment(req, res, next) {
     try {
         const id = Number(req.params.id)
 
+        const salonId =
+           Number(req.currentSalon?.id)
+
         if (!Number.isSafeInteger(id) || id <= 0) {
             return res.status(400).json({
                 error: {
@@ -48,7 +52,11 @@ export async function getAppointment(req, res, next) {
             })
         }
 
-        const appointment = await getAppointmentById(id)
+const appointment =
+    await getAppointmentById(
+        id,
+        salonId
+    )
 
         if (!appointment) {
             return res.status(404).json({
@@ -69,14 +77,16 @@ export async function getAppointment(req, res, next) {
 
 export async function createAppointment(req, res, next) {
     try {
-        const {
-            salon_id,
-            client_id,
-            employee_id,
-            service_id,
-            starts_at,
-            notes,
-        } = req.body
+const {
+    client_id,
+    employee_id,
+    service_id,
+    starts_at,
+    notes,
+} = req.body
+
+const salon_id =
+    Number(req.currentSalon?.id)
 
         const requiredIds = {
             salon_id,
@@ -177,6 +187,9 @@ export async function updateAppointmentStatus(
             })
         }
 
+        const salonId =
+            Number(req.currentSalon?.id)
+
         const { status } = req.body
 
         if (typeof status !== 'string') {
@@ -192,6 +205,7 @@ export async function updateAppointmentStatus(
         const result =
             await changeAppointmentStatus(
                 id,
+                salonId,
                 status
             )
 
@@ -236,6 +250,9 @@ export async function rescheduleAppointment(
             })
         }
 
+        const salonId =
+         Number(req.currentSalon?.id)
+
         const { starts_at } = req.body
 
         if (
@@ -254,6 +271,7 @@ export async function rescheduleAppointment(
         const result =
             await rescheduleAppointmentService(
                 id,
+                salonId,
                 starts_at
             )
 
@@ -279,8 +297,14 @@ export async function rescheduleAppointment(
 
 export async function updateAppointmentClient(req, res, next) {
     try {
-        const appointmentId = Number(req.params.id)
-        const clientId = Number(req.body?.client_id)
+        const appointmentId =
+    Number(req.params.id)
+
+const salonId =
+    Number(req.currentSalon?.id)
+
+const clientId =
+    Number(req.body?.client_id)
 
         if (
             !Number.isSafeInteger(appointmentId) ||
@@ -312,6 +336,7 @@ export async function updateAppointmentClient(req, res, next) {
 
         const result = await changeAppointmentClient(
             appointmentId,
+            salonId,
             clientId
         )
 

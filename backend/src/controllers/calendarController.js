@@ -36,16 +36,15 @@ export async function getCalendar(
     next
 ) {
     try {
-        const {
-            salonId,
-            from,
-            to,
-            employeeId,
-            status,
-        } = req.query
+const {
+    from,
+    to,
+    employeeId,
+    status,
+} = req.query
 
-        const numericSalonId =
-            Number(salonId)
+const numericSalonId =
+    Number(req.currentSalon?.id)
 
         if (
             !Number.isSafeInteger(

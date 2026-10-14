@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import app from '../src/app.js'
+import app from './helpers/testApp.js'
 
 test('GET /api/appointments/:id rejects invalid appointment ID', async () => {
   const server = app.listen(0)

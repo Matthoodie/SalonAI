@@ -11,9 +11,9 @@ export async function getServices(
   next
 ) {
   try {
-    const salonId = Number(
-      req.query.salon_id
-    )
+const salonId = Number(
+  req.currentSalon?.id
+)
 
     if (
       !Number.isSafeInteger(salonId) ||
@@ -45,15 +45,16 @@ export async function createServiceController(
   next
 ) {
   try {
-    const {
-      salon_id,
-      name,
-      category,
-      price_cents,
-      default_duration_minutes,
-    } = req.body
+const {
+  name,
+  category,
+  price_cents,
+  default_duration_minutes,
+} = req.body
 
-    const salonId = Number(salon_id)
+const salonId = Number(
+  req.currentSalon?.id
+)
     const priceCents = Number(price_cents)
     const defaultDurationMinutes =
       Number(default_duration_minutes)
@@ -150,15 +151,16 @@ export async function updateServiceController(
   try {
     const serviceId = Number(req.params.id)
 
-    const {
-      salon_id,
-      name,
-      category,
-      price_cents,
-      default_duration_minutes,
-    } = req.body
+const {
+  name,
+  category,
+  price_cents,
+  default_duration_minutes,
+} = req.body
 
-    const salonId = Number(salon_id)
+const salonId = Number(
+  req.currentSalon?.id
+)
     const priceCents = Number(price_cents)
     const defaultDurationMinutes =
       Number(default_duration_minutes)
@@ -280,12 +282,13 @@ export async function updateServiceActiveController(
   try {
     const serviceId = Number(req.params.id)
 
-    const {
-      salon_id,
-      active,
-    } = req.body
+const {
+  active,
+} = req.body
 
-    const salonId = Number(salon_id)
+const salonId = Number(
+  req.currentSalon?.id
+)
 
     if (
       !Number.isSafeInteger(serviceId) ||

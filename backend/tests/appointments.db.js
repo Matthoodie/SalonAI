@@ -1,7 +1,7 @@
 import test, { after } from 'node:test'
 import assert from 'node:assert/strict'
 
-import app from '../src/app.js'
+import app from './helpers/testApp.js'
 import pool from '../src/database/pool.js'
 
 after(async () => {
@@ -67,7 +67,9 @@ async function getDevelopmentSeedSalonId() {
   return result.rows[0].salon_id
 }
 
-test('GET /api/appointments requires a valid salonId', async () => {
+test('GET /api/appointments uses current salon context without salonId', async () => {
+  const fixture = await getSeedFixture()
+
   const server = app.listen(0)
 
   try {
@@ -78,16 +80,26 @@ test('GET /api/appointments requires a valid salonId', async () => {
     const address = server.address()
     const baseUrl = `http://127.0.0.1:${address.port}`
 
-    for (const path of [
-      '/api/appointments',
-      '/api/appointments?salonId=abc',
-      '/api/appointments?salonId=0',
-    ]) {
-      const response = await fetch(`${baseUrl}${path}`)
-      const body = await response.json()
+    const response = await fetch(
+      `${baseUrl}/api/appointments`,
+      {
+        headers: {
+          'x-test-salon-id':
+            String(fixture.salon_id),
+        },
+      }
+    )
 
-      assert.equal(response.status, 400)
-      assert.equal(body.error.code, 'INVALID_SALON_ID')
+    const body = await response.json()
+
+    assert.equal(response.status, 200)
+    assert.ok(Array.isArray(body.data))
+
+    for (const appointment of body.data) {
+      assert.equal(
+        Number(appointment.salon_id),
+        Number(fixture.salon_id)
+      )
     }
   } finally {
     await new Promise((resolve, reject) => {

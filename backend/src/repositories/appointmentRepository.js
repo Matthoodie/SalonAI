@@ -28,7 +28,10 @@ export async function findAllAppointments(salonId) {
     return result.rows
 }
 
-export async function findAppointmentById(id) {
+export async function findAppointmentById(
+    id,
+    salonId
+) {
     const result = await pool.query(
         `
       SELECT
@@ -48,9 +51,13 @@ export async function findAppointmentById(id) {
         updated_at
       FROM appointments
       WHERE id = $1
+        AND salon_id = $2
       LIMIT 1
     `,
-        [id]
+        [
+            id,
+            salonId,
+        ]
     )
 
     return result.rows[0] ?? null
@@ -298,15 +305,17 @@ export async function findSalonById(salonId) {
 
 export async function updateAppointmentStatus(
     appointmentId,
+    salonId,
     status
 ) {
     const result = await pool.query(
         `
       UPDATE appointments
       SET
-        status = $2,
+        status = $3,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
+        AND salon_id = $2
       RETURNING
         id,
         salon_id,
@@ -325,6 +334,7 @@ export async function updateAppointmentStatus(
     `,
         [
             appointmentId,
+            salonId,
             status,
         ]
     )
@@ -334,6 +344,7 @@ export async function updateAppointmentStatus(
 
 export async function updateAppointmentSchedule(
     appointmentId,
+    salonId,
     startsAt,
     endsAt
 ) {
@@ -341,10 +352,11 @@ export async function updateAppointmentSchedule(
         `
       UPDATE appointments
       SET
-        starts_at = $2,
-        ends_at = $3,
+        starts_at = $3,
+        ends_at = $4,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
+        AND salon_id = $2
       RETURNING
         id,
         salon_id,
@@ -363,6 +375,7 @@ export async function updateAppointmentSchedule(
     `,
         [
             appointmentId,
+            salonId,
             startsAt,
             endsAt,
         ]

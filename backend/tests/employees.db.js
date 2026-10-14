@@ -1,7 +1,7 @@
 import test, { after } from 'node:test'
 import assert from 'node:assert/strict'
 
-import app from '../src/app.js'
+import app from './helpers/testApp.js'
 import pool from '../src/database/pool.js'
 
 after(async () => {

@@ -218,12 +218,19 @@ export async function getAllAppointments(salonId) {
     return findAllAppointments(salonId)
 }
 
-export async function getAppointmentById(id) {
-    return findAppointmentById(id)
+export async function getAppointmentById(
+    id,
+    salonId
+) {
+    return findAppointmentById(
+        id,
+        salonId
+    )
 }
 
 export async function changeAppointmentStatus(
     appointmentId,
+    salonId,
     newStatus
 ) {
     const allowedStatuses = [
@@ -245,8 +252,11 @@ export async function changeAppointmentStatus(
         }
     }
 
-    const appointment =
-        await findAppointmentById(appointmentId)
+const appointment =
+        await findAppointmentById(
+            appointmentId,
+            salonId
+        )
 
     if (!appointment) {
         return {
@@ -287,8 +297,9 @@ export async function changeAppointmentStatus(
     }
 
     const updatedAppointment =
-        await updateAppointmentStatus(
+          await updateAppointmentStatus(
             appointmentId,
+            salonId,
             newStatus
         )
 
@@ -299,10 +310,14 @@ export async function changeAppointmentStatus(
 
 export async function rescheduleAppointment(
     appointmentId,
+    salonId,
     startsAtInput
 ) {
     const appointment =
-        await findAppointmentById(appointmentId)
+        await findAppointmentById(
+            appointmentId,
+            salonId
+        )
 
     if (!appointment) {
         return {
@@ -374,6 +389,7 @@ export async function rescheduleAppointment(
     const updatedAppointment =
         await updateAppointmentSchedule(
             appointmentId,
+            salonId,
             startsAt,
             endsAt
         )
@@ -385,10 +401,14 @@ export async function rescheduleAppointment(
 
 export async function changeAppointmentClient(
     appointmentId,
+    salonId,
     newClientId
 ) {
     const appointment =
-        await findAppointmentById(appointmentId)
+        await findAppointmentById(
+            appointmentId,
+            salonId
+        )
 
     if (!appointment) {
         return {
@@ -414,7 +434,10 @@ export async function changeAppointmentClient(
         }
     }
 
-    const client = await findClientById(newClientId)
+    const client = await findClientById(
+    newClientId,
+    salonId
+)
 
     if (!client) {
         return {
@@ -422,20 +445,6 @@ export async function changeAppointmentClient(
                 status: 404,
                 code: 'CLIENT_NOT_FOUND',
                 message: 'Client was not found.',
-            },
-        }
-    }
-
-    if (
-        Number(client.salon_id) !==
-        Number(appointment.salon_id)
-    ) {
-        return {
-            error: {
-                status: 400,
-                code: 'CLIENT_SALON_MISMATCH',
-                message:
-                    'Client does not belong to the appointment salon.',
             },
         }
     }
@@ -549,17 +558,33 @@ export async function prepareAppointmentCreation({
         }
     }
 
-    if (!employee.active) {
-        return {
-            error: {
-                status: 400,
-                code: 'EMPLOYEE_INACTIVE',
-                message: 'Employee is not active.',
-            },
-        }
+if (!employee.active) {
+    return {
+        error: {
+            status: 400,
+            code: 'EMPLOYEE_INACTIVE',
+            message: 'Employee is not active.',
+        },
     }
+}
 
-    const startsAt = new Date(starts_at)
+const client = await findClientById(
+    client_id,
+    salon_id
+)
+
+if (!client) {
+    return {
+        error: {
+            status: 404,
+            code: 'CLIENT_NOT_FOUND',
+            message:
+                'Client was not found for the selected salon.',
+        },
+    }
+}
+
+const startsAt = new Date(starts_at)
 
     const endsAt = new Date(
         startsAt.getTime() +
