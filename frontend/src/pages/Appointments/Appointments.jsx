@@ -1,4 +1,9 @@
 import {
+  mapClientToFrontend,
+  mapClientToPayload,
+} from '../../api/clientMapper'
+
+import {
   useEffect,
   useRef,
   useState,
@@ -229,23 +234,13 @@ async function quickAddClient(newClient) {
     )
   }
 
-const savedClient = await createClient({
-  name: newClient.name,
-  phone_country_code:
-    newClient.phoneCountryCode,
-  phone_number:
-    newClient.phoneNumber,
-  phone_normalized:
-    newClient.phoneNormalized,
-})
+  const savedClient = await createClient(
+    mapClientToPayload(newClient)
+  )
 
   const createdClient = {
-    ...newClient,
-    id: savedClient.id,
-    active: savedClient.active,
+    ...mapClientToFrontend(savedClient),
     visits: 0,
-    phone:
-      `${newClient.phoneCountryCode} ${newClient.phoneNumber}`.trim(),
   }
 
   setClientList((currentClients) => [
@@ -261,7 +256,6 @@ const savedClient = await createClient({
       window.alert(
         'Podaci salona nisu učitani. Pokušajte ponovno.'
       )
-
       return false
     }
 
@@ -272,61 +266,70 @@ const savedClient = await createClient({
     setIsCreatingAppointment(true)
 
     try {
-      const startsAt =
-        salonDateTimeToUtcIso(
-          newAppointment.date,
-          newAppointment.time,
-          salonTimezone
-        )
+      const {
+        newClient,
+        ...appointmentFields
+      } = newAppointment
 
-      const backendAppointment =
-  await createAppointment({
-    clientId: newAppointment.clientId,
-    employeeId: newAppointment.employeeId,
-    serviceId: newAppointment.serviceId,
-    startsAt,
-    notes: newAppointment.notes ?? null,
-  })
+      const startsAt = salonDateTimeToUtcIso(
+        newAppointment.date,
+        newAppointment.time,
+        salonTimezone
+      )
 
-      const createdAppointment = {
-        ...newAppointment,
+      const backendAppointment = await createAppointment({
+        clientId: newAppointment.clientId,
+        newClient: newClient
+          ? mapClientToPayload(newClient)
+          : undefined,
+        employeeId: newAppointment.employeeId,
+        serviceId: newAppointment.serviceId,
+        startsAt,
+        notes: newAppointment.notes ?? null,
+      })
 
-        id: backendAppointment.id,
+      if (newClient) {
+        const createdClient = {
+          ...newClient,
+          id: backendAppointment.client_id,
+          active: true,
+          visits: 0,
+        }
 
-        date:
-          newAppointment.date ||
-          getTodayDate(),
+        setClientList((currentClients) => {
+          const alreadyPresent = currentClients.some(
+            (client) =>
+              String(client.id) === String(createdClient.id)
+          )
 
-        startsAt:
-          backendAppointment.starts_at,
-
-        endsAt:
-          backendAppointment.ends_at,
-
-        durationMinutes:
-          backendAppointment.duration_minutes,
-
-        priceCents:
-          backendAppointment.price_cents,
-
-        status: 'Zakazano',
-
-        statusCode:
-          backendAppointment.status,
-
-        source:
-          backendAppointment.source,
-
-        notes:
-          backendAppointment.notes,
+          return alreadyPresent
+            ? currentClients
+            : [...currentClients, createdClient]
+        })
       }
 
-      setAppointmentList(
-        (currentAppointments) => [
-          ...currentAppointments,
-          createdAppointment,
-        ]
-      )
+      const createdAppointment = {
+        ...appointmentFields,
+        id: backendAppointment.id,
+        clientId: backendAppointment.client_id,
+        employeeId: backendAppointment.employee_id,
+        serviceId: backendAppointment.service_id,
+        date: newAppointment.date || getTodayDate(),
+        startsAt: backendAppointment.starts_at,
+        endsAt: backendAppointment.ends_at,
+        durationMinutes: backendAppointment.duration_minutes,
+        priceCents: backendAppointment.price_cents,
+        status: 'Zakazano',
+        statusCode: backendAppointment.status,
+        source: backendAppointment.source,
+        notes: backendAppointment.notes,
+      }
+
+      setAppointmentList((currentAppointments) => [
+        ...currentAppointments,
+        createdAppointment,
+      ])
+
       return true
     } catch (error) {
       console.error(
@@ -338,6 +341,7 @@ const savedClient = await createClient({
         error.message ||
         'Termin trenutno nije moguće kreirati.'
       )
+
       return false
     } finally {
       setIsCreatingAppointment(false)

@@ -34,12 +34,14 @@ export function getCurrentAuth(
       },
 
       membership: {
-        id: currentMembership.id,
-        role:
-          currentMembership.role,
-        active:
-          currentMembership.active,
-      },
+  id: currentMembership.id,
+  role:
+    currentMembership.role,
+  employee_id:
+    currentMembership.employeeId,
+  active:
+    currentMembership.active,
+},
     },
   })
 }

@@ -114,6 +114,7 @@ export async function changeAppointmentClient(
 
 export async function createAppointment({
   clientId,
+  newClient,
   employeeId,
   serviceId,
   startsAt,
@@ -123,28 +124,27 @@ export async function createAppointment({
     '/api/appointments',
     {
       method: 'POST',
-
       headers: {
         'Content-Type': 'application/json',
       },
-
-body: JSON.stringify({
-  client_id: clientId,
-  employee_id: employeeId,
-  service_id: serviceId,
-  starts_at: startsAt,
-  notes,
-}),
+      body: JSON.stringify({
+        ...(newClient
+          ? { new_client: newClient }
+          : { client_id: clientId }),
+        employee_id: employeeId,
+        service_id: serviceId,
+        starts_at: startsAt,
+        notes,
+      }),
     }
   )
 
-  const responseBody =
-    await response.json()
+  const responseBody = await response.json()
 
   if (!response.ok) {
     const error = new Error(
       responseBody?.error?.message ||
-        'Failed to create appointment.'
+      'Failed to create appointment.'
     )
 
     error.code =

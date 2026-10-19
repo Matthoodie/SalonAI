@@ -29,7 +29,8 @@ export async function findEmployeeForUpdate(
 }
 
 export async function findEmployeesBySalonId(
-  salonId
+  salonId,
+  employeeId = null
 ) {
   const result = await pool.query(
     `
@@ -141,9 +142,13 @@ export async function findEmployeesBySalonId(
         ) AS blocked_times
       FROM employees e
       WHERE e.salon_id = $1
+        AND (
+          $2::bigint IS NULL
+          OR e.id = $2
+        )
       ORDER BY e.name ASC
     `,
-    [salonId]
+    [salonId, employeeId]
   )
 
   return result.rows

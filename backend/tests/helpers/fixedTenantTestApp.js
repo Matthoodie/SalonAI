@@ -3,7 +3,11 @@ import {
 } from '../../src/createApp.js'
 
 export function createFixedTenantTestApp(
-  salonId
+  salonId,
+  {
+    role = 'owner',
+    employeeId = null,
+  } = {}
 ) {
   const numericSalonId =
     Number(salonId)
@@ -26,6 +30,12 @@ export function createFixedTenantTestApp(
       id: numericSalonId,
     }
 
+req.currentMembership = {
+  salonId: numericSalonId,
+  role,
+  employeeId,
+  active: true,
+}
     return next()
   }
 

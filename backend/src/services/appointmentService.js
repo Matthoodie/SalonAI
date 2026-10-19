@@ -214,24 +214,33 @@ const APPOINTMENT_STATUS_TRANSITIONS = {
     no_show: [],
 }
 
-export async function getAllAppointments(salonId) {
-    return findAllAppointments(salonId)
+export async function getAllAppointments(
+    salonId,
+    employeeId = null
+) {
+    return findAllAppointments(
+        salonId,
+        employeeId
+    )
 }
 
 export async function getAppointmentById(
     id,
-    salonId
+    salonId,
+    employeeId = null
 ) {
     return findAppointmentById(
         id,
-        salonId
+        salonId,
+        employeeId
     )
 }
 
 export async function changeAppointmentStatus(
     appointmentId,
     salonId,
-    newStatus
+    newStatus,
+    employeeId = null
 ) {
     const allowedStatuses = [
         'pending',
@@ -254,9 +263,10 @@ export async function changeAppointmentStatus(
 
 const appointment =
         await findAppointmentById(
-            appointmentId,
-            salonId
-        )
+    appointmentId,
+    salonId,
+    employeeId
+)
 
     if (!appointment) {
         return {
@@ -298,10 +308,11 @@ const appointment =
 
     const updatedAppointment =
           await updateAppointmentStatus(
-            appointmentId,
-            salonId,
-            newStatus
-        )
+    appointmentId,
+    salonId,
+    newStatus,
+    employeeId
+)
 
     return {
         data: updatedAppointment,
@@ -311,13 +322,15 @@ const appointment =
 export async function rescheduleAppointment(
     appointmentId,
     salonId,
-    startsAtInput
+    startsAtInput,
+    employeeId = null
 ) {
     const appointment =
         await findAppointmentById(
-            appointmentId,
-            salonId
-        )
+    appointmentId,
+    salonId,
+    employeeId
+)
 
     if (!appointment) {
         return {
@@ -388,11 +401,12 @@ export async function rescheduleAppointment(
 
     const updatedAppointment =
         await updateAppointmentSchedule(
-            appointmentId,
-            salonId,
-            startsAt,
-            endsAt
-        )
+    appointmentId,
+    salonId,
+    startsAt,
+    endsAt,
+    employeeId
+)
 
     return {
         data: updatedAppointment,
@@ -402,13 +416,15 @@ export async function rescheduleAppointment(
 export async function changeAppointmentClient(
     appointmentId,
     salonId,
-    newClientId
+    newClientId,
+    employeeId = null
 ) {
     const appointment =
         await findAppointmentById(
-            appointmentId,
-            salonId
-        )
+    appointmentId,
+    salonId,
+    employeeId
+)
 
     if (!appointment) {
         return {
@@ -461,10 +477,11 @@ export async function changeAppointmentClient(
 
     const updatedAppointment =
         await updateAppointmentClient(
-            appointment.id,
-            appointment.salon_id,
-            client.id
-        )
+    appointment.id,
+    appointment.salon_id,
+    client.id,
+    employeeId
+)
 
     return {
         data: updatedAppointment,
@@ -478,7 +495,7 @@ export async function prepareAppointmentCreation({
     service_id,
     starts_at,
     notes,
-}) {
+}, db) {
 
     const salon = await findSalonById(salon_id)
 
@@ -570,7 +587,8 @@ if (!employee.active) {
 
 const client = await findClientById(
     client_id,
-    salon_id
+    salon_id,
+    db
 )
 
 if (!client) {
@@ -619,8 +637,9 @@ const startsAt = new Date(starts_at)
 
     try {
         const appointment =
-            await insertAppointment(
-                appointmentData
+                await insertAppointment(
+                appointmentData,
+                db
             )
 
         return {

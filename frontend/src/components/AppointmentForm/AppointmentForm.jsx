@@ -104,6 +104,7 @@ function AppointmentForm({
   const [time, setTime] = useState('')
   const [clientName, setClientName] = useState('')
   const [clientId, setClientId] = useState('')
+  const [pendingClient, setPendingClient] = useState(null)
   const [clientSearch, setClientSearch] = useState('')
   const [isClientSearchOpen, setIsClientSearchOpen] =
     useState(false)
@@ -422,28 +423,47 @@ const filteredClientList = clientList
     })
   }, [editingAppointment, initialDate])
 
+    useEffect(() => {
+    setPendingClient(null)
+    setIsQuickAddClientOpen(false)
+  }, [editingAppointment, initialDate])
+
   async function handleQuickAddClient(newClient) {
+    if (!editingAppointment) {
+      setPendingClient({ ...newClient })
+      setClientId('')
+      setClientName(newClient.name)
+      setClientSearch(newClient.name)
+      setIsClientSearchOpen(false)
+      setIsQuickAddClientOpen(false)
+
+      setErrors((currentErrors) => ({
+        ...currentErrors,
+        clientName: '',
+      }))
+
+      return newClient
+    }
+
     if (!onQuickAddClient) {
       throw new Error(
         'Dodavanje novog klijenta trenutno nije dostupno.'
       )
     }
 
-    const createdClient =
-      await onQuickAddClient(newClient)
+    const createdClient = await onQuickAddClient(newClient)
 
+    setPendingClient(null)
     setClientId(String(createdClient.id))
     setClientName(createdClient.name)
     setClientSearch(createdClient.name)
     setIsClientSearchOpen(false)
     setIsQuickAddClientOpen(false)
 
-    if (errors.clientName) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        clientName: '',
-      }))
-    }
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      clientName: '',
+    }))
 
     return createdClient
   }
@@ -455,10 +475,11 @@ const filteredClientList = clientList
         serviceItem.name === service
     )
 
-    const selectedClient = clientList.find(
-      (client) =>
-        String(client.id) === clientId
-    )
+    const selectedClient =
+      (!editingAppointment && pendingClient) ||
+      clientList.find(
+        (client) => String(client.id) === clientId
+      )
 
     const selectedEmployee =
       employeeList.find(
@@ -637,8 +658,13 @@ const filteredClientList = clientList
           date,
           time,
 
-          clientId: selectedClient.id,
+          clientId: pendingClient
+            ? undefined
+            : selectedClient.id,
           clientName: selectedClient.name,
+          newClient: pendingClient
+            ? { ...pendingClient }
+            : undefined,
 
           employeeId: selectedEmployee.id,
           employeeName: selectedEmployee.name,
@@ -661,6 +687,10 @@ const filteredClientList = clientList
     setTime('')
     setClientName('')
     setClientId('')
+    setPendingClient(null)
+    setClientSearch('')
+    setIsClientSearchOpen(false)
+    setIsQuickAddClientOpen(false)
     setService('')
     setEmployeeId('')
 
@@ -764,6 +794,7 @@ const filteredClientList = clientList
           value={clientSearch}
           onFocus={() => setIsClientSearchOpen(true)}
           onChange={(event) => {
+            setPendingClient(null)
             setClientSearch(event.target.value)
             setClientId('')
             setClientName('')
@@ -801,6 +832,7 @@ const filteredClientList = clientList
                     className="appointment-client-result"
                     onClick={() => {
                       setClientId(String(client.id))
+                      setPendingClient(null)
                       setClientName(client.name)
                       setClientSearch(client.name)
                       setIsClientSearchOpen(false)
@@ -824,6 +856,12 @@ const filteredClientList = clientList
             )}
           </ul>
         )}
+                {!editingAppointment && pendingClient && (
+          <p role="status">
+            Novi klijent: {pendingClient.name}.
+            Podaci će se spremiti zajedno s terminom.
+          </p>
+        )}
         <div className="appointment-client-quick-add">
           <button
             type="button"
@@ -843,6 +881,14 @@ const filteredClientList = clientList
 
           {isQuickAddClientOpen && (
             <div className="appointment-client-quick-add-form">
+              {!editingAppointment && (
+                <p>
+                  Klikom na „Dodaj klijenta” odabirete ga
+                  za ovaj termin. Klijent će biti spremljen
+                  tek nakon uspješnog spremanja termina.
+                </p>
+              )}
+
               <ClientForm
                 clientList={clientList}
                 onAddClient={handleQuickAddClient}

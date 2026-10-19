@@ -10,6 +10,7 @@ export async function findMembershipsByUserId(
         sm.user_id,
         sm.salon_id,
         sm.role,
+        sm.employee_id,
         sm.active AS membership_active,
         sm.created_at AS membership_created_at,
         sm.updated_at AS membership_updated_at,

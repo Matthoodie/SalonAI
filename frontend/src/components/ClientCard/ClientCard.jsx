@@ -37,8 +37,10 @@ function ClientCard({
 
           <span>
             {isArchived
-              ? 'Arhiviran'
-              : 'Klijent'}
+  ? 'Arhiviran'
+  : client.isOccasional
+    ? 'Povremeni klijent'
+    : 'Stalni klijent'}
           </span>
         </div>
       </div>
@@ -49,7 +51,7 @@ function ClientCard({
         </span>
 
         <strong>
-          {client.phone}
+         {client.phone || 'Telefon nije unesen'}
         </strong>
       </div>
 

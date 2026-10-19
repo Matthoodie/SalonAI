@@ -141,35 +141,63 @@ const numericSalonId =
                             'Calendar range cannot exceed 62 days.',
                     },
                 })
-        }
+         }
 
-        let numericEmployeeId =
-            null
+const isEmployee =
+    req.currentMembership?.role ===
+    'employee'
 
-        if (
-            employeeId !== undefined
-        ) {
-            numericEmployeeId =
-                Number(employeeId)
+let numericEmployeeId =
+    null
 
-            if (
-                !Number.isSafeInteger(
-                    numericEmployeeId
-                ) ||
-                numericEmployeeId <= 0
-            ) {
-                return res
-                    .status(400)
-                    .json({
-                        error: {
-                            code:
-                                'INVALID_EMPLOYEE_ID',
-                            message:
-                                'employeeId must be a positive integer.',
-                        },
-                    })
-            }
-        }
+if (isEmployee) {
+    numericEmployeeId =
+        Number(
+            req.currentMembership
+                ?.employeeId
+        )
+
+    if (
+        !Number.isSafeInteger(
+            numericEmployeeId
+        ) ||
+        numericEmployeeId <= 0
+    ) {
+        const error = new Error(
+            'Employee membership is missing a valid employee identity.'
+        )
+
+        error.code =
+            'EMPLOYEE_MEMBERSHIP_IDENTITY_REQUIRED'
+
+        error.statusCode = 500
+
+        throw error
+    }
+} else if (
+    employeeId !== undefined
+) {
+    numericEmployeeId =
+        Number(employeeId)
+
+    if (
+        !Number.isSafeInteger(
+            numericEmployeeId
+        ) ||
+        numericEmployeeId <= 0
+    ) {
+        return res
+            .status(400)
+            .json({
+                error: {
+                    code:
+                        'INVALID_EMPLOYEE_ID',
+                    message:
+                        'employeeId must be a positive integer.',
+                },
+            })
+    }
+}
 
         const normalizedStatus =
             status === undefined

@@ -1,3 +1,4 @@
+import { mapClientToFrontend } from './api/clientMapper'
 import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
@@ -536,22 +537,9 @@ function App() {
           return
         }
 
-        const mappedClients = backendClients.map(
+    const mappedClients = backendClients.map(
           (client) => ({
-            ...client,
-
-            phoneCountryCode:
-              client.phone_country_code,
-
-            phoneNumber:
-              client.phone_number,
-
-            phoneNormalized:
-              client.phone_normalized,
-
-            phone:
-              `${client.phone_country_code} ${client.phone_number}`,
-
+            ...mapClientToFrontend(client),
             visits: 0,
           })
         )

@@ -5,14 +5,10 @@ import {
   updateEmployeeActiveForSalon,
 } from '../services/employeeService.js'
 
-export async function getEmployees(
-  req,
-  res,
-  next
-) {
+export async function getEmployees(req, res, next) {
   try {
-const salonId =
-      Number(req.currentSalon?.id)
+    const salonId = Number(req.currentSalon?.id)
+    const membership = req.currentMembership
 
     if (
       !Number.isSafeInteger(salonId) ||
@@ -21,18 +17,59 @@ const salonId =
       return res.status(400).json({
         error: {
           code: 'VALIDATION_ERROR',
-          message:
-            'salon_id must be a positive integer.',
+          message: 'salon_id must be a positive integer.',
         },
       })
     }
 
-    const employees =
-      await getEmployeesForSalon(
-        salonId
+    if (!membership) {
+      const error = new Error(
+        'Salon membership context is required.'
       )
 
-    res.status(200).json({
+      error.code = 'SALON_MEMBERSHIP_CONTEXT_REQUIRED'
+      error.statusCode = 500
+
+      throw error
+    }
+
+    if (
+      !['owner', 'admin', 'employee'].includes(membership.role)
+    ) {
+      return res.status(403).json({
+        error: {
+          code: 'INVALID_SALON_ROLE',
+          message: 'The salon role is not supported.',
+        },
+      })
+    }
+
+    let employeeId = null
+
+    if (membership.role === 'employee') {
+      employeeId = Number(membership.employeeId)
+
+      if (
+        !Number.isSafeInteger(employeeId) ||
+        employeeId <= 0
+      ) {
+        const error = new Error(
+          'Employee membership is missing a valid employee identity.'
+        )
+
+        error.code = 'EMPLOYEE_MEMBERSHIP_IDENTITY_REQUIRED'
+        error.statusCode = 500
+
+        throw error
+      }
+    }
+
+    const employees = await getEmployeesForSalon(
+      salonId,
+      employeeId
+    )
+
+    return res.status(200).json({
       data: employees,
     })
   } catch (error) {

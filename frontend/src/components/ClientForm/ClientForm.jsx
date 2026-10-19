@@ -2,26 +2,11 @@ import { useEffect, useState } from 'react'
 import './ClientForm.css'
 
 const phoneCountryOptions = [
-  {
-    code: '+385',
-    label: 'Hrvatska',
-  },
-  {
-    code: '+386',
-    label: 'Slovenija',
-  },
-  {
-    code: '+39',
-    label: 'Italija',
-  },
-  {
-    code: '+43',
-    label: 'Austrija',
-  },
-  {
-    code: '+49',
-    label: 'Njemačka',
-  },
+  { code: '+385', label: 'Hrvatska' },
+  { code: '+386', label: 'Slovenija' },
+  { code: '+39', label: 'Italija' },
+  { code: '+43', label: 'Austrija' },
+  { code: '+49', label: 'Njemačka' },
 ]
 
 function ClientForm({
@@ -32,66 +17,21 @@ function ClientForm({
   editingClient,
 }) {
   const [name, setName] = useState('')
-
-  const [
-    phoneCountryCode,
-    setPhoneCountryCode,
-  ] = useState('+385')
-
-  const [phoneNumber, setPhoneNumber] =
-    useState('')
-
-  const [errors, setErrors] = useState({
-    name: '',
-    phone: '',
-  })
-
+  const [isOccasional, setIsOccasional] = useState(false)
+  const [phoneCountryCode, setPhoneCountryCode] = useState('+385')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [errors, setErrors] = useState({ name: '', phone: '' })
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
-    if (editingClient) {
-      setName(editingClient.name)
-
-      setPhoneCountryCode(
-        editingClient.phoneCountryCode ||
-        '+385'
-      )
-
-      setPhoneNumber(
-        editingClient.phoneNumber ||
-        ''
-      )
-    } else {
-      setName('')
-      setPhoneCountryCode('+385')
-      setPhoneNumber('')
-    }
-
-    setErrors({
-      name: '',
-      phone: '',
-    })
+    setName(editingClient?.name ?? '')
+    setIsOccasional(editingClient?.isOccasional === true)
+    setPhoneCountryCode(editingClient?.phoneCountryCode || '+385')
+    setPhoneNumber(editingClient?.phoneNumber || '')
+    setErrors({ name: '', phone: '' })
+    setSaveError('')
   }, [editingClient])
-
-  function normalizePhoneNumber(
-    countryCode,
-    number
-  ) {
-    const digitsOnly = String(number)
-      .replace(/\D/g, '')
-
-    const withoutLeadingZero =
-      digitsOnly.startsWith('0')
-        ? digitsOnly.slice(1)
-        : digitsOnly
-
-    if (!withoutLeadingZero) {
-      return ''
-    }
-
-    return `${countryCode}${withoutLeadingZero}`
-  }
 
   async function handleSubmit() {
     if (isSaving) {
@@ -100,178 +40,116 @@ function ClientForm({
 
     setSaveError('')
 
-    const digitsOnly = phoneNumber.replace(
-      /\D/g,
-      ''
-    )
+    const cleanName = name.trim()
+    const hasPhoneInput = phoneNumber.trim() !== ''
+    const digitsOnly = phoneNumber.replace(/\D/g, '')
+    const cleanedPhoneNumber = digitsOnly.startsWith('0')
+      ? digitsOnly.slice(1)
+      : digitsOnly
 
-    const phoneDigitsWithoutLeadingZero =
-      digitsOnly.startsWith('0')
-        ? digitsOnly.slice(1)
-        : digitsOnly
+    const requiresPhoneValidation =
+      !isOccasional || hasPhoneInput
+
+    const phoneNormalized = hasPhoneInput
+      ? `${phoneCountryCode}${cleanedPhoneNumber}`
+      : null
 
     const newErrors = {
-      name: name.trim()
-        ? ''
-        : 'Upišite ime i prezime klijenta.',
-
-      phone:
-        phoneDigitsWithoutLeadingZero.length >= 7
+      name:
+        cleanName.length > 0 && cleanName.length <= 150
           ? ''
-          : 'Unesite ispravan telefonski broj.',
+          : 'Upišite ime klijenta, najviše 150 znakova.',
+      phone:
+        requiresPhoneValidation &&
+        (
+          cleanedPhoneNumber.length < 7 ||
+          cleanedPhoneNumber.length > 30 ||
+          (phoneNormalized?.length ?? 0) > 30
+        )
+          ? 'Unesite ispravan telefonski broj.'
+          : '',
     }
 
     setErrors(newErrors)
 
-    const hasErrors = Object.values(
-      newErrors
-    ).some(
-      (errorMessage) =>
-        errorMessage !== ''
-    )
-
-    if (hasErrors) {
+    if (Object.values(newErrors).some(Boolean)) {
       return
     }
 
-    const phoneNormalized =
-      normalizePhoneNumber(
-        phoneCountryCode,
-        phoneNumber
-      )
-
-    const duplicateClient = clientList.find(
-      (client) => {
-        const hasSamePhone =
-          client.phoneNormalized ===
-          phoneNormalized
-
-        const isDifferentClient =
-          !editingClient ||
-          client.id !== editingClient.id
-
-        return (
-          hasSamePhone &&
-          isDifferentClient
-        )
-      }
-    )
+    const duplicateClient = phoneNormalized
+      ? clientList.find((client) => (
+          client.phoneNormalized === phoneNormalized &&
+          (
+            !editingClient ||
+            String(client.id) !== String(editingClient.id)
+          )
+        ))
+      : null
 
     if (duplicateClient) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
+      setErrors((current) => ({
+        ...current,
         phone:
           `Klijent s ovim brojem već postoji: ${duplicateClient.name}.`,
       }))
-
       return
     }
 
-    const cleanedPhoneNumber =
-      phoneNormalized.replace(
-        phoneCountryCode,
-        ''
-      )
-
-    if (editingClient) {
-      setIsSaving(true)
-
-      try {
-        await onUpdateClient({
-          ...editingClient,
-          name: name.trim(),
-
-          phone:
-            `${phoneCountryCode} ${cleanedPhoneNumber}`,
-
-          phoneCountryCode,
-          phoneNumber:
-            cleanedPhoneNumber,
-          phoneNormalized,
-        })
-      } catch (error) {
-        setSaveError(
-          error?.message ||
-            'Promjene nije moguće spremiti. Pokušajte ponovno.'
-        )
-
-        return
-      } finally {
-        setIsSaving(false)
-      }
-    } else {
-      setIsSaving(true)
-
-      try {
-        await onAddClient({
-          name: name.trim(),
-
-          phone:
-            `${phoneCountryCode} ${cleanedPhoneNumber}`,
-
-          phoneCountryCode,
-          phoneNumber:
-            cleanedPhoneNumber,
-          phoneNormalized,
-        })
-      } catch (error) {
-        setSaveError(
-          error?.message ||
-          'Klijenta nije moguće spremiti. Pokušajte ponovno.'
-        )
-
-        return
-      } finally {
-        setIsSaving(false)
-      }
+    const clientPayload = {
+      ...(editingClient ?? {}),
+      name: cleanName,
+      isOccasional,
+      phoneCountryCode: hasPhoneInput ? phoneCountryCode : null,
+      phoneNumber: hasPhoneInput ? cleanedPhoneNumber : null,
+      phoneNormalized,
+      phone: hasPhoneInput
+        ? `${phoneCountryCode} ${cleanedPhoneNumber}`
+        : '',
     }
 
-    setName('')
-    setPhoneCountryCode('+385')
-    setPhoneNumber('')
+    setIsSaving(true)
 
-    setErrors({
-      name: '',
-      phone: '',
-    })
+    try {
+      const result = editingClient
+        ? await onUpdateClient(clientPayload)
+        : await onAddClient(clientPayload)
+
+      if (result === false) {
+        setSaveError('Podaci nisu spremljeni. Pokušajte ponovno.')
+        return
+      }
+
+      setName('')
+      setIsOccasional(false)
+      setPhoneCountryCode('+385')
+      setPhoneNumber('')
+      setErrors({ name: '', phone: '' })
+    } catch (error) {
+      setSaveError(
+        error?.message ||
+        'Klijenta nije moguće spremiti. Pokušajte ponovno.'
+      )
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function handleNameChange(event) {
     setName(event.target.value)
-
-    if (errors.name) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        name: '',
-      }))
-    }
+    setErrors((current) => ({ ...current, name: '' }))
   }
 
   function handlePhoneChange(event) {
-    const value = event.target.value
-
-    const allowedValue =
-      value.replace(
-        /[^\d\s()-]/g,
-        ''
-      )
-
-    setPhoneNumber(allowedValue)
-
-    if (errors.phone) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        phone: '',
-      }))
-    }
+    setPhoneNumber(
+      event.target.value.replace(/[^\d\s()-]/g, '')
+    )
+    setErrors((current) => ({ ...current, phone: '' }))
   }
 
   return (
     <div className="client-form">
       <h2>
-        {editingClient
-          ? 'Uredi klijenta'
-          : 'Novi klijent'}
+        {editingClient ? 'Uredi klijenta' : 'Novi klijent'}
       </h2>
 
       <div className="client-form-field">
@@ -284,12 +162,10 @@ function ClientForm({
           type="text"
           placeholder="Ime i prezime"
           value={name}
+          maxLength={150}
+          disabled={isSaving}
           onChange={handleNameChange}
-          className={
-            errors.name
-              ? 'client-input-error'
-              : ''
-          }
+          className={errors.name ? 'client-input-error' : ''}
         />
 
         <p className="client-form-error">
@@ -298,30 +174,52 @@ function ClientForm({
       </div>
 
       <div className="client-form-field">
+        <label htmlFor="client-type">
+          Vrsta klijenta
+        </label>
+
+        <select
+          id="client-type"
+          value={isOccasional ? 'occasional' : 'regular'}
+          disabled={isSaving}
+          onChange={(event) => {
+            setIsOccasional(event.target.value === 'occasional')
+            setErrors((current) => ({ ...current, phone: '' }))
+          }}
+        >
+          <option value="regular">Stalni klijent</option>
+          <option value="occasional">Povremeni klijent</option>
+        </select>
+      </div>
+
+      <div className="client-form-field">
         <label htmlFor="client-phone">
-          Telefon
+          {isOccasional ? 'Telefon (neobavezno)' : 'Telefon'}
         </label>
 
         <div className="client-phone-field">
           <select
+            aria-label="Pozivni broj države"
             value={phoneCountryCode}
-            onChange={(event) =>
-              setPhoneCountryCode(
-                event.target.value
-              )
-            }
+            disabled={isSaving}
+            onChange={(event) => {
+              setPhoneCountryCode(event.target.value)
+              setErrors((current) => ({ ...current, phone: '' }))
+            }}
           >
-            {phoneCountryOptions.map(
-              (country) => (
-                <option
-                  key={country.code}
-                  value={country.code}
-                >
-                  {country.label}{' '}
-                  {country.code}
-                </option>
-              )
+            {!phoneCountryOptions.some(
+              (country) => country.code === phoneCountryCode
+            ) && (
+              <option value={phoneCountryCode}>
+                {phoneCountryCode}
+              </option>
             )}
+
+            {phoneCountryOptions.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.label} {country.code}
+              </option>
+            ))}
           </select>
 
           <input
@@ -329,12 +227,9 @@ function ClientForm({
             type="tel"
             placeholder="91 123 4567"
             value={phoneNumber}
+            disabled={isSaving}
             onChange={handlePhoneChange}
-            className={
-              errors.phone
-                ? 'client-input-error'
-                : ''
-            }
+            className={errors.phone ? 'client-input-error' : ''}
           />
         </div>
 
@@ -366,6 +261,7 @@ function ClientForm({
           <button
             type="button"
             onClick={onCancelEdit}
+            disabled={isSaving}
           >
             Odustani
           </button>

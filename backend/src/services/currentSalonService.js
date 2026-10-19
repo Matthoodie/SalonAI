@@ -92,13 +92,19 @@ export async function resolveCurrentSalon(
 
   return {
     membership: {
-      id: membership.membership_id,
-      userId: membership.user_id,
-      salonId: membership.salon_id,
-      role: membership.role,
-      active:
-        membership.membership_active,
-    },
+  id: membership.membership_id,
+  userId: membership.user_id,
+  salonId: membership.salon_id,
+  role: membership.role,
+  employeeId:
+    membership.employee_id === null
+      ? null
+      : Number(
+          membership.employee_id
+        ),
+  active:
+    membership.membership_active,
+},
 
     salon: {
       id: membership.salon_id,

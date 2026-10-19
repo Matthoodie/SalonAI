@@ -7,6 +7,7 @@ export async function findClientsBySalonId(salonId) {
         id,
         salon_id,
         name,
+        is_occasional,
         phone_country_code,
         phone_number,
         phone_normalized,
@@ -25,24 +26,23 @@ export async function findClientsBySalonId(salonId) {
 
 export async function findClientById(
   clientId,
-  salonId
+  salonId,
+  db = pool
 ) {
-  const result = await pool.query(
+  const result = await db.query(
     `
       SELECT
         id,
         salon_id,
         name,
+        is_occasional,
         active
       FROM clients
       WHERE id = $1
         AND salon_id = $2
       LIMIT 1
     `,
-    [
-      clientId,
-      salonId,
-    ]
+    [clientId, salonId]
   )
 
   return result.rows[0] ?? null
@@ -54,21 +54,24 @@ export async function insertClient({
   phoneCountryCode,
   phoneNumber,
   phoneNormalized,
-}) {
-  const result = await pool.query(
+  isOccasional = false,
+}, db = pool) {
+  const result = await db.query(
     `
       INSERT INTO clients (
         salon_id,
         name,
         phone_country_code,
         phone_number,
-        phone_normalized
+        phone_normalized,
+        is_occasional
       )
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING
         id,
         salon_id,
         name,
+        is_occasional,
         phone_country_code,
         phone_number,
         phone_normalized,
@@ -82,6 +85,7 @@ export async function insertClient({
       phoneCountryCode,
       phoneNumber,
       phoneNormalized,
+      isOccasional,
     ]
   )
 
@@ -95,6 +99,7 @@ export async function updateClient({
   phoneCountryCode,
   phoneNumber,
   phoneNormalized,
+  isOccasional,
 }) {
   const result = await pool.query(
     `
@@ -104,6 +109,7 @@ export async function updateClient({
         phone_country_code = $4,
         phone_number = $5,
         phone_normalized = $6,
+        is_occasional = COALESCE($7::boolean, is_occasional),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
         AND salon_id = $2
@@ -111,6 +117,7 @@ export async function updateClient({
         id,
         salon_id,
         name,
+        is_occasional,
         phone_country_code,
         phone_number,
         phone_normalized,
@@ -125,6 +132,7 @@ export async function updateClient({
       phoneCountryCode,
       phoneNumber,
       phoneNormalized,
+      isOccasional ?? null,
     ]
   )
 
@@ -148,6 +156,7 @@ export async function updateClientActive({
         id,
         salon_id,
         name,
+        is_occasional,
         phone_country_code,
         phone_number,
         phone_normalized,
@@ -155,11 +164,7 @@ export async function updateClientActive({
         created_at,
         updated_at
     `,
-    [
-      clientId,
-      salonId,
-      active,
-    ]
+    [clientId, salonId, active]
   )
 
   return result.rows[0] ?? null

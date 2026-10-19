@@ -1,5 +1,6 @@
 import {
   findClientsBySalonId,
+  findClientById,
   insertClient,
   updateClient,
   updateClientActive,
@@ -12,6 +13,102 @@ function createClientValidationError(message) {
   return error
 }
 
+function requirePositiveId(value, label) {
+  const id = Number(value)
+
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    throw createClientValidationError(
+      `A valid ${label} ID is required.`
+    )
+  }
+
+  return id
+}
+
+function clientNotFoundError() {
+  const error = new Error(
+    'Client not found for the selected salon.'
+  )
+
+  error.code = 'CLIENT_NOT_FOUND'
+  error.statusCode = 404
+
+  return error
+}
+
+function normalizeClientInput({
+  name,
+  isOccasional,
+  phoneCountryCode,
+  phoneNumber,
+  phoneNormalized,
+}) {
+  if (typeof isOccasional !== 'boolean') {
+    throw createClientValidationError(
+      'is_occasional must be a boolean.'
+    )
+  }
+
+  const cleanName =
+    typeof name === 'string' ? name.trim() : ''
+
+  if (!cleanName || cleanName.length > 150) {
+    throw createClientValidationError(
+      'Client name must contain 1 to 150 characters.'
+    )
+  }
+
+  function cleanPhoneField(value) {
+    if (value === undefined || value === null) {
+      return null
+    }
+
+    if (typeof value !== 'string') {
+      throw createClientValidationError(
+        'Phone fields must be strings or null.'
+      )
+    }
+
+    return value.trim() || null
+  }
+
+  const countryCode = cleanPhoneField(phoneCountryCode)
+  const number = cleanPhoneField(phoneNumber)
+  const normalized = cleanPhoneField(phoneNormalized)
+
+  const hasNoPhone =
+    countryCode === null &&
+    number === null &&
+    normalized === null
+
+  if (hasNoPhone) {
+    if (!isOccasional) {
+      throw createClientValidationError(
+        'A phone number is required for regular clients.'
+      )
+    }
+  } else if (
+    !countryCode ||
+    !number ||
+    !normalized ||
+    countryCode.length > 10 ||
+    number.length > 30 ||
+    normalized.length > 30
+  ) {
+    throw createClientValidationError(
+      'Valid, complete client phone fields are required.'
+    )
+  }
+
+  return {
+    name: cleanName,
+    isOccasional,
+    phoneCountryCode: countryCode,
+    phoneNumber: number,
+    phoneNormalized: normalized,
+  }
+}
+
 export async function getClientsForSalon(salonId) {
   return findClientsBySalonId(salonId)
 }
@@ -22,62 +119,23 @@ export async function createClientForSalon({
   phoneCountryCode,
   phoneNumber,
   phoneNormalized,
-}) {
-  const normalizedSalonId = Number(salonId)
+  isOccasional = false,
+}, db) {
+  const normalizedSalonId =
+    requirePositiveId(salonId, 'salon')
 
-  if (
-    !Number.isSafeInteger(normalizedSalonId) ||
-    normalizedSalonId <= 0
-  ) {
-    throw createClientValidationError(
-      'A valid salon ID is required.'
-    )
-  }
-
-  const cleanName =
-    typeof name === 'string' ? name.trim() : ''
-
-  const cleanCountryCode =
-    typeof phoneCountryCode === 'string'
-      ? phoneCountryCode.trim()
-      : ''
-
-  const cleanPhoneNumber =
-    typeof phoneNumber === 'string'
-      ? phoneNumber.trim()
-      : ''
-
-  const cleanPhoneNormalized =
-    typeof phoneNormalized === 'string'
-      ? phoneNormalized.trim()
-      : ''
-
-  if (!cleanName || cleanName.length > 150) {
-    throw createClientValidationError(
-      'Client name must contain 1 to 150 characters.'
-    )
-  }
-
-  if (
-    !cleanCountryCode ||
-    cleanCountryCode.length > 10 ||
-    !cleanPhoneNumber ||
-    cleanPhoneNumber.length > 30 ||
-    !cleanPhoneNormalized ||
-    cleanPhoneNormalized.length > 30
-  ) {
-    throw createClientValidationError(
-      'Valid client phone fields are required.'
-    )
-  }
+  const input = normalizeClientInput({
+    name,
+    isOccasional,
+    phoneCountryCode,
+    phoneNumber,
+    phoneNormalized,
+  })
 
   return insertClient({
     salonId: normalizedSalonId,
-    name: cleanName,
-    phoneCountryCode: cleanCountryCode,
-    phoneNumber: cleanPhoneNumber,
-    phoneNormalized: cleanPhoneNormalized,
-  })
+    ...input,
+  }, db)
 }
 
 export async function updateClientForSalon({
@@ -87,83 +145,47 @@ export async function updateClientForSalon({
   phoneCountryCode,
   phoneNumber,
   phoneNormalized,
+  isOccasional,
 }) {
-  const normalizedClientId = Number(clientId)
-  const normalizedSalonId = Number(salonId)
+  const normalizedClientId =
+    requirePositiveId(clientId, 'client')
 
-  if (
-    !Number.isSafeInteger(normalizedClientId) ||
-    normalizedClientId <= 0
-  ) {
-    throw createClientValidationError(
-      'A valid client ID is required.'
-    )
+  const normalizedSalonId =
+    requirePositiveId(salonId, 'salon')
+
+  const existingClient = await findClientById(
+    normalizedClientId,
+    normalizedSalonId
+  )
+
+  if (!existingClient) {
+    throw clientNotFoundError()
   }
 
-  if (
-    !Number.isSafeInteger(normalizedSalonId) ||
-    normalizedSalonId <= 0
-  ) {
-    throw createClientValidationError(
-      'A valid salon ID is required.'
-    )
-  }
+  const effectiveIsOccasional =
+    isOccasional === undefined
+      ? existingClient.is_occasional
+      : isOccasional
 
-  const cleanName =
-    typeof name === 'string' ? name.trim() : ''
-
-  const cleanCountryCode =
-    typeof phoneCountryCode === 'string'
-      ? phoneCountryCode.trim()
-      : ''
-
-  const cleanPhoneNumber =
-    typeof phoneNumber === 'string'
-      ? phoneNumber.trim()
-      : ''
-
-  const cleanPhoneNormalized =
-    typeof phoneNormalized === 'string'
-      ? phoneNormalized.trim()
-      : ''
-
-  if (!cleanName || cleanName.length > 150) {
-    throw createClientValidationError(
-      'Client name must contain 1 to 150 characters.'
-    )
-  }
-
-  if (
-    !cleanCountryCode ||
-    cleanCountryCode.length > 10 ||
-    !cleanPhoneNumber ||
-    cleanPhoneNumber.length > 30 ||
-    !cleanPhoneNormalized ||
-    cleanPhoneNormalized.length > 30
-  ) {
-    throw createClientValidationError(
-      'Valid client phone fields are required.'
-    )
-  }
+  const input = normalizeClientInput({
+    name,
+    isOccasional: effectiveIsOccasional,
+    phoneCountryCode,
+    phoneNumber,
+    phoneNormalized,
+  })
 
   const updatedClient = await updateClient({
     clientId: normalizedClientId,
     salonId: normalizedSalonId,
-    name: cleanName,
-    phoneCountryCode: cleanCountryCode,
-    phoneNumber: cleanPhoneNumber,
-    phoneNormalized: cleanPhoneNormalized,
+    ...input,
+
+    // If omitted, preserve the stored classification in SQL.
+    isOccasional,
   })
 
   if (!updatedClient) {
-    const error = new Error(
-      'Client not found for the selected salon.'
-    )
-
-    error.code = 'CLIENT_NOT_FOUND'
-    error.statusCode = 404
-
-    throw error
+    throw clientNotFoundError()
   }
 
   return updatedClient
@@ -174,26 +196,11 @@ export async function updateClientActiveForSalon({
   salonId,
   active,
 }) {
-  const normalizedClientId = Number(clientId)
-  const normalizedSalonId = Number(salonId)
+  const normalizedClientId =
+    requirePositiveId(clientId, 'client')
 
-  if (
-    !Number.isSafeInteger(normalizedClientId) ||
-    normalizedClientId <= 0
-  ) {
-    throw createClientValidationError(
-      'A valid client ID is required.'
-    )
-  }
-
-  if (
-    !Number.isSafeInteger(normalizedSalonId) ||
-    normalizedSalonId <= 0
-  ) {
-    throw createClientValidationError(
-      'A valid salon ID is required.'
-    )
-  }
+  const normalizedSalonId =
+    requirePositiveId(salonId, 'salon')
 
   if (typeof active !== 'boolean') {
     throw createClientValidationError(
@@ -208,13 +215,7 @@ export async function updateClientActiveForSalon({
   })
 
   if (!updatedClient) {
-    const error = new Error(
-      'Client not found for the selected salon.'
-    )
-    error.code = 'CLIENT_NOT_FOUND'
-    error.statusCode = 404
-
-    throw error
+    throw clientNotFoundError()
   }
 
   return updatedClient

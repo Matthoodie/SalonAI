@@ -12,6 +12,11 @@ import {
 } from '../../api/clientApi'
 import './Clients.css'
 
+import {
+  mapClientToFrontend,
+  mapClientToPayload,
+} from '../../api/clientMapper'
+
 function formatClientAppointmentDate(date) {
   if (!date) {
     return ''
@@ -97,19 +102,14 @@ useEffect(() => {
       )
     }
 
-    const savedClient = await createClient({
-  name: newClient.name,
-  phone_country_code: newClient.phoneCountryCode,
-  phone_number: newClient.phoneNumber,
-  phone_normalized: newClient.phoneNormalized,
-})
+    const savedClient = await createClient(
+      mapClientToPayload(newClient)
+    )
 
     setClientList((currentClients) => [
       ...currentClients,
       {
-        ...newClient,
-        id: savedClient.id,
-        active: savedClient.active,
+        ...mapClientToFrontend(savedClient),
         visits: 0,
       },
     ])
@@ -124,15 +124,7 @@ useEffect(() => {
 
     const savedClient = await updateClientApi(
       updatedClient.id,
-      {
-  name: updatedClient.name,
-  phone_country_code:
-    updatedClient.phoneCountryCode,
-  phone_number:
-    updatedClient.phoneNumber,
-  phone_normalized:
-    updatedClient.phoneNormalized,
-     }
+      mapClientToPayload(updatedClient)
     )
 
     setClientList((currentClients) =>
@@ -140,19 +132,7 @@ useEffect(() => {
         String(client.id) === String(savedClient.id)
           ? {
               ...client,
-              ...savedClient,
-
-              phoneCountryCode:
-                savedClient.phone_country_code,
-
-              phoneNumber:
-                savedClient.phone_number,
-
-              phoneNormalized:
-                savedClient.phone_normalized,
-
-              phone:
-                `${savedClient.phone_country_code} ${savedClient.phone_number}`,
+              ...mapClientToFrontend(savedClient),
             }
           : client
       )
@@ -182,29 +162,16 @@ useEffect(() => {
 
     try {
       const savedClient = await updateClientActive(
-  client.id,
-  nextActive
-)
+        client.id,
+        nextActive
+      )
 
       setClientList((currentClients) =>
         currentClients.map((currentClient) =>
-          String(currentClient.id) ===
-          String(savedClient.id)
+          String(currentClient.id) === String(savedClient.id)
             ? {
                 ...currentClient,
-                ...savedClient,
-
-                phoneCountryCode:
-                  savedClient.phone_country_code,
-
-                phoneNumber:
-                  savedClient.phone_number,
-
-                phoneNormalized:
-                  savedClient.phone_normalized,
-
-                phone:
-                  `${savedClient.phone_country_code} ${savedClient.phone_number}`,
+                ...mapClientToFrontend(savedClient),
               }
             : currentClient
         )
@@ -217,7 +184,7 @@ useEffect(() => {
 
       window.alert(
         error.message ||
-          'Status klijenta nije moguće promijeniti.'
+        'Status klijenta nije moguće promijeniti.'
       )
     }
   }
@@ -586,7 +553,12 @@ const selectedClientUpcomingAppointments =
   {selectedClient.name}
 </h2>
 
-        <p>{selectedClient.phone}</p>
+        <p>{selectedClient.phone || 'Telefon nije unesen'}</p>
+<p>
+  {selectedClient.isOccasional
+    ? 'Povremeni klijent'
+    : 'Stalni klijent'}
+</p>
        </div>
 
        <button

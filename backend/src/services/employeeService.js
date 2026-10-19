@@ -622,10 +622,29 @@ function validateBlockedTimes(
 }
 
 export async function getEmployeesForSalon(
-  salonId
+  salonId,
+  employeeId = null
 ) {
+  if (
+    employeeId !== null &&
+    (
+      !Number.isSafeInteger(employeeId) ||
+      employeeId <= 0
+    )
+  ) {
+    const error = new Error(
+      'Employee scope requires a valid employee identity.'
+    )
+
+    error.code = 'EMPLOYEE_MEMBERSHIP_IDENTITY_REQUIRED'
+    error.statusCode = 500
+
+    throw error
+  }
+
   return findEmployeesBySalonId(
-    salonId
+    salonId,
+    employeeId
   )
 }
 

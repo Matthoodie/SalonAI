@@ -16,13 +16,22 @@ async function attachLegacyTestSalonContext(
       req.query?.salonId ??
       req.body?.salon_id
 
-    if (rawSalonId !== undefined) {
-      req.currentSalon = {
-        id: Number(rawSalonId),
-      }
+if (rawSalonId !== undefined) {
+  const salonId =
+    Number(rawSalonId)
 
-      return next()
-    }
+  req.currentSalon = {
+    id: salonId,
+  }
+
+  req.currentMembership = {
+    salonId,
+    role: 'owner',
+    active: true,
+  }
+
+  return next()
+}
 
     const result = await pool.query(
       `
@@ -34,11 +43,20 @@ async function attachLegacyTestSalonContext(
       `
     )
 
-    if (result.rows[0]) {
-      req.currentSalon = {
-        id: Number(result.rows[0].id),
-      }
-    }
+if (result.rows[0]) {
+  const salonId =
+    Number(result.rows[0].id)
+
+  req.currentSalon = {
+    id: salonId,
+  }
+
+  req.currentMembership = {
+    salonId,
+    role: 'owner',
+    active: true,
+  }
+}
 
     return next()
   } catch (error) {

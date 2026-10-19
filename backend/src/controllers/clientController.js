@@ -40,6 +40,7 @@ export async function createClient(req, res, next) {
       phoneCountryCode: req.body?.phone_country_code,
       phoneNumber: req.body?.phone_number,
       phoneNormalized: req.body?.phone_normalized,
+      isOccasional: req.body?.is_occasional,
     })
 
     return res.status(201).json({
@@ -59,6 +60,7 @@ export async function updateClient(req, res, next) {
       phoneCountryCode: req.body?.phone_country_code,
       phoneNumber: req.body?.phone_number,
       phoneNormalized: req.body?.phone_normalized,
+      isOccasional: req.body?.is_occasional,
     })
 
     return res.status(200).json({

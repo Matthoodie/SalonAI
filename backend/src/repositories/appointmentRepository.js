@@ -1,6 +1,9 @@
 import pool from '../database/pool.js'
 
-export async function findAllAppointments(salonId) {
+export async function findAllAppointments(
+    salonId,
+    employeeId = null
+) {
     const result = await pool.query(
         `
     SELECT
@@ -20,9 +23,16 @@ export async function findAllAppointments(salonId) {
       updated_at
     FROM appointments
     WHERE salon_id = $1
+      AND (
+        $2::bigint IS NULL
+        OR employee_id = $2
+      )
     ORDER BY starts_at
   `,
-        [salonId]
+               [
+            salonId,
+            employeeId,
+        ]
     )
 
     return result.rows
@@ -30,7 +40,8 @@ export async function findAllAppointments(salonId) {
 
 export async function findAppointmentById(
     id,
-    salonId
+    salonId,
+    employeeId = null
 ) {
     const result = await pool.query(
         `
@@ -52,11 +63,16 @@ export async function findAppointmentById(
       FROM appointments
       WHERE id = $1
         AND salon_id = $2
+        AND (
+          $3::bigint IS NULL
+          OR employee_id = $3
+        )
       LIMIT 1
     `,
         [
             id,
             salonId,
+            employeeId,
         ]
     )
 
@@ -94,8 +110,8 @@ export async function insertAppointment({
     status,
     source,
     notes,
-}) {
-    const result = await pool.query(
+}, db = pool) {
+    const result = await db.query(
         `
       INSERT INTO appointments (
         salon_id,
@@ -306,7 +322,8 @@ export async function findSalonById(salonId) {
 export async function updateAppointmentStatus(
     appointmentId,
     salonId,
-    status
+    status,
+    employeeId = null
 ) {
     const result = await pool.query(
         `
@@ -315,7 +332,11 @@ export async function updateAppointmentStatus(
         status = $3,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
-        AND salon_id = $2
+  AND salon_id = $2
+  AND (
+    $4::bigint IS NULL
+    OR employee_id = $4
+  )
       RETURNING
         id,
         salon_id,
@@ -333,10 +354,11 @@ export async function updateAppointmentStatus(
         updated_at
     `,
         [
-            appointmentId,
-            salonId,
-            status,
-        ]
+    appointmentId,
+    salonId,
+    status,
+    employeeId,
+]
     )
 
     return result.rows[0] ?? null
@@ -346,7 +368,8 @@ export async function updateAppointmentSchedule(
     appointmentId,
     salonId,
     startsAt,
-    endsAt
+    endsAt,
+    employeeId = null
 ) {
     const result = await pool.query(
         `
@@ -356,7 +379,11 @@ export async function updateAppointmentSchedule(
         ends_at = $4,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
-        AND salon_id = $2
+  AND salon_id = $2
+  AND (
+    $5::bigint IS NULL
+    OR employee_id = $5
+  )
       RETURNING
         id,
         salon_id,
@@ -374,11 +401,12 @@ export async function updateAppointmentSchedule(
         updated_at
     `,
         [
-            appointmentId,
-            salonId,
-            startsAt,
-            endsAt,
-        ]
+    appointmentId,
+    salonId,
+    startsAt,
+    endsAt,
+    employeeId,
+]
     )
 
     return result.rows[0] ?? null
@@ -387,7 +415,8 @@ export async function updateAppointmentSchedule(
 export async function updateAppointmentClient(
     appointmentId,
     salonId,
-    clientId
+    clientId,
+    employeeId = null
 ) {
     const result = await pool.query(
         `
@@ -396,7 +425,11 @@ export async function updateAppointmentClient(
         client_id = $3,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
-        AND salon_id = $2
+  AND salon_id = $2
+  AND (
+    $4::bigint IS NULL
+    OR employee_id = $4
+  )
       RETURNING
         id,
         salon_id,
@@ -414,10 +447,11 @@ export async function updateAppointmentClient(
         updated_at
     `,
         [
-            appointmentId,
-            salonId,
-            clientId,
-        ]
+    appointmentId,
+    salonId,
+    clientId,
+    employeeId,
+]
     )
 
     return result.rows[0] ?? null
