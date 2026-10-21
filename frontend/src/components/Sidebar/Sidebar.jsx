@@ -4,6 +4,7 @@ import './Sidebar.css'
 function Sidebar({
   isMobileMenuOpen,
   onCloseMobileMenu,
+  canAccessFullCrm = false,
 }) {
   return (
      <aside
@@ -32,14 +33,16 @@ function Sidebar({
             </Link>
           </li>
 
-<li>
-<Link
-  to="/clients"
-  onClick={onCloseMobileMenu}
->
-  Klijenti
-</Link>
-</li>
+          {canAccessFullCrm && (
+            <li>
+              <Link
+                to="/clients"
+                onClick={onCloseMobileMenu}
+              >
+                Klijenti
+              </Link>
+            </li>
+          )}
 
 <li>
   <Link 

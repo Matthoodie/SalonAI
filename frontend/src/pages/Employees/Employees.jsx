@@ -27,6 +27,9 @@ function Employees({
   serviceList = [],
   salonId,
   salonTimezone,
+  canManageEmployees = false,
+  isLoading = false,
+  loadError = null,
 }) {
   const [editingEmployee, setEditingEmployee] =
     useState(null)
@@ -63,11 +66,19 @@ function Employees({
   }, [isFormOpen, editingEmployee])
 
   function openAddEmployeeForm() {
+    if (!canManageEmployees) {
+      return
+    }
+
     setEditingEmployee(null)
     setIsFormOpen(true)
   }
 
   function startEditingEmployee(employee) {
+    if (!canManageEmployees) {
+      return
+    }
+
     setEditingEmployee(employee)
     setIsFormOpen(true)
   }
@@ -75,6 +86,9 @@ function Employees({
   async function addEmployee(
     newEmployee
   ) {
+     if (!canManageEmployees) {
+      return false
+    }
     try {
       if (
         !Number.isSafeInteger(
@@ -132,6 +146,9 @@ function Employees({
   async function updateEmployee(
     updatedEmployee
   ) {
+     if (!canManageEmployees) {
+      return false
+    }
     try {
       if (
         !Number.isSafeInteger(
@@ -195,6 +212,9 @@ function Employees({
   async function toggleEmployeeActive(
     employeeId
   ) {
+      if (!canManageEmployees) {
+      return false
+    }
     try {
       const employee =
         employeeList.find(
@@ -264,93 +284,116 @@ function Employees({
     }
   }
 
-  return (
+    return (
     <div className="employees-page">
       <div className="employees-header">
         <div>
           <span className="employees-eyebrow">
-            Tim
+            {canManageEmployees ? 'Tim' : 'Profil'}
           </span>
 
-          <h1>Zaposlenici</h1>
+          <h1>
+            {canManageEmployees ? 'Zaposlenici' : 'Moj profil'}
+          </h1>
 
           <p>
-            Upravljajte zaposlenicima salona
-            i njihovim statusom.
+            {canManageEmployees
+              ? 'Upravljajte zaposlenicima salona i njihovim statusom.'
+              : 'Pregled vašeg profila i redovnog radnog vremena.'}
           </p>
         </div>
 
-        <div className="employees-header-actions">
-          <button
-            type="button"
-            className="employees-add-button"
-            onClick={openAddEmployeeForm}
-          >
-            + Novi zaposlenik
-          </button>
+        {canManageEmployees && (
+          <div className="employees-header-actions">
+            <button
+              type="button"
+              className="employees-add-button"
+              onClick={openAddEmployeeForm}
+              disabled={isLoading || Boolean(loadError)}
+            >
+              + Novi zaposlenik
+            </button>
 
-          <div className="employees-count">
-            <span>
-              Aktivni zaposlenici
-            </span>
-
-            <strong>
-              {activeEmployees.length}
-            </strong>
+            {!isLoading && !loadError && (
+              <div className="employees-count">
+                <span>Aktivni zaposlenici</span>
+                <strong>{activeEmployees.length}</strong>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {isFormOpen && (
-        <div
-          ref={employeeFormSectionRef}
-          className="employees-form-section"
-        >
-          <EmployeeForm
-            serviceList={serviceList}
-            onAddEmployee={addEmployee}
-            onUpdateEmployee={updateEmployee}
-            onCancelEdit={cancelEmployeeForm}
-            editingEmployee={
-              editingEmployee
-            }
-          />
-        </div>
-      )}
-
-      {employeeList.length === 0 ? (
-        <div className="employees-placeholder">
-          <h2>Još nema zaposlenika</h2>
-
+      {loadError ? (
+        <div className="employees-placeholder" role="alert">
+          <h2>Podatke nije moguće učitati</h2>
           <p>
-            Dodajte prvog zaposlenika kako
-            biste počeli graditi tim salona.
+            {typeof loadError === 'string'
+              ? loadError
+              : loadError.message ||
+                'Pokušajte ponovno osvježiti stranicu.'}
           </p>
-
-          <button
-            type="button"
-            className="employees-add-button"
-            onClick={openAddEmployeeForm}
-          >
-            + Dodaj prvog zaposlenika
-          </button>
+        </div>
+      ) : isLoading ? (
+        <div className="employees-placeholder" role="status">
+          <p>Učitavanje podataka…</p>
         </div>
       ) : (
-        <div className="employees-list">
-          {employeeList.map((employee) => (
-            <EmployeeCard
-              key={employee.id}
-              employee={employee}
-              serviceList={serviceList}
-              onEdit={
-                startEditingEmployee
-              }
-              onToggleActive={
-                toggleEmployeeActive
-              }
-            />
-          ))}
-        </div>
+        <>
+          {canManageEmployees && isFormOpen && (
+            <div
+              ref={employeeFormSectionRef}
+              className="employees-form-section"
+            >
+              <EmployeeForm
+                serviceList={serviceList}
+                onAddEmployee={addEmployee}
+                onUpdateEmployee={updateEmployee}
+                onCancelEdit={cancelEmployeeForm}
+                editingEmployee={editingEmployee}
+              />
+            </div>
+          )}
+
+          {employeeList.length === 0 ? (
+            <div className="employees-placeholder">
+              <h2>
+                {canManageEmployees
+                  ? 'Još nema zaposlenika'
+                  : 'Profil zaposlenika nije dostupan'}
+              </h2>
+
+              <p>
+                {canManageEmployees
+                  ? 'Dodajte prvog zaposlenika kako biste počeli graditi tim salona.'
+                  : 'Obratite se administratoru salona radi provjere svojeg profila.'}
+              </p>
+
+              {canManageEmployees && (
+                <button
+                  type="button"
+                  className="employees-add-button"
+                  onClick={openAddEmployeeForm}
+                >
+                  + Dodaj prvog zaposlenika
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="employees-list">
+              {employeeList.map((employee) => (
+                <EmployeeCard
+                  key={employee.id}
+                  employee={employee}
+                  serviceList={serviceList}
+                  canManageEmployees={canManageEmployees}
+                  onEdit={startEditingEmployee}
+                  onToggleActive={toggleEmployeeActive}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

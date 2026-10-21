@@ -3,6 +3,7 @@ import {
   createClientForSalon,
   updateClientForSalon,
   updateClientActiveForSalon,
+  searchBookingClientsForSalon,
 } from '../services/clientService.js'
 
 export async function getClients(req, res, next) {
@@ -84,6 +85,23 @@ const client = await updateClientActiveForSalon({
 })
     return res.status(200).json({
       data: client,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function searchBookingClients(req, res, next) {
+  res.set('Cache-Control', 'no-store')
+
+  try {
+    const clients = await searchBookingClientsForSalon({
+      salonId: req.currentSalon?.id,
+      query: req.query.q,
+    })
+
+    return res.status(200).json({
+      data: clients,
     })
   } catch (error) {
     next(error)

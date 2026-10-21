@@ -48,6 +48,7 @@ function Services({
   serviceList = [],
   setServiceList,
   salonId,
+  canManageServices = false,
 }) {
   const [isFormOpen, setIsFormOpen] =
     useState(false)
@@ -82,6 +83,10 @@ function Services({
     useState('all')
 
   async function addService(newService) {
+    if (!canManageServices) {
+      return false
+    }
+
     if (!salonId) {
       window.alert(
         'Podaci salona nisu učitani. Pokušajte ponovno.'
@@ -143,11 +148,19 @@ function Services({
   }
 
   function startEditingService(service) {
+    if (!canManageServices) {
+      return
+    }
+
     setEditingService(service)
     setIsFormOpen(true)
   }
 
   async function updateService(updatedService) {
+    if (!canManageServices) {
+      return false
+    }
+
     if (!salonId) {
       window.alert(
         'Podaci salona nisu učitani. Pokušajte ponovno.'
@@ -219,6 +232,10 @@ function Services({
   async function toggleServiceActive(
     serviceId
   ) {
+    if (!canManageServices) {
+      return
+    }
+
     if (!salonId) {
       window.alert(
         'Podaci salona nisu učitani. Pokušajte ponovno.'
@@ -351,25 +368,27 @@ function Services({
           <h1>Usluge</h1>
 
           <p>
-            Upravljajte cijenama, zadanim
-            trajanjem i dostupnošću usluga
-            salona.
+            {canManageServices
+              ? 'Upravljajte cijenama, zadanim trajanjem i dostupnošću usluga salona.'
+              : 'Pregled usluga salona, njihovih cijena i zadanog trajanja.'}
           </p>
         </div>
 
-        <button
-          type="button"
-          className="services-add-button"
-          onClick={() => {
-            setEditingService(null)
-            setIsFormOpen(true)
-          }}
-        >
-          + Nova usluga
-        </button>
+        {canManageServices && (
+          <button
+            type="button"
+            className="services-add-button"
+            onClick={() => {
+              setEditingService(null)
+              setIsFormOpen(true)
+            }}
+          >
+            + Nova usluga
+          </button>
+        )}
       </div>
 
-      {isFormOpen && (
+      {canManageServices && isFormOpen && (
         <ServiceForm
           onAddService={addService}
           onUpdateService={updateService}
@@ -491,9 +510,9 @@ function Services({
           <h2>Nema dodanih usluga</h2>
 
           <p>
-            Dodajte prvu uslugu kako biste
-            mogli povezati cijene i trajanje
-            s terminima.
+            {canManageServices
+              ? 'Dodajte prvu uslugu kako biste mogli povezati cijene i trajanje s terminima.'
+              : 'Usluge salona još nisu dostupne. Obratite se administratoru salona.'}
           </p>
         </div>
       ) : (
@@ -559,39 +578,30 @@ function Services({
                   </div>
                 </div>
 
-                <div className="service-card-actions">
-                  <button
-                    type="button"
-                    className="service-action-button"
-                    onClick={() =>
-                      startEditingService(
-                        service
-                      )
-                    }
-                  >
-                    Uredi
-                  </button>
+                {canManageServices && (
+                  <div className="service-card-actions">
+                    <button
+                      type="button"
+                      className="service-action-button"
+                      onClick={() => startEditingService(service)}
+                    >
+                      Uredi
+                    </button>
 
-                  <button
-                    type="button"
-                    className="service-action-button"
-                    onClick={() =>
-                      toggleServiceActive(
-                        service.id
-                      )
-                    }
-                    disabled={
-                      updatingServiceActiveId !== null
-                    }
-                  >
-                    {updatingServiceActiveId ===
-                      service.id
-                      ? 'Spremanje...'
-                      : service.active
-                        ? 'Deaktiviraj'
-                        : 'Aktiviraj'}
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      className="service-action-button"
+                      onClick={() => toggleServiceActive(service.id)}
+                      disabled={updatingServiceActiveId !== null}
+                    >
+                      {updatingServiceActiveId === service.id
+                        ? 'Spremanje...'
+                        : service.active
+                          ? 'Deaktiviraj'
+                          : 'Aktiviraj'}
+                    </button>
+                  </div>
+                )}
               </article>
             )
           )}

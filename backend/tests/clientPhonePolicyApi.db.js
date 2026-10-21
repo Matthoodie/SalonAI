@@ -389,3 +389,143 @@ test('client phone API: body salon ID cannot redirect client creation', async ()
 
   assert.equal(Number(stored.salon_id), salonId)
 })
+
+test('booking client search: employee receives only minimal active salon results', async () => {
+  const prefix = `LookupBoundary${Date.now()}`
+  const createdIds = []
+
+  for (let index = 0; index < 12; index += 1) {
+    const result = await request(
+      adminUrl,
+      'POST',
+      '/api/clients',
+      {
+        name: `${prefix} ${String(index).padStart(2, '0')}`,
+        is_occasional: true,
+      }
+    )
+
+    assert.equal(result.status, 201)
+    createdIds.push(String(result.body.data.id))
+  }
+
+  const archived = await request(
+    adminUrl,
+    'POST',
+    '/api/clients',
+    {
+      name: `${prefix} Archived`,
+      is_occasional: true,
+    }
+  )
+
+  assert.equal(archived.status, 201)
+
+  const archiveResult = await request(
+    adminUrl,
+    'PATCH',
+    `/api/clients/${archived.body.data.id}/active`,
+    { active: false }
+  )
+
+  assert.equal(archiveResult.status, 200)
+
+  const foreign = await request(
+    otherAdminUrl,
+    'POST',
+    '/api/clients',
+    {
+      name: `${prefix} Foreign`,
+      is_occasional: true,
+    }
+  )
+
+  assert.equal(foreign.status, 201)
+
+  const response = await fetch(
+    `${employeeUrl}/api/clients/search?q=${encodeURIComponent(prefix)}` +
+    `&salon_id=${otherSalonId}&limit=1000`
+  )
+
+  const body = await response.json()
+
+  assert.equal(response.status, 200, JSON.stringify(body))
+  assert.equal(response.headers.get('cache-control'), 'no-store')
+  assert.equal(body.data.length, 10)
+
+  for (const client of body.data) {
+    assert.deepEqual(
+      Object.keys(client).sort(),
+      ['id', 'name', 'phone_hint']
+    )
+
+    assert.ok(createdIds.includes(String(client.id)))
+    assert.equal(client.phone_hint, null)
+  }
+})
+
+test('booking client search: invalid and broad queries are rejected', async () => {
+  const queries = [
+    '',
+    'ab',
+    '%',
+    '___',
+    '123',
+    'a'.repeat(101),
+  ]
+
+  for (const query of queries) {
+    const response = await fetch(
+      `${employeeUrl}/api/clients/search?q=${encodeURIComponent(query)}`
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 400, JSON.stringify({ query, body }))
+    assert.equal(body.error.code, 'INVALID_CLIENT_INPUT')
+    assert.equal(body.data, undefined)
+  }
+
+  const response = await fetch(
+    `${employeeUrl}/api/clients/search`
+  )
+
+  assert.equal(response.status, 400)
+})
+
+test('booking client search: phone is searchable but returned masked', async () => {
+  const result = await request(
+    adminUrl,
+    'POST',
+    '/api/clients',
+    {
+      name: `LookupPhone${Date.now()}`,
+      phone_country_code: '+385',
+      phone_number: '998765432',
+      phone_normalized: '+385998765432',
+    }
+  )
+
+  assert.equal(result.status, 201)
+
+  for (const query of ['0998765432', '+385998765432']) {
+    const response = await fetch(
+      `${employeeUrl}/api/clients/search?q=${encodeURIComponent(query)}`
+    )
+
+    const body = await response.json()
+
+    assert.equal(response.status, 200, JSON.stringify(body))
+
+    const found = body.data.find(
+      (client) => String(client.id) === String(result.body.data.id)
+    )
+
+    assert.ok(found)
+    assert.deepEqual(
+      Object.keys(found).sort(),
+      ['id', 'name', 'phone_hint']
+    )
+    assert.equal(found.phone_hint, '•••• 5432')
+  }
+})

@@ -1,3 +1,4 @@
+import { fetchCurrentAuth } from './api/authApi'
 import { mapClientToFrontend } from './api/clientMapper'
 import { useEffect, useState } from 'react'
 import { Route, Routes } from 'react-router-dom'
@@ -271,6 +272,19 @@ function migrateEmployees(
 }
 
 function App() {
+  const [authContext, setAuthContext] = useState(null)
+  const canAccessFullCrm =
+    authContext?.membership?.role === 'owner' ||
+    authContext?.membership?.role === 'admin'
+
+    const canManageEmployees =
+    authContext?.membership?.role === 'owner' ||
+    authContext?.membership?.role === 'admin'
+
+    const canManageServices =
+    authContext?.membership?.role === 'owner' ||
+    authContext?.membership?.role === 'admin'
+
   const [
     appointmentFormInitialDate,
     setAppointmentFormInitialDate,
@@ -287,10 +301,10 @@ function App() {
   const [employeeList, setEmployeeList] =
     useState([])
 
-  const [
+   const [
     employeesLoading,
     setEmployeesLoading,
-  ] = useState(false)
+  ] = useState(true)
 
   const [
     employeesLoadError,
@@ -331,27 +345,20 @@ function App() {
       try {
         setAppointmentsLoading(true)
         setAppointmentsLoadError(null)
-        const {
-          from,
-          to,
-        } = getInitialCalendarRange()
-
-        const calendarData =
-         await fetchCalendar({
-          from,
-          to,
-         })
+        const currentAuth = await fetchCurrentAuth()
 
         if (cancelled) {
           return
         }
 
+        setAuthContext(currentAuth)
+
         setSalonTimezone(
-          calendarData.salon.timezone
+          currentAuth.current_salon.timezone
         )
 
         setSalonId(
-          calendarData.salon.id
+          currentAuth.current_salon.id
         )
 
         const backendServices =
@@ -372,7 +379,11 @@ function App() {
           backendEmployees,
           backendAppointments,
         ] = await Promise.all([
-          fetchClients(),
+          ['owner', 'admin'].includes(
+            currentAuth.membership.role
+          )
+            ? fetchClients()
+            : Promise.resolve([]),
           fetchEmployees(),
           fetchAppointments(),
         ])
@@ -384,7 +395,7 @@ function App() {
         const mappedAppointments =
           mapAppointmentRowsToFrontend(
             backendAppointments,
-            calendarData.salon.timezone,
+            currentAuth.current_salon.timezone,
             backendClients,
             backendEmployees,
             backendServices
@@ -522,7 +533,8 @@ function App() {
   }, [salonTimezone])
 
   useEffect(() => {
-    if (!salonId) {
+    if (!salonId || !canAccessFullCrm) {
+      setClientList([])
       return
     }
 
@@ -564,9 +576,12 @@ function App() {
     return () => {
       cancelled = true
     }
-  }, [salonId])
+   }, [salonId, canAccessFullCrm])
 
   function exportSalonData() {
+      if (!canAccessFullCrm) {
+      return
+    }
     const salonData = {
       clients: clientList,
       services: serviceList,
@@ -695,7 +710,11 @@ function App() {
   }
 
   return (
-    <Layout>
+    <Layout
+      currentUser={authContext?.user}
+      canAccessFullCrm={canAccessFullCrm}
+    >
+      {canAccessFullCrm && (
       <div className="data-tools">
         <button
           type="button"
@@ -722,6 +741,7 @@ function App() {
           />
         </label>
       </div>
+      )}
 
       <Routes>
         <Route
@@ -737,16 +757,23 @@ function App() {
         <Route
           path="/clients"
           element={
-            <Clients
-              clientList={clientList}
-              setClientList={
-                setClientList
-              }
-              appointmentList={
-                appointmentList
-              }
-              salonId={salonId}
-            />
+            !authContext ? (
+              <p role="status">
+                Učitavanje korisničkog računa…
+              </p>
+            ) : canAccessFullCrm ? (
+              <Clients
+                clientList={clientList}
+                setClientList={setClientList}
+                appointmentList={appointmentList}
+                salonId={salonId}
+              />
+            ) : (
+              <p role="alert">
+                Nemate pristup bazi klijenata.
+                Klijenta možete pronaći pri dodavanju termina.
+              </p>
+            )
           }
         />
 
@@ -754,6 +781,7 @@ function App() {
           path="/services"
           element={
             <Services
+              canManageServices={canManageServices}
               serviceList={
                 serviceList
               }
@@ -771,6 +799,12 @@ function App() {
           path="/employees"
           element={
             <Employees
+              canManageEmployees={canManageEmployees}
+              isLoading={!authContext || employeesLoading}
+              loadError={
+                employeesLoadError ||
+                (!authContext ? appointmentsLoadError : null)
+              }
               employeeList={employeeList}
               setEmployeeList={setEmployeeList}
               serviceList={serviceList}
@@ -784,6 +818,7 @@ function App() {
           path="/appointments"
           element={
             <Appointments
+              authContext={authContext}
               appointmentList={
                 appointmentList
               }
@@ -831,6 +866,7 @@ function App() {
           path="/calendar"
           element={
             <Calendar
+              authContext={authContext}
               appointmentList={
                 appointmentList
               }

@@ -191,45 +191,51 @@ test(
 test(
   'auth response exposes employee_id from current membership',
   async () => {
-    const userResult =
-      await pool.query(
-        `
-          SELECT
-            id,
-            email,
-            display_name,
-            active
-          FROM users
-          WHERE id = $1
-        `,
-        [userId]
-      )
+    const userResult = await pool.query(
+      `
+        SELECT
+          id,
+          email,
+          display_name,
+          active
+        FROM users
+        WHERE id = $1
+      `,
+      [userId]
+    )
 
     const req = {
-      currentUser:
-        userResult.rows[0],
+      currentUser: userResult.rows[0],
     }
 
     let middlewareError = null
+    let middlewareCalled = false
 
     await requireCurrentSalon(
       req,
       {},
       (error) => {
-        middlewareError =
-          error ?? null
+        middlewareCalled = true
+        middlewareError = error ?? null
       }
     )
 
-    assert.equal(
-      middlewareError,
-      null
-    )
+    assert.equal(middlewareCalled, true)
+    assert.equal(middlewareError, null)
 
     let statusCode = null
     let responseBody = null
+    let controllerError = null
+    let controllerNextCalled = false
+
+    const headers = {}
 
     const res = {
+      set(name, value) {
+        headers[name] = value
+        return this
+      },
+
       status(code) {
         statusCode = code
         return this
@@ -241,15 +247,19 @@ test(
       },
     }
 
-    getCurrentAuth(
+    await getCurrentAuth(
       req,
-      res
+      res,
+      (error) => {
+        controllerNextCalled = true
+        controllerError = error ?? null
+      }
     )
 
-    assert.equal(
-      statusCode,
-      200
-    )
+    assert.ifError(controllerError)
+    assert.equal(controllerNextCalled, false)
+    assert.equal(statusCode, 200)
+    assert.equal(headers['Cache-Control'], 'no-store')
 
     assert.equal(
       responseBody.data.membership.role,
@@ -262,10 +272,18 @@ test(
     )
 
     assert.equal(
-      Number(
-        responseBody.data.current_salon.id
-      ),
+      Number(responseBody.data.current_salon.id),
       salonId
+    )
+
+    assert.deepEqual(
+      responseBody.data.permissions,
+      {
+        'appointment.create': 'self',
+        'appointment.reschedule': 'deny',
+        'appointment.change_status': 'deny',
+        'appointment.change_client': 'deny',
+      }
     )
   }
 )

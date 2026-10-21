@@ -1,5 +1,6 @@
 import {
   PERMISSION_VALUES,
+  SALON_PERMISSION_KEYS,
   SALON_PERMISSION_ALLOWED_VALUES,
   SALON_ROLE_PERMISSION_DEFAULTS,
 } from '../permissions/salonPermissions.js'
@@ -220,4 +221,30 @@ export async function resolveAppointmentPermissionScope({
     permissionValue,
     employeeId,
   }
+}
+
+export async function resolveAppointmentPermissions({
+  salonId,
+  role,
+}) {
+  const keys = [
+    SALON_PERMISSION_KEYS.APPOINTMENT_CREATE,
+    SALON_PERMISSION_KEYS.APPOINTMENT_RESCHEDULE,
+    SALON_PERMISSION_KEYS.APPOINTMENT_CHANGE_STATUS,
+    SALON_PERMISSION_KEYS.APPOINTMENT_CHANGE_CLIENT,
+  ]
+
+  const entries = await Promise.all(
+    keys.map(async (permissionKey) => {
+      const value = await resolveSalonPermission({
+        salonId,
+        role,
+        permissionKey,
+      })
+
+      return [permissionKey, value]
+    })
+  )
+
+  return Object.fromEntries(entries)
 }

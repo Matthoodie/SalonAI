@@ -1,3 +1,8 @@
+import {
+  canUseAppointmentPermission,
+  canEditAppointment,
+} from '../../api/appointmentPermissions'
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Calendar.css'
@@ -70,6 +75,7 @@ function generateCalendarDays(displayedDate) {
 }
 
 function Calendar({
+  authContext,
   appointmentList = [],
   onRequestNewAppointment,
   onRequestEditAppointment,
@@ -78,6 +84,11 @@ function Calendar({
   appointmentsLoadError,
 }) {
 
+  const canCreateAppointment = canUseAppointmentPermission(
+    authContext,
+    'appointment.create',
+    authContext?.membership?.employee_id
+  )
   const navigate = useNavigate()
   const today = new Date()
 
@@ -161,11 +172,21 @@ function Calendar({
   }
   
 function createAppointmentForSelectedDate() {
+  if (!canCreateAppointment) {
+    return
+  }
   onRequestNewAppointment(selectedDateKey)
   navigate('/appointments')
 }
 
 function editAppointmentFromCalendar(appointmentId) {
+  const appointment = appointmentList.find(
+    (item) => String(item.id) === String(appointmentId)
+  )
+
+  if (!canEditAppointment(authContext, appointment)) {
+    return
+  }
   onRequestEditAppointment(appointmentId)
   navigate('/appointments')
 }
@@ -402,13 +423,15 @@ function editAppointmentFromCalendar(appointmentId) {
             </p>
           </div>
 
-    <button
-  type="button"
-  className="selected-day-add-button"
-  onClick={createAppointmentForSelectedDate}
->
-  + Novi termin
-</button>
+    {canCreateAppointment && (
+  <button
+    type="button"
+    className="selected-day-add-button"
+    onClick={createAppointmentForSelectedDate}
+  >
+    + Novi termin
+  </button>
+)}
         </div>
 
         {selectedDateAppointments.length === 0 ? (
@@ -430,6 +453,8 @@ function editAppointmentFromCalendar(appointmentId) {
               (appointment) => {
                 const isCompleted =
                   appointment.status === 'Završen'
+                const canEditThisAppointment =
+                  canEditAppointment(authContext, appointment)
 
                 return (
                   <button
@@ -440,10 +465,17 @@ function editAppointmentFromCalendar(appointmentId) {
       ? 'selected-day-appointment selected-day-appointment-completed'
       : 'selected-day-appointment'
   }
-  onClick={() =>
-    editAppointmentFromCalendar(appointment.id)
+  onClick={
+    canEditThisAppointment
+      ? () => editAppointmentFromCalendar(appointment.id)
+      : undefined
   }
-  aria-label={`Uredi termin za ${appointment.clientName} u ${appointment.time}`}
+  aria-disabled={!canEditThisAppointment}
+  aria-label={
+    canEditThisAppointment
+      ? `Uredi termin za ${appointment.clientName} u ${appointment.time}`
+      : `Termin za ${appointment.clientName} u ${appointment.time}`
+  }
 >
   <div className="selected-day-appointment-time">
     {appointment.time}

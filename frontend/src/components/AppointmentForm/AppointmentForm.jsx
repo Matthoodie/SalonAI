@@ -1,3 +1,12 @@
+import {
+  canUseAppointmentPermission,
+} from '../../api/appointmentPermissions'
+
+import {
+  canSearchBookingClients,
+  searchBookingClients,
+} from '../../api/clientApi'
+
 import { useEffect, useRef, useState } from 'react'
 import ClientForm from '../ClientForm/ClientForm'
 import {
@@ -57,6 +66,7 @@ function getTodayDate() {
 }
 
 function AppointmentForm({
+  authContext,
   appointments = [],
   serviceList = [],
   clientList = [],
@@ -114,41 +124,78 @@ function AppointmentForm({
   ] = useState(false)
   const [service, setService] = useState('')
 
-  const normalizedClientSearch =
-    clientSearch.trim().toLocaleLowerCase('hr')
+  const [selectedLookupClient, setSelectedLookupClient] =
+    useState(null)
 
-  const clientSearchDigits =
-    normalizedClientSearch.replace(/\D/g, '')
+  const [clientLookup, setClientLookup] = useState({
+    query: '',
+    rows: [],
+    loading: false,
+    error: '',
+  })
 
-const filteredClientList = clientList
-  .filter((client) => client.active !== false)
-  .filter((client) => {
-      const clientNameForSearch =
-        String(client.name || '').toLocaleLowerCase('hr')
+  const lookupQuery = clientSearch.trim()
+  const lookupAllowed = canSearchBookingClients(lookupQuery)
 
-      const clientPhoneForSearch =
-        String(client.phone || client.phoneNumber || '')
+  const filteredClientList =
+    lookupAllowed && clientLookup.query === lookupQuery
+      ? clientLookup.rows
+      : []
 
-      const clientPhoneDigits =
-        clientPhoneForSearch.replace(/\D/g, '')
+  const clientLookupMessage = !lookupAllowed
+    ? 'Upišite najmanje 3 slova imena ili 7 znamenki telefona bez početnog pozivnog prefiksa.'
+    : clientLookup.query !== lookupQuery || clientLookup.loading
+      ? 'Pretraživanje...'
+      : clientLookup.error || 'Nema pronađenih klijenata.'
 
-      const clientPhoneLocalDigits =
-        clientPhoneDigits.startsWith('385')
-          ? `0${clientPhoneDigits.slice(3)}`
-          : clientPhoneDigits
+  useEffect(() => {
+    if (!isClientSearchOpen || !lookupAllowed) {
+      return
+    }
 
-      return (
-        clientNameForSearch.includes(normalizedClientSearch) ||
-        (
-          clientSearchDigits.length > 0 &&
-          (
-            clientPhoneDigits.includes(clientSearchDigits) ||
-            clientPhoneLocalDigits.includes(clientSearchDigits)
-          )
-        )
-      )
+    const controller = new AbortController()
+
+    setClientLookup({
+      query: lookupQuery,
+      rows: [],
+      loading: true,
+      error: '',
     })
-    .slice(0, 10)
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        const rows = await searchBookingClients(
+          lookupQuery,
+          { signal: controller.signal }
+        )
+
+        if (!controller.signal.aborted) {
+          setClientLookup({
+            query: lookupQuery,
+            rows,
+            loading: false,
+            error: '',
+          })
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setClientLookup({
+            query: lookupQuery,
+            rows: [],
+            loading: false,
+            error:
+              error.message ||
+              'Pretraga klijenata nije uspjela.',
+          })
+        }
+      }
+    }, 300)
+
+    return () => {
+      window.clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [lookupQuery, lookupAllowed, isClientSearchOpen])
 
   const [employeeId, setEmployeeId] =
     useState('')
@@ -389,7 +436,9 @@ const filteredClientList = clientList
       setClientId(
         matchingClient
           ? String(matchingClient.id)
-          : ''
+          : editingAppointment.clientId != null
+            ? String(editingAppointment.clientId)
+            : ''
       )
 
       setService(
@@ -425,10 +474,15 @@ const filteredClientList = clientList
 
     useEffect(() => {
     setPendingClient(null)
+    setSelectedLookupClient(null)
     setIsQuickAddClientOpen(false)
   }, [editingAppointment, initialDate])
 
   async function handleQuickAddClient(newClient) {
+    if (!canQuickAddClient) {
+      throw new Error('Nemate dopuštenje za dodavanje klijenta ovim putem.')
+    }
+      setSelectedLookupClient(null)
     if (!editingAppointment) {
       setPendingClient({ ...newClient })
       setClientId('')
@@ -468,7 +522,47 @@ const filteredClientList = clientList
     return createdClient
   }
 
+  const canCreate = canUseAppointmentPermission(
+    authContext,
+    'appointment.create',
+    authContext?.membership?.employee_id
+  )
+
+  const canReschedule = Boolean(editingAppointment) &&
+    canUseAppointmentPermission(
+      authContext,
+      'appointment.reschedule',
+      editingAppointment.employeeId
+    )
+
+  const canChangeClient = Boolean(editingAppointment) &&
+    canUseAppointmentPermission(
+      authContext,
+      'appointment.change_client',
+      editingAppointment.employeeId
+    )
+
+  const canEditScheduleFields = editingAppointment
+    ? canReschedule
+    : canCreate
+
+  const canEditClientFields = editingAppointment
+    ? canChangeClient
+    : canCreate
+
+  const canSubmitForm = editingAppointment
+    ? canReschedule || canChangeClient
+    : canCreate
+
+  const canQuickAddClient = canEditClientFields && (
+    !editingAppointment ||
+    ['owner', 'admin'].includes(authContext?.membership?.role)
+  )
+
   async function handleSubmit() {
+    if (!canSubmitForm || isCreating || isUpdating) {
+      return
+    }
 
     const selectedService = serviceList.find(
       (serviceItem) =>
@@ -477,8 +571,23 @@ const filteredClientList = clientList
 
     const selectedClient =
       (!editingAppointment && pendingClient) ||
+      (
+        selectedLookupClient &&
+        String(selectedLookupClient.id) === clientId
+          ? selectedLookupClient
+          : null
+      ) ||
       clientList.find(
         (client) => String(client.id) === clientId
+      ) ||
+      (
+        editingAppointment?.clientId != null &&
+        String(editingAppointment.clientId) === clientId
+          ? {
+              id: editingAppointment.clientId,
+              name: editingAppointment.clientName,
+            }
+          : null
       )
 
     const selectedEmployee =
@@ -683,6 +792,7 @@ const filteredClientList = clientList
       }
     }
 
+    setSelectedLookupClient(null)
     setDate(getTodayDate())
     setTime('')
     setClientName('')
@@ -739,6 +849,24 @@ const filteredClientList = clientList
     }
   }
 
+  if (!canSubmitForm) {
+    return (
+      <div className="appointment-form">
+        <p role="status">
+          {editingAppointment
+            ? 'Nemate dopuštenje za uređivanje ovog termina.'
+            : 'Dodavanje termina nije dostupno za vaš račun.'}
+        </p>
+
+        {editingAppointment && (
+          <button type="button" onClick={onCancelEdit}>
+            Zatvori
+          </button>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="appointment-form">
       <h2>
@@ -754,6 +882,7 @@ const filteredClientList = clientList
 
         <input
           id="appointment-date"
+          disabled={!canEditScheduleFields}
           ref={dateInputRef}
           className={
             errors.date
@@ -784,6 +913,7 @@ const filteredClientList = clientList
 
         <input
           id="appointment-client"
+          disabled={!canEditClientFields}
           ref={clientNameInputRef}
           type="search"
           className={
@@ -795,6 +925,7 @@ const filteredClientList = clientList
           onFocus={() => setIsClientSearchOpen(true)}
           onChange={(event) => {
             setPendingClient(null)
+            setSelectedLookupClient(null)
             setClientSearch(event.target.value)
             setClientId('')
             setClientName('')
@@ -818,11 +949,11 @@ const filteredClientList = clientList
             </p>
           )}
 
-        {isClientSearchOpen && (
+        {canEditClientFields && isClientSearchOpen && (
           <ul className="appointment-client-results">
             {filteredClientList.length === 0 ? (
               <li className="appointment-client-no-results">
-                Nema pronađenih klijenata.
+                {clientLookupMessage}
               </li>
             ) : (
               filteredClientList.map((client) => (
@@ -831,6 +962,7 @@ const filteredClientList = clientList
                     type="button"
                     className="appointment-client-result"
                     onClick={() => {
+                      setSelectedLookupClient(client)
                       setClientId(String(client.id))
                       setPendingClient(null)
                       setClientName(client.name)
@@ -866,6 +998,7 @@ const filteredClientList = clientList
           <button
             type="button"
             className="appointment-client-quick-add-toggle"
+            hidden={!canQuickAddClient}
             onClick={() => {
               setIsClientSearchOpen(false)
 
@@ -879,7 +1012,7 @@ const filteredClientList = clientList
               : '+ Novi klijent'}
           </button>
 
-          {isQuickAddClientOpen && (
+          {canQuickAddClient && isQuickAddClientOpen && (
             <div className="appointment-client-quick-add-form">
               {!editingAppointment && (
                 <p>
@@ -924,6 +1057,7 @@ const filteredClientList = clientList
 
         <select
           id="appointment-service"
+          disabled={Boolean(editingAppointment) || !canCreate}
           ref={serviceInputRef}
           className={
             errors.service
@@ -991,7 +1125,11 @@ const filteredClientList = clientList
               }))
             }
           }}
-          disabled={!selectedServiceForEmployee}
+          disabled={
+            Boolean(editingAppointment) ||
+            !canCreate ||
+            !selectedServiceForEmployee
+          }
         >
           <option value="">
             {!selectedServiceForEmployee
@@ -1041,6 +1179,7 @@ const filteredClientList = clientList
           value={time}
           onChange={handleTimeChange}
           disabled={
+            !canEditScheduleFields ||
             !selectedServiceForEmployee ||
             !employeeId
           }
@@ -1093,6 +1232,7 @@ const filteredClientList = clientList
           className="primary-button"
           onClick={handleSubmit}
           disabled={
+            !canSubmitForm ||
             isUpdating ||
             isCreating
           }

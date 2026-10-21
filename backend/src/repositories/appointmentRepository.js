@@ -1,82 +1,83 @@
 import pool from '../database/pool.js'
 
 export async function findAllAppointments(
-    salonId,
-    employeeId = null
+  salonId,
+  employeeId = null
 ) {
-    const result = await pool.query(
-        `
-    SELECT
-      id,
-      salon_id,
-      client_id,
-      employee_id,
-      service_id,
-      starts_at,
-      ends_at,
-      price_cents,
-      duration_minutes,
-      status,
-      source,
-      notes,
-      created_at,
-      updated_at
-    FROM appointments
-    WHERE salon_id = $1
-      AND (
-        $2::bigint IS NULL
-        OR employee_id = $2
-      )
-    ORDER BY starts_at
-  `,
-               [
-            salonId,
-            employeeId,
-        ]
-    )
+  const result = await pool.query(
+    `
+      SELECT
+        a.id,
+        a.salon_id,
+        a.client_id,
+        a.employee_id,
+        a.service_id,
+        a.starts_at,
+        a.ends_at,
+        a.price_cents,
+        a.duration_minutes,
+        a.status,
+        a.source,
+        a.notes,
+        a.created_at,
+        a.updated_at,
+        c.name AS client_name
+      FROM appointments a
+      JOIN clients c
+        ON c.id = a.client_id
+        AND c.salon_id = a.salon_id
+      WHERE a.salon_id = $1
+        AND (
+          $2::bigint IS NULL
+          OR a.employee_id = $2
+        )
+      ORDER BY a.starts_at, a.id
+    `,
+    [salonId, employeeId]
+  )
 
-    return result.rows
+  return result.rows
 }
 
 export async function findAppointmentById(
-    id,
-    salonId,
-    employeeId = null
+  id,
+  salonId,
+  employeeId = null
 ) {
-    const result = await pool.query(
-        `
+  const result = await pool.query(
+    `
       SELECT
-        id,
-        salon_id,
-        client_id,
-        employee_id,
-        service_id,
-        starts_at,
-        ends_at,
-        price_cents,
-        duration_minutes,
-        status,
-        source,
-        notes,
-        created_at,
-        updated_at
-      FROM appointments
-      WHERE id = $1
-        AND salon_id = $2
+        a.id,
+        a.salon_id,
+        a.client_id,
+        a.employee_id,
+        a.service_id,
+        a.starts_at,
+        a.ends_at,
+        a.price_cents,
+        a.duration_minutes,
+        a.status,
+        a.source,
+        a.notes,
+        a.created_at,
+        a.updated_at,
+        c.name AS client_name
+      FROM appointments a
+      JOIN clients c
+        ON c.id = a.client_id
+        AND c.salon_id = a.salon_id
+      WHERE a.id = $1
+        AND a.salon_id = $2
         AND (
           $3::bigint IS NULL
-          OR employee_id = $3
+          OR a.employee_id = $3
         )
       LIMIT 1
     `,
-        [
-            id,
-            salonId,
-            employeeId,
-        ]
-    )
+    [id, salonId, employeeId]
+  )
 
-    return result.rows[0] ?? null
+  return result.rows[0] ?? null
 }
 
 export async function findServiceById(serviceId) {

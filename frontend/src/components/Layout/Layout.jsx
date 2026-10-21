@@ -3,12 +3,17 @@ import Header from '../Header/Header'
 import Sidebar from '../Sidebar/Sidebar'
 import './Layout.css'
 
-function Layout({ children }) {
+function Layout({
+  children,
+  currentUser,
+  canAccessFullCrm = false,
+}) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] =
     useState(false)
   return (
   <div className="app-layout">
     <Sidebar
+      canAccessFullCrm={canAccessFullCrm}
       isMobileMenuOpen={isMobileMenuOpen}
       onCloseMobileMenu={() =>
         setIsMobileMenuOpen(false)
@@ -43,7 +48,7 @@ function Layout({ children }) {
         </button>
       </div>
 
-      <Header />
+      <Header currentUser={currentUser} />
 
       <div className="app-page-content">
         {children}

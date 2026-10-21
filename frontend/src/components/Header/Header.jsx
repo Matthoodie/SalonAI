@@ -1,28 +1,15 @@
-import { useLocation } from 'react-router-dom'
 import './Header.css'
 
-function Header() {
-  const location = useLocation()
-
-  const pageTitles = {
-    '/': 'Dashboard',
-    '/clients': 'Klijenti',
-    '/services': 'Usluge',
-    '/employees': 'Zaposlenici',
-    '/appointments': 'Termini',
-    '/calendar': 'Kalendar',
-  }
-
-  const pageTitle =
-    pageTitles[location.pathname] ||
-    'SalonAI'
+function Header({ currentUser }) {
+  const userLabel =
+    currentUser?.display_name?.trim() ||
+    currentUser?.email ||
+    'Korisnik'
 
   return (
     <header className="header">
-      <h2>{pageTitle}</h2>
-
       <div className="user">
-        Matej
+        {userLabel}
       </div>
     </header>
   )

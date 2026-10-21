@@ -26,6 +26,8 @@ function AppointmentCard({
   onCancel,
   onEdit,
   isUpdating = false,
+  canEdit = false,
+  canChangeStatus = false,
 }) {
   const isCompleted =
     appointment.statusCode === 'completed'
@@ -37,7 +39,7 @@ function AppointmentCard({
     appointment.statusCode === 'pending' ||
     appointment.statusCode === 'confirmed'
 
-  const canCancel = isActive
+  const canCancel = isActive && canChangeStatus
 
   return (
     <article
@@ -115,45 +117,42 @@ function AppointmentCard({
           </p>
         </div>
       </div>
-      <div className="appointment-actions">
-        {isActive && (
-          <button
-            type="button"
-            className="appointment-button appointment-button-complete"
-            onClick={() =>
-              onComplete(appointment.id)
-            }
-            disabled={isUpdating}
-          >
-            {isUpdating
-              ? 'Ažuriranje...'
-              : 'Označi kao završen'}
-          </button>
-        )}
+      {(canEdit || (isActive && canChangeStatus)) && (
+        <div className="appointment-actions">
+          {isActive && canChangeStatus && (
+            <button
+              type="button"
+              className="appointment-button appointment-button-complete"
+              onClick={() => onComplete(appointment.id)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Ažuriranje...' : 'Označi kao završen'}
+            </button>
+          )}
 
-        <button
-          type="button"
-          className="appointment-button appointment-button-edit"
-          onClick={() => onEdit(appointment)}
-        >
-          Uredi
-        </button>
+          {canEdit && (
+            <button
+              type="button"
+              className="appointment-button appointment-button-edit"
+              onClick={() => onEdit(appointment)}
+              disabled={isUpdating}
+            >
+              Uredi
+            </button>
+          )}
 
-        {canCancel && (
-          <button
-            type="button"
-            className="appointment-button appointment-button-delete"
-            onClick={() =>
-              onCancel(appointment.id)
-            }
-            disabled={isUpdating}
-          >
-            {isUpdating
-              ? 'Ažuriranje...'
-              : 'Otkaži termin'}
-          </button>
-        )}
-      </div>
+          {canCancel && (
+            <button
+              type="button"
+              className="appointment-button appointment-button-delete"
+              onClick={() => onCancel(appointment.id)}
+              disabled={isUpdating}
+            >
+              {isUpdating ? 'Ažuriranje...' : 'Otkaži termin'}
+            </button>
+          )}
+        </div>
+      )}
     </article>
   )
 }

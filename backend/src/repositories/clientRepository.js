@@ -169,3 +169,43 @@ export async function updateClientActive({
 
   return result.rows[0] ?? null
 }
+
+export async function searchClientsForBooking({
+  salonId,
+  nameQuery,
+  phoneQuery,
+}) {
+  const result = await pool.query(
+    `
+      SELECT
+        id,
+        name,
+        CASE
+          WHEN phone_normalized IS NULL THEN NULL
+          ELSE '•••• ' || right(phone_normalized, 4)
+        END AS phone_hint
+      FROM clients
+      WHERE salon_id = $1
+        AND active = true
+        AND (
+          (
+            $2::text IS NOT NULL
+            AND strpos(lower(name), lower($2::text)) > 0
+          )
+          OR
+          (
+            $3::text IS NOT NULL
+            AND strpos(
+              regexp_replace(phone_normalized, '[^0-9]', '', 'g'),
+              $3::text
+            ) > 0
+          )
+        )
+      ORDER BY name, id
+      LIMIT 10
+    `,
+    [salonId, nameQuery, phoneQuery]
+  )
+
+  return result.rows
+}

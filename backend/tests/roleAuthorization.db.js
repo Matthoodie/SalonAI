@@ -134,16 +134,12 @@ async function expectRoleForbidden({
 }
 
 test(
-  'employee can read clients',
+  'employee cannot read full client CRM',
   async () => {
-    const response = await fetch(
-      `${baseUrl}/api/clients`
-    )
-
-    assert.equal(
-      response.status,
-      200
-    )
+    await expectRoleForbidden({
+      method: 'GET',
+      path: '/api/clients',
+    })
   }
 )
 

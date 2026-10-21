@@ -121,3 +121,59 @@ export async function updateClientActive(
 
   return responseBody.data
 }
+
+export function canSearchBookingClients(query) {
+  const value = query.trim()
+
+  if (!value || value.length > 100) {
+    return false
+  }
+
+  if (/^[+\d\s()-]+$/.test(value)) {
+    const digits = value.replace(/\D/g, '')
+
+    const significantDigits = digits.startsWith('00')
+      ? digits.slice(2)
+      : digits.startsWith('0')
+        ? digits.slice(1)
+        : digits
+
+    return (
+      digits.length <= 30 &&
+      significantDigits.length >= 7
+    )
+  }
+
+  return (value.match(/\p{L}/gu) ?? []).length >= 3
+}
+
+export async function searchBookingClients(query, { signal } = {}) {
+  const response = await fetch(
+    `/api/clients/search?q=${encodeURIComponent(query.trim())}`,
+    {
+      signal,
+      cache: 'no-store',
+    }
+  )
+
+  const body = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(
+      body?.error?.message ||
+      'Pretraga klijenata trenutno nije dostupna.'
+    )
+
+    error.code =
+      body?.error?.code ||
+      'CLIENT_SEARCH_FAILED'
+
+    throw error
+  }
+
+  return body.data.map((client) => ({
+    id: client.id,
+    name: client.name,
+    phone: client.phone_hint ?? '',
+  }))
+}

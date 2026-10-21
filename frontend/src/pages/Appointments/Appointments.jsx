@@ -1,4 +1,9 @@
 import {
+  canUseAppointmentPermission,
+  canEditAppointment,
+} from '../../api/appointmentPermissions'
+
+import {
   mapClientToFrontend,
   mapClientToPayload,
 } from '../../api/clientMapper'
@@ -38,6 +43,7 @@ function getTodayDate() {
 }
 
 function Appointments({
+  authContext,
   appointmentList,
   setAppointmentList,
   salonTimezone,
@@ -98,7 +104,7 @@ function Appointments({
         appointment.id === initialEditingAppointmentId
     )
 
-    if (appointmentToEdit) {
+    if (canEditAppointment(authContext, appointmentToEdit)) {
       setEditingAppointment(appointmentToEdit)
     }
 
@@ -107,11 +113,26 @@ function Appointments({
     initialEditingAppointmentId,
     appointmentList,
     clearInitialEditingAppointmentId,
+    authContext,
   ])
 
   async function completeAppointment(
     appointmentId
   ) {
+    const targetAppointment = appointmentList.find(
+      (item) => String(item.id) === String(appointmentId)
+    )
+
+    if (
+      !targetAppointment ||
+      !canUseAppointmentPermission(
+        authContext,
+        'appointment.change_status',
+        targetAppointment.employeeId
+      )
+    ) {
+      return
+    }
     if (updatingAppointmentId !== null) {
       return
     }
@@ -158,6 +179,20 @@ function Appointments({
   async function cancelAppointment(
     appointmentId
   ) {
+    const targetAppointment = appointmentList.find(
+      (item) => String(item.id) === String(appointmentId)
+    )
+
+    if (
+      !targetAppointment ||
+      !canUseAppointmentPermission(
+        authContext,
+        'appointment.change_status',
+        targetAppointment.employeeId
+      )
+    ) {
+      return
+    }
     const isConfirmed = window.confirm(
       'Jeste li sigurni da želite otkazati ovaj termin?'
     )
@@ -217,6 +252,10 @@ function Appointments({
   }
 
   function startEditingAppointment(appointment) {
+    if (!canEditAppointment(authContext, appointment)) {
+      return
+    }
+
     setEditingAppointment(appointment)
 
     requestAnimationFrame(() => {
@@ -252,6 +291,16 @@ async function quickAddClient(newClient) {
 }
 
   async function addAppointment(newAppointment) {
+    if (
+      !canUseAppointmentPermission(
+        authContext,
+        'appointment.create',
+        newAppointment.employeeId
+      )
+    ) {
+      window.alert('Nemate dopuštenje za dodavanje ovog termina.')
+      return false
+    }
     if (!salonId || !salonTimezone) {
       window.alert(
         'Podaci salona nisu učitani. Pokušajte ponovno.'
@@ -378,6 +427,29 @@ async function updateAppointment(
   const scheduleChanged =
     dateChanged || timeChanged
 
+  if (
+    clientChanged &&
+    !canUseAppointmentPermission(
+      authContext,
+      'appointment.change_client',
+      editingAppointment.employeeId
+    )
+  ) {
+    window.alert('Nemate dopuštenje za promjenu klijenta.')
+    return false
+  }
+
+  if (
+    scheduleChanged &&
+    !canUseAppointmentPermission(
+      authContext,
+      'appointment.reschedule',
+      editingAppointment.employeeId
+    )
+  ) {
+    window.alert('Nemate dopuštenje za pomicanje termina.')
+    return false
+  }
   if (
     employeeChanged ||
     serviceChanged
@@ -787,6 +859,7 @@ async function updateAppointment(
 
       <div ref={appointmentFormRef}>
         <AppointmentForm
+          authContext={authContext}
           appointments={appointmentList}
           serviceList={serviceList}
           clientList={clientList}
@@ -826,6 +899,12 @@ async function updateAppointment(
         ) : (
           searchedAppointments.map((appointment) => (
             <AppointmentCard
+              canEdit={canEditAppointment(authContext, appointment)}
+              canChangeStatus={canUseAppointmentPermission(
+                authContext,
+                'appointment.change_status',
+                appointment.employeeId
+              )}
               key={appointment.id}
               appointment={appointment}
               onComplete={completeAppointment}

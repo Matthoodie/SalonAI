@@ -112,6 +112,7 @@ function EmployeeCard({
   serviceList = [],
   onEdit,
   onToggleActive,
+  canManageEmployees = false,
 }) {
   const employeeServices =
     serviceList.filter((service) =>
@@ -164,30 +165,29 @@ function EmployeeCard({
           {employeeServices.length}
         </strong>
       </div>
-<div className="employee-card-actions">
-  <button
-    type="button"
-    className="employee-edit-button"
-    onClick={() => onEdit(employee)}
-  >
-    Uredi
-  </button>
-  <button
-  type="button"
-  className={
-    employee.active
-      ? 'employee-status-button employee-status-button-deactivate'
-      : 'employee-status-button employee-status-button-activate'
-  }
-  onClick={() =>
-    onToggleActive(employee.id)
-  }
->
-  {employee.active
-    ? 'Deaktiviraj'
-    : 'Aktiviraj'}
-</button>
-</div>
+      {canManageEmployees && (
+        <div className="employee-card-actions">
+          <button
+            type="button"
+            className="employee-edit-button"
+            onClick={() => onEdit(employee)}
+          >
+            Uredi
+          </button>
+
+          <button
+            type="button"
+            className={
+              employee.active
+                ? 'employee-status-button employee-status-button-deactivate'
+                : 'employee-status-button employee-status-button-activate'
+            }
+            onClick={() => onToggleActive(employee.id)}
+          >
+            {employee.active ? 'Deaktiviraj' : 'Aktiviraj'}
+          </button>
+        </div>
+      )}
     </article>
   )
 }

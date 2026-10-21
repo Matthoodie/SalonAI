@@ -4,6 +4,7 @@ import {
   insertClient,
   updateClient,
   updateClientActive,
+  searchClientsForBooking,
 } from '../repositories/clientRepository.js'
 
 function createClientValidationError(message) {
@@ -219,4 +220,71 @@ export async function updateClientActiveForSalon({
   }
 
   return updatedClient
+}
+
+export async function searchBookingClientsForSalon({
+  salonId,
+  query,
+}) {
+  const normalizedSalonId = requirePositiveId(salonId, 'salon')
+
+  if (typeof query !== 'string') {
+    throw createClientValidationError(
+      'Search query must be a string.'
+    )
+  }
+
+  const cleanQuery = query.trim()
+
+  if (cleanQuery.length > 100) {
+    throw createClientValidationError(
+      'Search query must contain at most 100 characters.'
+    )
+  }
+
+  let nameQuery = null
+  let phoneQuery = null
+
+  const looksLikePhone =
+    /^[+\d\s()-]+$/.test(cleanQuery)
+
+  if (looksLikePhone) {
+    const digits = cleanQuery.replace(/\D/g, '')
+
+    if (digits.length < 7 || digits.length > 30) {
+      throw createClientValidationError(
+        'Phone search requires 7 to 30 digits.'
+      )
+    }
+
+    // Lokalni broj 091... traži se bez početne nule.
+    // Međunarodni zapis 00385... traži se bez početnog 00.
+    phoneQuery = digits.startsWith('00')
+      ? digits.slice(2)
+      : digits.startsWith('0')
+        ? digits.slice(1)
+        : digits
+
+    if (phoneQuery.length < 7) {
+      throw createClientValidationError(
+        'Phone search requires at least 7 significant digits.'
+      )
+    }
+  } else {
+    const letters = cleanQuery.match(/\p{L}/gu) ?? []
+
+    if (letters.length < 3) {
+      throw createClientValidationError(
+        'Name search requires at least 3 letters.'
+      )
+    }
+
+    nameQuery = cleanQuery
+  }
+
+  return searchClientsForBooking({
+    salonId: normalizedSalonId,
+    nameQuery,
+    phoneQuery,
+  })
 }

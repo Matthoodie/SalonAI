@@ -5,6 +5,7 @@ import {
   createClient,
   updateClient,
   updateClientActive,
+  searchBookingClients,
 } from '../controllers/clientController.js'
 
 import {
@@ -13,7 +14,17 @@ import {
 
 const router = Router()
 
-router.get('/', getClients)
+router.get(
+  '/search',
+  requireSalonRole('owner', 'admin', 'employee'),
+  searchBookingClients
+)
+
+router.get(
+  '/',
+  requireSalonRole('owner', 'admin'),
+  getClients
+)
 
 router.post(
   '/',

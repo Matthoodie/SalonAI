@@ -167,7 +167,10 @@ export function mapAppointmentRowsToFrontend(
 
         client: {
           id: appointment.client_id,
-          name: client?.name ?? 'Nepoznat klijent',
+          name:
+            appointment.client_name ??
+            client?.name ??
+            'Nepoznat klijent',
         },
 
         employee: {

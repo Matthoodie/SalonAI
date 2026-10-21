@@ -1,47 +1,49 @@
-export function getCurrentAuth(
-  req,
-  res
-) {
-  const currentUser =
-    req.currentUser
+import {
+  resolveAppointmentPermissions,
+} from '../services/salonPermissionService.js'
 
-  const currentSalon =
-    req.currentSalon
+export async function getCurrentAuth(req, res, next) {
+  res.set('Cache-Control', 'no-store')
 
-  const currentMembership =
-    req.currentMembership
+  try {
+    const currentUser = req.currentUser
+    const currentSalon = req.currentSalon
+    const currentMembership = req.currentMembership
 
-  return res.status(200).json({
-    data: {
-      authenticated: true,
+    const permissions = await resolveAppointmentPermissions({
+      salonId: currentSalon.id,
+      role: currentMembership.role,
+    })
 
-      user: {
-        id: currentUser.id,
-        email: currentUser.email,
-        display_name:
-          currentUser.display_name,
-        active:
-          currentUser.active,
+    return res.status(200).json({
+      data: {
+        authenticated: true,
+
+        user: {
+          id: currentUser.id,
+          email: currentUser.email,
+          display_name: currentUser.display_name,
+          active: currentUser.active,
+        },
+
+        current_salon: {
+          id: currentSalon.id,
+          name: currentSalon.name,
+          timezone: currentSalon.timezone,
+          active: currentSalon.active,
+        },
+
+        membership: {
+          id: currentMembership.id,
+          role: currentMembership.role,
+          employee_id: currentMembership.employeeId,
+          active: currentMembership.active,
+        },
+
+        permissions,
       },
-
-      current_salon: {
-        id: currentSalon.id,
-        name: currentSalon.name,
-        timezone:
-          currentSalon.timezone,
-        active:
-          currentSalon.active,
-      },
-
-      membership: {
-  id: currentMembership.id,
-  role:
-    currentMembership.role,
-  employee_id:
-    currentMembership.employeeId,
-  active:
-    currentMembership.active,
-},
-    },
-  })
+    })
+  } catch (error) {
+    next(error)
+  }
 }
