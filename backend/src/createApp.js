@@ -9,6 +9,7 @@ import serviceRoutes from './routes/serviceRoutes.js'
 import employeeRoutes from './routes/employeeRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
+import invitationRoutes from './routes/invitationRoutes.js'
 
 import {
   errorHandler,
@@ -18,6 +19,7 @@ import {
 export function createApp({
   authRouteMiddleware = [],
   privateRouteMiddleware = [],
+  invitationRouter = invitationRoutes,
 } = {}) {
   const app = express()
 
@@ -32,6 +34,12 @@ export function createApp({
     '/api/auth',
     ...authRouteMiddleware,
     authRoutes
+  )
+
+  app.use(
+    '/api/invitations',
+    ...authRouteMiddleware,
+    invitationRouter
   )
 
   app.use(
