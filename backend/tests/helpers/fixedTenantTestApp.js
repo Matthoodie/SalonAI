@@ -7,10 +7,11 @@ export function createFixedTenantTestApp(
   {
     role = 'owner',
     employeeId = null,
+    userId = salonId,
   } = {}
 ) {
-  const numericSalonId =
-    Number(salonId)
+  const numericSalonId = Number(salonId)
+  const numericUserId = Number(userId)
 
   if (
     !Number.isSafeInteger(numericSalonId) ||
@@ -21,21 +22,33 @@ export function createFixedTenantTestApp(
     )
   }
 
-  function attachFixedTenantContext(
-    req,
-    res,
-    next
+  if (
+    !Number.isSafeInteger(numericUserId) ||
+    numericUserId <= 0
   ) {
+    throw new Error(
+      'Fixed test user ID must be a positive integer.'
+    )
+  }
+
+  function attachFixedTenantContext(req, res, next) {
+    req.currentUser = {
+      id: numericUserId,
+      active: true,
+    }
+
     req.currentSalon = {
       id: numericSalonId,
     }
 
-req.currentMembership = {
-  salonId: numericSalonId,
-  role,
-  employeeId,
-  active: true,
-}
+    req.currentMembership = {
+      userId: numericUserId,
+      salonId: numericSalonId,
+      role,
+      employeeId,
+      active: true,
+    }
+
     return next()
   }
 

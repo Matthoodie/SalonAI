@@ -12,11 +12,16 @@ import {
   requireSalonRole,
 } from '../middleware/roleMiddleware.js'
 
+import {
+  clientSearchRateLimit,
+} from '../middleware/clientSearchRateLimit.js'
+
 const router = Router()
 
 router.get(
   '/search',
   requireSalonRole('owner', 'admin', 'employee'),
+  clientSearchRateLimit,
   searchBookingClients
 )
 
