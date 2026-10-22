@@ -33,6 +33,13 @@ export function createInvitationRouter({
 
   router.use(authenticate)
 
+  router.get(
+    '/',
+    requireCurrentSalon,
+    requireSalonRole('owner', 'admin'),
+    controller.list
+  )
+
   router.post(
     '/accept',
     controller.accept

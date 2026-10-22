@@ -324,3 +324,77 @@ export async function revokeSalonInvitation({
     db.release()
   }
 }
+
+export async function listSalonInvitations({
+  salonId,
+  actorUserId,
+  beforeId,
+}) {
+  const numericSalonId = positiveId(salonId, 'salonId')
+  const numericActorId = positiveId(actorUserId, 'actorUserId')
+
+  const numericBeforeId =
+    beforeId === undefined
+      ? null
+      : positiveId(beforeId, 'beforeId')
+
+  const db = await pool.connect()
+
+  try {
+    await db.query('BEGIN')
+
+    await assertIssuer(
+      db,
+      numericSalonId,
+      numericActorId
+    )
+
+    const result = await db.query(
+      `
+        SELECT
+          i.id,
+          i.salon_id,
+          i.email_normalized,
+          i.role,
+          i.employee_id,
+          e.name AS employee_name,
+          i.created_at,
+          i.expires_at,
+          i.accepted_at,
+          i.revoked_at,
+          CASE
+            WHEN i.accepted_at IS NOT NULL THEN 'accepted'
+            WHEN i.revoked_at IS NOT NULL THEN 'revoked'
+            WHEN i.expires_at <= CURRENT_TIMESTAMP THEN 'expired'
+            ELSE 'pending'
+          END AS status
+        FROM salon_invitations i
+        LEFT JOIN employees e
+          ON e.id = i.employee_id
+          AND e.salon_id = i.salon_id
+        WHERE i.salon_id = $1
+          AND ($2::bigint IS NULL OR i.id < $2)
+        ORDER BY i.id DESC
+        LIMIT 51
+      `,
+      [numericSalonId, numericBeforeId]
+    )
+
+    const invitations = result.rows.slice(0, 50)
+    const hasMore = result.rows.length > 50
+
+    await db.query('COMMIT')
+
+    return {
+      invitations,
+      next_before_id: hasMore
+        ? invitations[invitations.length - 1].id
+        : null,
+    }
+  } catch (error) {
+    await db.query('ROLLBACK').catch(() => {})
+    throw error
+  } finally {
+    db.release()
+  }
+}

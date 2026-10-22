@@ -215,6 +215,7 @@ async function fixture(run) {
         userId = users.owner.id,
         selectedSalonId = salonId,
         body = {},
+        method = 'POST',
       } = {}
     ) {
       const headers = {
@@ -232,9 +233,11 @@ async function fixture(run) {
       const response = await fetch(
         `${baseUrl}/api/invitations${path}`,
         {
-          method: 'POST',
+          method,
           headers,
-          body: JSON.stringify(body),
+          body: method === 'GET'
+            ? undefined
+            : JSON.stringify(body),
         }
       )
 
@@ -643,5 +646,243 @@ test('invitation HTTP: malformed token is rejected without creating membership',
     )
 
     assert.equal(memberships.rows.length, 0)
+  })
+})
+
+test('invitation HTTP: list requires authentication and owner or admin role', async () => {
+  await fixture(async ({ request, users }) => {
+    const anonymous = await request('', {
+      method: 'GET',
+      userId: null,
+    })
+
+    assert.equal(anonymous.status, 401)
+
+    const employee = await request('', {
+      method: 'GET',
+      userId: users.employee.id,
+    })
+
+    assert.equal(employee.status, 403)
+    assert.equal(
+      employee.body.error.code,
+      'INSUFFICIENT_SALON_ROLE'
+    )
+
+    const outsider = await request('', {
+      method: 'GET',
+      userId: users.outsider.id,
+    })
+
+    assert.equal(outsider.status, 403)
+
+    for (const userId of [users.owner.id, users.admin.id]) {
+      const allowed = await request('', {
+        method: 'GET',
+        userId,
+      })
+
+      assert.equal(allowed.status, 200)
+      assert.deepEqual(allowed.body.data.invitations, [])
+      assert.equal(allowed.body.data.next_before_id, null)
+      assert.equal(
+        allowed.headers.get('cache-control'),
+        'no-store'
+      )
+    }
+  })
+})
+
+test('invitation HTTP: list returns all lifecycle states without token material', async () => {
+  await fixture(async ({ create, request, users }) => {
+    const created = {}
+
+    for (const status of [
+      'pending',
+      'expired',
+      'accepted',
+      'revoked',
+    ]) {
+      const result = await create({
+        email: `${status}-${users.recipient.email}`,
+        role: 'admin',
+        employee_id: null,
+      })
+
+      assert.equal(result.status, 201)
+      created[status] = result.body.data.invitation.id
+    }
+
+    await pool.query(
+      `
+        UPDATE salon_invitations
+        SET
+          created_at = CURRENT_TIMESTAMP - INTERVAL '2 days',
+          expires_at = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE id = $1
+      `,
+      [created.expired]
+    )
+
+    await pool.query(
+      `
+        UPDATE salon_invitations
+        SET
+          accepted_at = clock_timestamp(),
+          accepted_by_user_id = $2
+        WHERE id = $1
+      `,
+      [created.accepted, users.recipient.id]
+    )
+
+    const revoked = await request(
+      `/${created.revoked}/revoke`
+    )
+
+    assert.equal(revoked.status, 200)
+
+    const listed = await request('', {
+      method: 'GET',
+    })
+
+    assert.equal(listed.status, 200)
+    assert.equal(listed.body.data.invitations.length, 4)
+
+    const expectedFields = [
+      'id',
+      'salon_id',
+      'email_normalized',
+      'role',
+      'employee_id',
+      'employee_name',
+      'created_at',
+      'expires_at',
+      'accepted_at',
+      'revoked_at',
+      'status',
+    ].sort()
+
+    for (const [status, id] of Object.entries(created)) {
+      const invitation = listed.body.data.invitations.find(
+        (item) => String(item.id) === String(id)
+      )
+
+      assert.ok(invitation)
+      assert.equal(invitation.status, status)
+      assert.deepEqual(
+        Object.keys(invitation).sort(),
+        expectedFields
+      )
+    }
+  })
+})
+
+test('invitation HTTP: list stays within selected salon and ignores query salon spoofing', async () => {
+  await fixture(async ({
+    create,
+    request,
+    salonId,
+    otherSalonId,
+  }) => {
+    const first = await create({
+      role: 'admin',
+      employee_id: null,
+    })
+
+    const second = await create(
+      {
+        role: 'admin',
+        employee_id: null,
+      },
+      {
+        selectedSalonId: otherSalonId,
+      }
+    )
+
+    assert.equal(first.status, 201)
+    assert.equal(second.status, 201)
+
+    const listed = await request(
+      `?salon_id=${otherSalonId}`,
+      {
+        method: 'GET',
+        selectedSalonId: salonId,
+      }
+    )
+
+    assert.equal(listed.status, 200)
+    assert.equal(listed.body.data.invitations.length, 1)
+
+    assert.equal(
+      String(listed.body.data.invitations[0].id),
+      String(first.body.data.invitation.id)
+    )
+
+    assert.equal(
+      Number(listed.body.data.invitations[0].salon_id),
+      salonId
+    )
+  })
+})
+
+test('invitation HTTP: list paginates without duplicates and rejects invalid cursor', async () => {
+  await fixture(async ({ request, salonId, users }) => {
+    await pool.query(
+      `
+        INSERT INTO salon_invitations (
+          salon_id,
+          email_normalized,
+          role,
+          token_hash,
+          created_by_user_id,
+          expires_at
+        )
+        SELECT
+          $1::bigint,
+          'page-' || n || '@example.test',
+          'admin',
+          repeat(md5(($1::bigint)::text || ':' || n::text), 2),
+          $2::bigint,
+          CURRENT_TIMESTAMP + INTERVAL '7 days'
+        FROM generate_series(1, 51) AS series(n)
+      `,
+      [salonId, users.owner.id]
+    )
+
+    const first = await request('', {
+      method: 'GET',
+    })
+
+    assert.equal(first.status, 200)
+    assert.equal(first.body.data.invitations.length, 50)
+    assert.ok(first.body.data.next_before_id)
+
+    const second = await request(
+      `?before_id=${first.body.data.next_before_id}`,
+      {
+        method: 'GET',
+      }
+    )
+
+    assert.equal(second.status, 200)
+    assert.equal(second.body.data.invitations.length, 1)
+    assert.equal(second.body.data.next_before_id, null)
+
+    const ids = [
+      ...first.body.data.invitations,
+      ...second.body.data.invitations,
+    ].map((item) => String(item.id))
+
+    assert.equal(new Set(ids).size, 51)
+
+    const invalid = await request('?before_id=abc', {
+      method: 'GET',
+    })
+
+    assert.equal(invalid.status, 400)
+    assert.equal(
+      invalid.body.error.code,
+      'INVALID_INVITATION_INPUT'
+    )
   })
 })

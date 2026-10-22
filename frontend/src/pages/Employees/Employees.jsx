@@ -19,6 +19,7 @@ import {
 import EmployeeCard from '../../components/EmployeeCard/EmployeeCard'
 import EmployeeForm from '../../components/EmployeeForm/EmployeeForm'
 import InvitationManager from '../../components/Invitations/InvitationManager'
+import InvitationList from '../../components/Invitations/InvitationList'
 
 import './Employees.css'
 
@@ -32,6 +33,9 @@ function Employees({
   isLoading = false,
   loadError = null,
 }) {
+  const [invitationsRevision, setInvitationsRevision] =
+    useState(0)
+
   const [editingEmployee, setEditingEmployee] =
     useState(null)
 
@@ -342,7 +346,18 @@ function Employees({
       ) : (
         <>
           {canManageEmployees && (
-            <InvitationManager employeeList={employeeList} />
+            <>
+              <InvitationManager
+                employeeList={employeeList}
+                onChanged={() =>
+                  setInvitationsRevision((value) => value + 1)
+                }
+              />
+
+              <InvitationList
+                refreshToken={invitationsRevision}
+              />
+            </>
           )}
 
           {canManageEmployees && isFormOpen && (

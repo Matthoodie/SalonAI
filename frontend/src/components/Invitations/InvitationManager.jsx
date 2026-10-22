@@ -5,7 +5,10 @@ import {
   revokeInvitation,
 } from '../../api/invitationApi'
 
-function InvitationManager({ employeeList = [] }) {
+function InvitationManager({
+  employeeList = [],
+  onChanged,
+}) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('employee')
   const [employeeId, setEmployeeId] = useState('')
@@ -74,6 +77,7 @@ function InvitationManager({ employeeList = [] }) {
       }
 
       setCreated(result)
+      onChanged?.()
     } catch (requestError) {
       if (
         mountedRef.current &&
@@ -115,6 +119,7 @@ function InvitationManager({ employeeList = [] }) {
       setNotice(
         'Pozivnica je opozvana. Prethodni kod više se ne može koristiti.'
       )
+      onChanged?.()
     } catch (requestError) {
       if (
         mountedRef.current &&

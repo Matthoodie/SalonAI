@@ -113,3 +113,22 @@ export async function acceptInvitation(token) {
     'Pozivnicu nije moguće prihvatiti.'
   )
 }
+
+export async function fetchInvitations({
+  beforeId,
+  signal,
+} = {}) {
+  const query = beforeId
+    ? `?before_id=${encodeURIComponent(beforeId)}`
+    : ''
+
+  const response = await salonFetch(
+    `/api/invitations${query}`,
+    { signal }
+  )
+
+  return readResponse(
+    response,
+    'Pozivnice nije moguće učitati.'
+  )
+}

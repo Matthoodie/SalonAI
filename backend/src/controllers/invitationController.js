@@ -1,6 +1,7 @@
 import {
   createSalonInvitation,
   revokeSalonInvitation,
+  listSalonInvitations,
 } from '../services/invitationManagementService.js'
 
 import {
@@ -11,6 +12,22 @@ export function createInvitationController({
   acceptInvitation = acceptSalonInvitation,
 } = {}) {
   return {
+    async list(req, res, next) {
+      try {
+        const result = await listSalonInvitations({
+          salonId: req.currentSalon?.id,
+          actorUserId: req.currentUser?.id,
+          beforeId: req.query?.before_id,
+        })
+
+        return res.status(200).json({
+          data: result,
+        })
+      } catch (error) {
+        return next(error)
+      }
+    },
+
     async create(req, res, next) {
       try {
         const result = await createSalonInvitation({
