@@ -18,6 +18,7 @@ import {
 
 import EmployeeCard from '../../components/EmployeeCard/EmployeeCard'
 import EmployeeForm from '../../components/EmployeeForm/EmployeeForm'
+import InvitationManager from '../../components/Invitations/InvitationManager'
 
 import './Employees.css'
 
@@ -340,6 +341,10 @@ function Employees({
         </div>
       ) : (
         <>
+          {canManageEmployees && (
+            <InvitationManager employeeList={employeeList} />
+          )}
+
           {canManageEmployees && isFormOpen && (
             <div
               ref={employeeFormSectionRef}

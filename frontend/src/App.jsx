@@ -29,6 +29,7 @@ import { mapEmployeesToFrontend } from './api/employeeMapper'
 import { mapServicesToFrontend } from './api/serviceMapper'
 
 import Layout from './components/Layout/Layout'
+import InvitationAcceptance from './components/Invitations/InvitationAcceptance'
 
 import Services from './pages/Services/Services'
 import Appointments from './pages/Appointments/Appointments'
@@ -730,6 +731,17 @@ function App() {
             ? 'Vaš račun trenutačno nema dostupnih salona. Obratite se administratoru salona radi dodjele pristupa.'
             : 'Odaberite salon za nastavak rada.'}
         </p>
+      )}
+
+      {!isBusy && user && (
+        <InvitationAcceptance
+          key={user.id}
+          currentUser={user}
+          onAccepted={(salonId) => {
+            saveSelectedSalon(user.id, salonId)
+            window.location.assign('/')
+          }}
+        />
       )}
 
       {!isBusy && authContext && (
