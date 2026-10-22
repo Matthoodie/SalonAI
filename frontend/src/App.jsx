@@ -1,40 +1,32 @@
-import { fetchCurrentAuth } from './api/authApi'
-import { mapClientToFrontend } from './api/clientMapper'
-import { useEffect, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+
 import { Route, Routes } from 'react-router-dom'
 
+import { fetchCurrentAuth } from './api/authApi'
+import { fetchAvailableWorkspaces } from './api/workspaceApi'
+
 import {
-  fetchCalendar,
-} from './api/calendarApi'
+  setActiveSalonForRequests,
+} from './api/salonApiContext'
+
+import { fetchCalendar } from './api/calendarApi'
+import { fetchAppointments } from './api/appointmentApi'
+import { fetchServices } from './api/serviceApi'
+import { fetchEmployees } from './api/employeeApi'
+import { fetchClients } from './api/clientApi'
 
 import {
   mapAppointmentRowsToFrontend,
   mapCalendarResponseToAppointments,
 } from './api/appointmentMapper'
 
-import {
-  fetchAppointments,
-} from './api/appointmentApi'
-
-import {
-  fetchServices,
-} from './api/serviceApi'
-
-import {
-  fetchEmployees,
-} from './api/employeeApi'
-
-import {
-  fetchClients,
-} from './api/clientApi'
-
-import {
-  mapEmployeesToFrontend,
-} from './api/employeeMapper'
-
-import {
-  mapServicesToFrontend,
-} from './api/serviceMapper'
+import { mapClientToFrontend } from './api/clientMapper'
+import { mapEmployeesToFrontend } from './api/employeeMapper'
+import { mapServicesToFrontend } from './api/serviceMapper'
 
 import Layout from './components/Layout/Layout'
 
@@ -45,245 +37,100 @@ import Clients from './pages/Clients/Clients'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Employees from './pages/Employees/Employees'
 
-function getTodayDate() {
-  const today = new Date()
-  const timezoneOffset =
-    today.getTimezoneOffset() * 60_000
-
-  const localDate = new Date(
-    today.getTime() - timezoneOffset
-  )
-
-  return localDate
-    .toISOString()
-    .split('T')[0]
-}
-
 function formatDateKey(date) {
   const year = date.getFullYear()
-
-  const month = String(
-    date.getMonth() + 1
-  ).padStart(2, '0')
-
-  const day = String(
-    date.getDate()
-  ).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
 
   return `${year}-${month}-${day}`
 }
 
-function getInitialCalendarRange() {
-  const today = new Date()
-
-  const rangeStart = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    1
-  )
-
-  const rangeEnd = new Date(
-    today.getFullYear(),
-    today.getMonth() + 2,
-    0
-  )
-
-  return {
-    from: formatDateKey(rangeStart),
-    to: formatDateKey(rangeEnd),
-  }
-}
-
 function getCalendarGridRange(displayedDate) {
-  const firstDayOfMonth = new Date(
+  const firstDay = new Date(
     displayedDate.getFullYear(),
     displayedDate.getMonth(),
     1
   )
 
   const daysBeforeMonday =
-    (firstDayOfMonth.getDay() + 6) % 7
+    (firstDay.getDay() + 6) % 7
 
-  const gridStart = new Date(
-    firstDayOfMonth.getFullYear(),
-    firstDayOfMonth.getMonth(),
+  const start = new Date(
+    firstDay.getFullYear(),
+    firstDay.getMonth(),
     1 - daysBeforeMonday
   )
 
-  const gridEnd = new Date(
-    gridStart.getFullYear(),
-    gridStart.getMonth(),
-    gridStart.getDate() + 41
+  const end = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate() + 41
   )
 
   return {
-    from: formatDateKey(gridStart),
-    to: formatDateKey(gridEnd),
+    from: formatDateKey(start),
+    to: formatDateKey(end),
   }
 }
 
-function migrateAppointments(
-  appointmentsToMigrate,
-  serviceList,
-  clientList
-) {
-  const fallbackDate = getTodayDate()
-
-  return appointmentsToMigrate.map(
-    (appointment) => {
-      const legacyServiceName =
-        appointment.serviceName ||
-        appointment.service ||
-        ''
-
-      const matchingService =
-        serviceList.find(
-          (serviceItem) =>
-            serviceItem.name ===
-            legacyServiceName
-        )
-
-      const matchingClient =
-        clientList.find(
-          (client) =>
-            client.name
-              .trim()
-              .toLowerCase() ===
-            String(
-              appointment.clientName || ''
-            )
-              .trim()
-              .toLowerCase()
-        )
-
-      return {
-        ...appointment,
-
-        clientId:
-          appointment.clientId ??
-          matchingClient?.id ??
-          null,
-
-        clientName:
-          appointment.clientName ||
-          matchingClient?.name ||
-          '',
-
-        date:
-          appointment.date ||
-          fallbackDate,
-
-        serviceId:
-          appointment.serviceId ??
-          matchingService?.id ??
-          null,
-
-        serviceName:
-          appointment.serviceName ||
-          legacyServiceName,
-
-        servicePrice:
-          appointment.servicePrice ??
-          matchingService?.price ??
-          null,
-
-        serviceDurationMinutes:
-          appointment.serviceDurationMinutes ??
-          matchingService?.defaultDurationMinutes ??
-          null,
-      }
-    }
-  )
+function storageKey(userId) {
+  return `salonai:selected-salon:${userId}`
 }
 
-function createDefaultWorkingHours() {
-  return {
-    monday: {
-      enabled: true,
-      startTime: '08:00',
-      endTime: '16:00',
-    },
-    tuesday: {
-      enabled: true,
-      startTime: '08:00',
-      endTime: '16:00',
-    },
-    wednesday: {
-      enabled: true,
-      startTime: '08:00',
-      endTime: '16:00',
-    },
-    thursday: {
-      enabled: true,
-      startTime: '08:00',
-      endTime: '16:00',
-    },
-    friday: {
-      enabled: true,
-      startTime: '08:00',
-      endTime: '16:00',
-    },
-    saturday: {
-      enabled: false,
-      startTime: '',
-      endTime: '',
-    },
-    sunday: {
-      enabled: false,
-      startTime: '',
-      endTime: '',
-    },
+function readSavedSalon(userId) {
+  try {
+    return window.sessionStorage.getItem(
+      storageKey(userId)
+    )
+  } catch {
+    return null
   }
 }
 
-function migrateEmployees(
-  employeesToMigrate
-) {
-  return employeesToMigrate.map(
-    (employee) => ({
-      ...employee,
+function saveSelectedSalon(userId, salonId) {
+  try {
+    window.sessionStorage.setItem(
+      storageKey(userId),
+      String(salonId)
+    )
+  } catch {
+    // Aplikacija radi i kada preglednik zabrani pohranu.
+  }
+}
 
-      workingHours:
-        employee.workingHours ||
-        createDefaultWorkingHours(),
+function clearSavedSalon(userId) {
+  try {
+    window.sessionStorage.removeItem(
+      storageKey(userId)
+    )
+  } catch {
+    // Nedostupna pohrana ne smije blokirati odabir.
+  }
+}
 
-      dateOverrides:
-        Array.isArray(
-          employee.dateOverrides
-        )
-          ? employee.dateOverrides
-          : [],
-
-      timeOff:
-        Array.isArray(
-          employee.timeOff
-        )
-          ? employee.timeOff
-          : [],
-
-      blockedTimes:
-        Array.isArray(
-          employee.blockedTimes
-        )
-          ? employee.blockedTimes
-          : [],
-    })
+function isCancelledRequest(error) {
+  return (
+    error?.name === 'AbortError' ||
+    error?.code === 'STALE_SALON_CONTEXT'
   )
 }
 
-function App() {
-  const [authContext, setAuthContext] = useState(null)
-  const canAccessFullCrm =
-    authContext?.membership?.role === 'owner' ||
-    authContext?.membership?.role === 'admin'
+function SalonWorkspace({ authContext }) {
+  const salonId = authContext.current_salon.id
+  const salonTimezone = authContext.current_salon.timezone
 
-    const canManageEmployees =
-    authContext?.membership?.role === 'owner' ||
-    authContext?.membership?.role === 'admin'
+  const canManage =
+    authContext.membership.role === 'owner' ||
+    authContext.membership.role === 'admin'
 
-    const canManageServices =
-    authContext?.membership?.role === 'owner' ||
-    authContext?.membership?.role === 'admin'
+  const [serviceList, setServiceList] = useState([])
+  const [employeeList, setEmployeeList] = useState([])
+  const [clientList, setClientList] = useState([])
+  const [appointmentList, setAppointmentList] = useState([])
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
+  const [reloadToken, setReloadToken] = useState(0)
 
   const [
     appointmentFormInitialDate,
@@ -295,96 +142,33 @@ function App() {
     setAppointmentFormEditingId,
   ] = useState(null)
 
-  const [serviceList, setServiceList] =
-    useState([])
+  const mountedRef = useRef(false)
 
-  const [employeeList, setEmployeeList] =
-    useState([])
+  useEffect(() => {
+    mountedRef.current = true
 
-   const [
-    employeesLoading,
-    setEmployeesLoading,
-  ] = useState(true)
-
-  const [
-    employeesLoadError,
-    setEmployeesLoadError,
-  ] = useState(null)
-
-  const [clientList, setClientList] = useState([])
-
-  const [
-    appointmentList,
-    setAppointmentList,
-  ] = useState([])
-
-  const [
-    appointmentsLoading,
-    setAppointmentsLoading,
-  ] = useState(true)
-
-  const [
-    appointmentsLoadError,
-    setAppointmentsLoadError,
-  ] = useState(null)
-
-  const [
-    salonTimezone,
-    setSalonTimezone,
-  ] = useState(null)
-
-  const [
-    salonId,
-    setSalonId,
-  ] = useState(null)
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
 
-    async function loadAppointmentsFromBackend() {
+    async function loadSalonData() {
+      setIsLoading(true)
+      setLoadError(null)
+
       try {
-        setAppointmentsLoading(true)
-        setAppointmentsLoadError(null)
-        const currentAuth = await fetchCurrentAuth()
-
-        if (cancelled) {
-          return
-        }
-
-        setAuthContext(currentAuth)
-
-        setSalonTimezone(
-          currentAuth.current_salon.timezone
-        )
-
-        setSalonId(
-          currentAuth.current_salon.id
-        )
-
-        const backendServices =
-         await fetchServices()
-
-        if (cancelled) {
-          return
-        }
-
-        setServiceList(
-          mapServicesToFrontend(
-            backendServices
-          )
-        )
-
         const [
-          backendClients,
+          backendServices,
           backendEmployees,
+          backendClients,
           backendAppointments,
         ] = await Promise.all([
-          ['owner', 'admin'].includes(
-            currentAuth.membership.role
-          )
-            ? fetchClients()
-            : Promise.resolve([]),
+          fetchServices(),
           fetchEmployees(),
+          canManage ? fetchClients() : Promise.resolve([]),
           fetchAppointments(),
         ])
 
@@ -392,52 +176,76 @@ function App() {
           return
         }
 
+        const mappedServices =
+          mapServicesToFrontend(backendServices)
+
+        const mappedEmployees =
+          mapEmployeesToFrontend(
+            backendEmployees,
+            salonTimezone
+          )
+
+        const mappedClients = backendClients.map(
+          (client) => ({
+            ...mapClientToFrontend(client),
+            visits: 0,
+          })
+        )
+
         const mappedAppointments =
           mapAppointmentRowsToFrontend(
             backendAppointments,
-            currentAuth.current_salon.timezone,
+            salonTimezone,
             backendClients,
             backendEmployees,
             backendServices
           )
 
+        setServiceList(mappedServices)
+        setEmployeeList(mappedEmployees)
+        setClientList(mappedClients)
         setAppointmentList(mappedAppointments)
       } catch (error) {
-        console.error(
-          'Neuspješno učitavanje termina s backenda:',
-          error
-        )
-
-        if (!cancelled) {
-          setAppointmentsLoadError(error)
+        if (cancelled || isCancelledRequest(error)) {
+          return
         }
+
+        setLoadError(
+          error.message ||
+            'Podatke salona trenutno nije moguće učitati.'
+        )
       } finally {
         if (!cancelled) {
-          setAppointmentsLoading(false)
+          setIsLoading(false)
         }
       }
     }
 
-    loadAppointmentsFromBackend()
+    loadSalonData()
 
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [salonId, salonTimezone, canManage, reloadToken])
 
   async function loadCalendarMonth(displayedDate) {
-    if (!salonId) {
-      return
-    }
-
     const { from, to } =
       getCalendarGridRange(displayedDate)
 
     try {
-      const calendarData = await fetchCalendar({
-           from,
-           to,
-         })
+      const calendarData = await fetchCalendar({ from, to })
+
+      if (!mountedRef.current) {
+        return
+      }
+
+      if (
+        String(calendarData.salon.id) !== String(salonId)
+      ) {
+        throw new Error(
+          'Kalendar ne pripada odabranom salonu.'
+        )
+      }
 
       const fetchedAppointments =
         mapCalendarResponseToAppointments(calendarData)
@@ -451,296 +259,107 @@ function App() {
         )
 
         for (const appointment of fetchedAppointments) {
-          const appointmentId = String(appointment.id)
+          const id = String(appointment.id)
 
-          if (!appointmentsById.has(appointmentId)) {
-            appointmentsById.set(
-              appointmentId,
-              appointment
-            )
+          if (!appointmentsById.has(id)) {
+            appointmentsById.set(id, appointment)
           }
         }
 
         return [...appointmentsById.values()]
       })
     } catch (error) {
-      console.error(
-        'Neuspješno učitavanje odabranog mjeseca:',
-        error
-      )
+      if (
+        !mountedRef.current ||
+        isCancelledRequest(error)
+      ) {
+        return
+      }
 
       window.alert(
         error.message ||
-        'Nije moguće učitati termine za odabrani mjesec.'
+          'Nije moguće učitati termine odabranog mjeseca.'
       )
     }
   }
 
-  useEffect(() => {
-  if (!salonTimezone) {
-    return
-  }
-
-  let cancelled = false
-
-  async function loadEmployeesFromBackend() {
-      try {
-        setEmployeesLoading(true)
-        setEmployeesLoadError(null)
-
-      const backendEmployees =
-         await fetchEmployees()
-
-        if (cancelled) {
-          return
-        }
-
-        const mappedEmployees =
-          mapEmployeesToFrontend(
-            backendEmployees,
-            salonTimezone
-          )
-
-        setEmployeeList(
-          mappedEmployees
-        )
-      } catch (error) {
-        if (cancelled) {
-          return
-        }
-
-        console.error(
-          'Neuspješno učitavanje zaposlenika:',
-          error
-        )
-
-        setEmployeesLoadError(
-          error.message ||
-          'Zaposlenike trenutno nije moguće učitati.'
-        )
-      } finally {
-        if (!cancelled) {
-          setEmployeesLoading(false)
-        }
-      }
-    }
-
-    loadEmployeesFromBackend()
-
-    return () => {
-      cancelled = true
-    }
-  }, [salonTimezone])
-
-  useEffect(() => {
-    if (!salonId || !canAccessFullCrm) {
-      setClientList([])
-      return
-    }
-
-    let cancelled = false
-
-    async function loadClientsFromBackend() {
-      try {
-        const backendClients =
-  await fetchClients()
-
-        if (cancelled) {
-          return
-        }
-
-    const mappedClients = backendClients.map(
-          (client) => ({
-            ...mapClientToFrontend(client),
-            visits: 0,
-          })
-        )
-
-        setClientList(mappedClients)
-      } catch (error) {
-        if (cancelled) {
-          return
-        }
-
-        console.error(
-          'Neuspješno učitavanje klijenata iz baze:',
-          error
-        )
-
-        setClientList([])
-      }
-    }
-
-    loadClientsFromBackend()
-
-    return () => {
-      cancelled = true
-    }
-   }, [salonId, canAccessFullCrm])
-
   function exportSalonData() {
-      if (!canAccessFullCrm) {
+    if (!canManage || isLoading || loadError) {
       return
     }
+
     const salonData = {
       clients: clientList,
       services: serviceList,
       employees: employeeList,
       appointments: appointmentList,
-      exportedAt:
-        new Date().toISOString(),
+      exportedAt: new Date().toISOString(),
       version: 1,
     }
 
-    const dataString =
-      JSON.stringify(
-        salonData,
-        null,
-        2
-      )
-
-    const dataBlob = new Blob(
-      [dataString],
-      {
-        type: 'application/json',
-      }
+    const blob = new Blob(
+      [JSON.stringify(salonData, null, 2)],
+      { type: 'application/json' }
     )
 
-    const downloadUrl =
-      URL.createObjectURL(dataBlob)
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
 
-    const downloadLink =
-      document.createElement('a')
+    link.href = url
+    link.download =
+      `salonai-${salonId}-${formatDateKey(new Date())}.json`
 
-    downloadLink.href =
-      downloadUrl
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
 
-    downloadLink.download =
-      `salonai-backup-${getTodayDate()}.json`
+    URL.revokeObjectURL(url)
+  }
 
-    document.body.appendChild(
-      downloadLink
-    )
-
-    downloadLink.click()
-    downloadLink.remove()
-
-    URL.revokeObjectURL(
-      downloadUrl
+  if (isLoading) {
+    return (
+      <p role="status">
+        Učitavanje podataka salona…
+      </p>
     )
   }
 
-  function importSalonData(file) {
-    if (!file) {
-      return
-    }
+  if (loadError) {
+    return (
+      <div>
+        <p role="alert">{loadError}</p>
 
-    const reader = new FileReader()
-
-    reader.onload = (event) => {
-      try {
-        const importedData =
-          JSON.parse(
-            event.target.result
-          )
-
-        const hasValidStructure =
-          Array.isArray(importedData.clients) &&
-          Array.isArray(importedData.services) &&
-          Array.isArray(importedData.employees) &&
-          Array.isArray(importedData.appointments)
-
-        if (!hasValidStructure) {
-          window.alert(
-            'Odabrana datoteka nije valjani SalonAI backup.'
-          )
-          return
-        }
-
-        const isConfirmed =
-          window.confirm(
-            'Uvoz će zamijeniti trenutne lokalne podatke. Želite li nastaviti?'
-          )
-
-        if (!isConfirmed) {
-          return
-        }
-
-        setClientList(
-          importedData.clients
-        )
-
-        setServiceList(
-          importedData.services
-        )
-
-        setEmployeeList(
-          migrateEmployees(
-            importedData.employees
-          )
-        )
-
-        const migratedAppointments =
-          migrateAppointments(
-            importedData.appointments,
-            importedData.services,
-            importedData.clients
-          )
-
-        setAppointmentList(
-          migratedAppointments
-        )
-
-        window.alert(
-          'SalonAI podaci uspješno su uvezeni.'
-        )
-      } catch (error) {
-        console.error(
-          'Neuspješan uvoz SalonAI backupa:',
-          error
-        )
-
-        window.alert(
-          'Backup nije moguće učitati.'
-        )
-      }
-    }
-
-    reader.readAsText(file)
+        <button
+          type="button"
+          onClick={() => setReloadToken((value) => value + 1)}
+        >
+          Pokušaj ponovno
+        </button>
+      </div>
+    )
   }
 
   return (
-    <Layout
-      currentUser={authContext?.user}
-      canAccessFullCrm={canAccessFullCrm}
-    >
-      {canAccessFullCrm && (
-      <div className="data-tools">
-        <button
-          type="button"
-          onClick={exportSalonData}
-        >
-          Export podataka
-        </button>
+    <>
+      {canManage && (
+        <div className="data-tools">
+          <button
+            type="button"
+            onClick={exportSalonData}
+          >
+            Export podataka
+          </button>
 
-        <label>
-          Import podataka (privremeno nedostupno)
+          <label>
+            Import podataka (privremeno nedostupno)
 
-          <input
-            type="file"
-            accept="application/json,.json"
-            disabled
-            onChange={(event) => {
-              const file =
-                event.target.files?.[0]
-
-              importSalonData(file)
-
-              event.target.value = ''
-            }}
-          />
-        </label>
-      </div>
+            <input
+              type="file"
+              accept="application/json,.json"
+              disabled
+            />
+          </label>
+        </div>
       )}
 
       <Routes>
@@ -757,11 +376,7 @@ function App() {
         <Route
           path="/clients"
           element={
-            !authContext ? (
-              <p role="status">
-                Učitavanje korisničkog računa…
-              </p>
-            ) : canAccessFullCrm ? (
+            canManage ? (
               <Clients
                 clientList={clientList}
                 setClientList={setClientList}
@@ -781,16 +396,10 @@ function App() {
           path="/services"
           element={
             <Services
-              canManageServices={canManageServices}
-              serviceList={
-                serviceList
-              }
-              setServiceList={
-                setServiceList
-              }
-              salonId={
-                salonId
-              }
+              canManageServices={canManage}
+              serviceList={serviceList}
+              setServiceList={setServiceList}
+              salonId={salonId}
             />
           }
         />
@@ -799,12 +408,9 @@ function App() {
           path="/employees"
           element={
             <Employees
-              canManageEmployees={canManageEmployees}
-              isLoading={!authContext || employeesLoading}
-              loadError={
-                employeesLoadError ||
-                (!authContext ? appointmentsLoadError : null)
-              }
+              canManageEmployees={canManage}
+              isLoading={false}
+              loadError={null}
               employeeList={employeeList}
               setEmployeeList={setEmployeeList}
               serviceList={serviceList}
@@ -819,44 +425,21 @@ function App() {
           element={
             <Appointments
               authContext={authContext}
-              appointmentList={
-                appointmentList
-              }
-              setAppointmentList={
-                setAppointmentList
-              }
-              salonTimezone={
-                salonTimezone
-              }
-              salonId={
-                salonId
-              }
-              serviceList={
-                serviceList
-              }
-              clientList={
-                clientList
-              }
-              setClientList={
-                setClientList
-              }
+              appointmentList={appointmentList}
+              setAppointmentList={setAppointmentList}
+              salonTimezone={salonTimezone}
+              salonId={salonId}
+              serviceList={serviceList}
+              clientList={clientList}
+              setClientList={setClientList}
               employeeList={employeeList}
-
-              initialAppointmentDate={
-                appointmentFormInitialDate
-              }
+              initialAppointmentDate={appointmentFormInitialDate}
               clearInitialAppointmentDate={() =>
-                setAppointmentFormInitialDate(
-                  ''
-                )
+                setAppointmentFormInitialDate('')
               }
-              initialEditingAppointmentId={
-                appointmentFormEditingId
-              }
+              initialEditingAppointmentId={appointmentFormEditingId}
               clearInitialEditingAppointmentId={() =>
-                setAppointmentFormEditingId(
-                  null
-                )
+                setAppointmentFormEditingId(null)
               }
             />
           }
@@ -867,28 +450,296 @@ function App() {
           element={
             <Calendar
               authContext={authContext}
-              appointmentList={
-                appointmentList
-              }
-              appointmentsLoading={
-                appointmentsLoading
-              }
-              appointmentsLoadError={
-                appointmentsLoadError
-              }
-              onRequestNewAppointment={
-                setAppointmentFormInitialDate
-              }
-              onRequestEditAppointment={
-                setAppointmentFormEditingId
-              }
-              onRequestMonthChange={
-                loadCalendarMonth
-              }
+              appointmentList={appointmentList}
+              appointmentsLoading={false}
+              appointmentsLoadError={null}
+              onRequestNewAppointment={setAppointmentFormInitialDate}
+              onRequestEditAppointment={setAppointmentFormEditingId}
+              onRequestMonthChange={loadCalendarMonth}
             />
           }
         />
       </Routes>
+    </>
+  )
+}
+
+function App() {
+  const [user, setUser] = useState(null)
+  const [workspaces, setWorkspaces] = useState([])
+  const [authContext, setAuthContext] = useState(null)
+
+  const [isBusy, setIsBusy] = useState(true)
+  const [workspaceError, setWorkspaceError] = useState(null)
+  const [reloadToken, setReloadToken] = useState(0)
+
+  const generationRef = useRef(0)
+  const switchingRef = useRef(false)
+
+  async function activateWorkspace(
+    salonId,
+    expectedUserId,
+    generation
+  ) {
+    setActiveSalonForRequests(salonId)
+
+    const context = await fetchCurrentAuth()
+
+    if (generationRef.current !== generation) {
+      return
+    }
+
+    if (
+      String(context.user.id) !== String(expectedUserId) ||
+      String(context.current_salon.id) !== String(salonId) ||
+      context.user.active !== true ||
+      context.membership.active !== true ||
+      context.current_salon.active !== true
+    ) {
+      throw new Error(
+        'Poslužitelj nije potvrdio odabrani korisnički i salonski kontekst.'
+      )
+    }
+
+    saveSelectedSalon(expectedUserId, salonId)
+    setAuthContext(context)
+  }
+
+  useEffect(() => {
+    const generation = ++generationRef.current
+    const controller = new AbortController()
+
+    switchingRef.current = true
+
+    setActiveSalonForRequests(null)
+    setAuthContext(null)
+    setWorkspaces([])
+    setUser(null)
+    setWorkspaceError(null)
+    setIsBusy(true)
+
+    async function initializeWorkspaces() {
+      try {
+        const data = await fetchAvailableWorkspaces({
+          signal: controller.signal,
+        })
+
+        if (generationRef.current !== generation) {
+          return
+        }
+
+        setUser(data.user)
+        setWorkspaces(data.workspaces)
+
+        const savedId = readSavedSalon(data.user.id)
+
+        const savedWorkspace = data.workspaces.find(
+          (workspace) =>
+            String(workspace.salon.id) === savedId
+        )
+
+        if (savedId && !savedWorkspace) {
+          clearSavedSalon(data.user.id)
+        }
+
+        const initialWorkspace =
+          savedWorkspace ||
+          (
+            data.workspaces.length === 1
+              ? data.workspaces[0]
+              : null
+          )
+
+        if (initialWorkspace) {
+          await activateWorkspace(
+            initialWorkspace.salon.id,
+            data.user.id,
+            generation
+          )
+        }
+      } catch (error) {
+        if (
+          generationRef.current !== generation ||
+          isCancelledRequest(error)
+        ) {
+          return
+        }
+
+        setActiveSalonForRequests(null)
+        setAuthContext(null)
+
+        setWorkspaceError(
+          error.message ||
+            'Nije moguće učitati dostupne salone.'
+        )
+      } finally {
+        if (generationRef.current === generation) {
+          switchingRef.current = false
+          setIsBusy(false)
+        }
+      }
+    }
+
+    initializeWorkspaces()
+
+    return () => {
+      generationRef.current += 1
+      controller.abort()
+      setActiveSalonForRequests(null)
+    }
+  }, [reloadToken])
+
+  async function changeWorkspace(salonId) {
+    if (
+      switchingRef.current ||
+      !user ||
+      !salonId ||
+      String(authContext?.current_salon?.id) === String(salonId)
+    ) {
+      return
+    }
+
+    const selected = workspaces.find(
+      (workspace) =>
+        String(workspace.salon.id) === String(salonId)
+    )
+
+    if (!selected) {
+      return
+    }
+
+    if (
+      authContext &&
+      !window.confirm(
+        'Promjenom salona zatvaraju se otvoreni obrasci. Nespremljeni unosi neće se prenijeti. Nastaviti?'
+      )
+    ) {
+      return
+    }
+
+    const generation = ++generationRef.current
+
+    switchingRef.current = true
+
+    setIsBusy(true)
+    setWorkspaceError(null)
+    setAuthContext(null)
+
+    try {
+      await activateWorkspace(
+        selected.salon.id,
+        user.id,
+        generation
+      )
+    } catch (error) {
+      if (
+        generationRef.current !== generation ||
+        isCancelledRequest(error)
+      ) {
+        return
+      }
+
+      setActiveSalonForRequests(null)
+      clearSavedSalon(user.id)
+
+      setWorkspaceError(
+        error.message ||
+          'Nije moguće otvoriti odabrani salon.'
+      )
+    } finally {
+      if (generationRef.current === generation) {
+        switchingRef.current = false
+        setIsBusy(false)
+      }
+    }
+  }
+
+  const canAccessFullCrm =
+    authContext?.membership?.role === 'owner' ||
+    authContext?.membership?.role === 'admin'
+
+  return (
+    <Layout
+      currentUser={authContext?.user || user}
+      canAccessFullCrm={canAccessFullCrm}
+    >
+      {workspaces.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px',
+            marginBottom: '20px',
+          }}
+        >
+          <label htmlFor="active-salon">
+            Salon
+          </label>
+
+          <select
+            id="active-salon"
+            value={
+              authContext
+                ? String(authContext.current_salon.id)
+                : ''
+            }
+            disabled={isBusy}
+            onChange={(event) =>
+              changeWorkspace(event.target.value)
+            }
+          >
+            <option value="" disabled>
+              Odaberite salon
+            </option>
+
+            {workspaces.map((workspace) => (
+              <option
+                key={workspace.salon.id}
+                value={String(workspace.salon.id)}
+              >
+                {workspace.salon.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {isBusy && (
+        <p role="status">
+          Učitavanje salonskog konteksta…
+        </p>
+      )}
+
+      {!isBusy && workspaceError && (
+        <div>
+          <p role="alert">{workspaceError}</p>
+
+          <button
+            type="button"
+            onClick={() => setReloadToken((value) => value + 1)}
+          >
+            Ponovno učitaj salone
+          </button>
+        </div>
+      )}
+
+      {!isBusy && !workspaceError && !authContext && (
+        <p role="status">
+          {workspaces.length === 0
+            ? 'Vaš račun trenutačno nema dostupnih salona. Obratite se administratoru salona radi dodjele pristupa.'
+            : 'Odaberite salon za nastavak rada.'}
+        </p>
+      )}
+
+      {!isBusy && authContext && (
+        <SalonWorkspace
+          key={
+            `${authContext.user.id}:${authContext.current_salon.id}`
+          }
+          authContext={authContext}
+        />
+      )}
     </Layout>
   )
 }

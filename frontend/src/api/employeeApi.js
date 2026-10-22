@@ -1,5 +1,6 @@
+import { salonFetch } from './salonApiContext'
 export async function fetchEmployees() {
-  const response = await fetch(
+  const response = await salonFetch(
     '/api/employees'
   )
 
@@ -25,7 +26,7 @@ export async function fetchEmployees() {
 export async function createEmployee(
   employeePayload
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     '/api/employees',
     {
       method: 'POST',
@@ -64,7 +65,7 @@ export async function updateEmployee(
   employeeId,
   employeePayload
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/employees/${employeeId}`,
     {
       method: 'PATCH',
@@ -105,7 +106,7 @@ export async function updateEmployeeActive(
     active,
   }
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/employees/${employeeId}/active`,
     {
       method: 'PATCH',

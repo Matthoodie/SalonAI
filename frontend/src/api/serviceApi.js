@@ -1,5 +1,6 @@
+import { salonFetch } from './salonApiContext'
 export async function fetchServices() {
-  const response = await fetch(
+  const response = await salonFetch(
     '/api/services'
   )
 
@@ -28,7 +29,7 @@ export async function createService({
   priceCents,
   defaultDurationMinutes,
 }) {
-  const response = await fetch(
+  const response = await salonFetch(
     '/api/services',
     {
       method: 'POST',
@@ -73,7 +74,7 @@ export async function updateService({
   priceCents,
   defaultDurationMinutes,
 }) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/services/${serviceId}`,
     {
       method: 'PATCH',
@@ -115,7 +116,7 @@ export async function updateServiceActive({
   serviceId,
   active,
 }) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/services/${serviceId}/active`,
     {
       method: 'PATCH',

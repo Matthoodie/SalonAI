@@ -1,5 +1,6 @@
+import { salonFetch } from './salonApiContext'
 export async function fetchCurrentAuth() {
-  const response = await fetch('/api/auth/me', {
+  const response = await salonFetch('/api/auth/me', {
     cache: 'no-store',
   })
 

@@ -1,5 +1,6 @@
+import { salonFetch } from './salonApiContext'
 export async function fetchClients() {
-  const response = await fetch(
+  const response = await salonFetch(
     '/api/clients'
   )
 
@@ -22,7 +23,7 @@ export async function fetchClients() {
 }
 
 export async function createClient(clientPayload) {
-  const response = await fetch('/api/clients', {
+  const response = await salonFetch('/api/clients', {
     method: 'POST',
 
     headers: {
@@ -54,7 +55,7 @@ export async function updateClient(
   clientId,
   clientPayload
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/clients/${clientId}`,
     {
       method: 'PATCH',
@@ -89,7 +90,7 @@ export async function updateClientActive(
   clientId,
   active
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/clients/${clientId}/active`,
     {
       method: 'PATCH',
@@ -148,7 +149,7 @@ export function canSearchBookingClients(query) {
 }
 
 export async function searchBookingClients(query, { signal } = {}) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/clients/search?q=${encodeURIComponent(query.trim())}`,
     {
       signal,

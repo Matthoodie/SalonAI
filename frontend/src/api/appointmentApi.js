@@ -1,8 +1,9 @@
+import { salonFetch } from './salonApiContext'
 export async function updateAppointmentStatus(
   appointmentId,
   status
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/appointments/${appointmentId}/status`,
     {
       method: 'PATCH',
@@ -40,7 +41,7 @@ export async function rescheduleAppointment(
   appointmentId,
   startsAt
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/appointments/${appointmentId}/schedule`,
     {
       method: 'PATCH',
@@ -78,7 +79,7 @@ export async function changeAppointmentClient(
   appointmentId,
   clientId
 ) {
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/appointments/${appointmentId}/client`,
     {
       method: 'PATCH',
@@ -120,7 +121,7 @@ export async function createAppointment({
   startsAt,
   notes = null,
 }) {
-  const response = await fetch(
+  const response = await salonFetch(
     '/api/appointments',
     {
       method: 'POST',
@@ -158,7 +159,7 @@ export async function createAppointment({
 }
 
 export async function fetchAppointments() {
-  const response = await fetch(
+  const response = await salonFetch(
     '/api/appointments'
   )
 

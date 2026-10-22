@@ -1,3 +1,4 @@
+import { salonFetch } from './salonApiContext'
 export async function fetchCalendar({
   from,
   to,
@@ -23,7 +24,7 @@ export async function fetchCalendar({
     )
   }
 
-  const response = await fetch(
+  const response = await salonFetch(
     `/api/calendar?${params.toString()}`
   )
 
