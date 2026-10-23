@@ -1,3 +1,5 @@
+import SalonMemberHistory from './SalonMemberHistory'
+
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -363,6 +365,9 @@ function SalonMemberList({
         i profil zaposlenika imaju zasebne statuse.
         Deaktivacija članstva ne briše postojeće termine.
       </p>
+      <SalonMemberHistory
+        refreshToken={`${refreshToken}:${reloadToken}`}
+      />
     </section>
   )
 }

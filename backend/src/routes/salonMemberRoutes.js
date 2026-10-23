@@ -2,6 +2,7 @@ import { Router } from 'express'
 
 import {
   listSalonMembers,
+  listSalonMemberHistory,
   changeSalonMemberRole,
   changeSalonMemberActive,
 } from '../controllers/salonMemberController.js'
@@ -16,6 +17,12 @@ router.use((req, res, next) => {
   res.set('Cache-Control', 'no-store')
   next()
 })
+
+router.get(
+  '/history',
+  requireSalonRole('owner', 'admin'),
+  listSalonMemberHistory
+)
 
 router.get(
   '/',

@@ -1,6 +1,12 @@
 import { salonFetch } from './salonApiContext'
 
 const errorMessages = {
+  MEMBER_HISTORY_ACCESS_DENIED:
+    'Nemate pristup povijesti promjena ovog salona.',
+  INVALID_MEMBER_HISTORY_INPUT:
+    'Podaci za dohvat povijesti nisu valjani.',
+  INVALID_MEMBER_HISTORY_CURSOR:
+    'Starije promjene nije moguće učitati. Osvježite povijest.',
   INSUFFICIENT_SALON_ROLE:
     'Nemate ovlasti za ovu radnju.',
   SALON_MEMBER_ACCESS_DENIED:
@@ -101,4 +107,35 @@ export async function updateSalonMemberActive(membershipId, active) {
   })
 
   return readResponse(response)
+}
+
+
+export async function fetchSalonMemberHistory({
+  beforeId,
+  signal,
+} = {}) {
+  const query =
+    beforeId === undefined || beforeId === null
+      ? ''
+      : `?before_id=${encodeURIComponent(
+          validateMembershipId(beforeId)
+        )}`
+
+  const response = await salonFetch(
+    `/api/members/history${query}`,
+    { signal }
+  )
+
+  const data = await readResponse(response)
+
+  if (
+    !Array.isArray(data?.changes) ||
+    !Object.hasOwn(data, 'next_before_id')
+  ) {
+    throw new Error(
+      'Poslužitelj nije vratio valjanu povijest promjena.'
+    )
+  }
+
+  return data
 }

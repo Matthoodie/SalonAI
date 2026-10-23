@@ -792,3 +792,282 @@ test('members HTTP: invalid input and demotion without profile return clear erro
   assert.equal(unchanged.role, member.role)
   assert.equal(unchanged.active, member.active)
 })
+
+
+test('member history HTTP: owner and admin receive only allowed history fields', async () => {
+  const member = await findTestMembership('employee')
+
+  // Create a real change through the API.
+  try {
+    const changed = await patchTestMembership({
+      membershipId: member.id,
+      action: 'active',
+      body: { active: !member.active },
+    })
+
+    assert.equal(changed.status, 200)
+
+    const expectedFields = [
+      'id',
+      'salon_id',
+      'membership_id',
+      'target_user_id',
+      'actor_user_id',
+      'actor_role',
+      'action',
+      'old_role',
+      'new_role',
+      'old_active',
+      'new_active',
+      'created_at',
+      'actor_email',
+      'actor_display_name',
+      'target_email',
+      'target_display_name',
+    ].sort()
+
+    for (const userId of [users.owner, users.admin]) {
+      const result = await request({
+        userId,
+        query: '/history',
+      })
+
+      assert.equal(result.status, 200)
+      assert.equal(
+        result.headers.get('cache-control'),
+        'no-store'
+      )
+
+      assert.ok(result.body.data.changes.length > 0)
+
+      for (const change of result.body.data.changes) {
+        assert.deepEqual(
+          Object.keys(change).sort(),
+          expectedFields
+        )
+
+        assert.equal(Number(change.salon_id), salonIds[0])
+      }
+
+      const latest = result.body.data.changes[0]
+
+      assert.equal(Number(latest.membership_id), Number(member.id))
+      assert.equal(Number(latest.actor_user_id), users.owner)
+      assert.equal(Number(latest.target_user_id), users.employee)
+      assert.equal(latest.actor_role, 'owner')
+      assert.equal(latest.action, 'active')
+      assert.equal(latest.old_active, member.active)
+      assert.equal(latest.new_active, !member.active)
+      assert.equal(typeof latest.actor_email, 'string')
+      assert.equal(typeof latest.target_email, 'string')
+    }
+  } finally {
+    await pool.query(
+      'UPDATE salon_memberships SET active = $2 WHERE id = $1',
+      [member.id, member.active]
+    )
+  }
+})
+
+test('member history HTTP: anonymous employee and inactive account cannot read history', async () => {
+  for (const entry of [
+    { userId: null, status: 401 },
+    { userId: users.employee, status: 403 },
+    { userId: users.inactiveAccount, status: 403 },
+    { userId: users.inactiveMembership, status: 403 },
+  ]) {
+    const result = await request({
+      userId: entry.userId,
+      query: '/history',
+    })
+
+    assert.equal(result.status, entry.status)
+    assert.equal(Object.hasOwn(result.body, 'data'), false)
+  }
+})
+
+test('member history HTTP: selected salon controls history and query cannot spoof context', async () => {
+  const foreign = await request({
+    salonId: salonIds[2],
+    query: '/history',
+  })
+
+  assert.equal(foreign.status, 403)
+  assert.equal(foreign.body.error.code, 'SALON_ACCESS_DENIED')
+
+  const spoofed = await request({
+    query:
+      `/history?salon_id=${salonIds[2]}` +
+      `&actorUserId=${users.foreignOwner}`,
+  })
+
+  assert.equal(spoofed.status, 200)
+  assert.ok(spoofed.body.data.changes.length > 0)
+
+  assert.ok(
+    spoofed.body.data.changes.every(
+      (change) => Number(change.salon_id) === salonIds[0]
+    )
+  )
+
+  const otherSalon = await request({
+    userId: users.foreignOwner,
+    salonId: salonIds[2],
+    query: '/history',
+  })
+
+  assert.equal(otherSalon.status, 200)
+  assert.deepEqual(otherSalon.body.data.changes, [])
+  assert.equal(otherSalon.body.data.next_before_id, null)
+
+  const employeeElsewhere = await request({
+    userId: users.owner,
+    salonId: salonIds[1],
+    query: '/history',
+  })
+
+  assert.equal(employeeElsewhere.status, 403)
+  assert.equal(
+    employeeElsewhere.body.error.code,
+    'INSUFFICIENT_SALON_ROLE'
+  )
+})
+
+test('member history HTTP: cursor pagination has no duplicates and rejects invalid cursors', async () => {
+  const member = await findTestMembership('employee')
+
+  // Synthetic history rows are used only in this isolated test salon.
+  const inserted = await pool.query(
+    `
+      INSERT INTO salon_membership_changes (
+        salon_id,
+        membership_id,
+        target_user_id,
+        actor_user_id,
+        actor_role,
+        action,
+        old_role,
+        new_role,
+        old_active,
+        new_active
+      )
+      SELECT
+        $1::bigint,
+        $2::bigint,
+        $3::bigint,
+        $4::bigint,
+        'owner',
+        'active',
+        'employee',
+        'employee',
+        true,
+        false
+      FROM generate_series(1, 55)
+      RETURNING id
+    `,
+    [
+      salonIds[0],
+      member.id,
+      users.employee,
+      users.owner,
+    ]
+  )
+
+  const seededIds = inserted.rows
+    .map((row) => String(row.id))
+    .sort((a, b) => Number(b) - Number(a))
+
+  try {
+    const first = await request({ query: '/history' })
+
+    assert.equal(first.status, 200)
+    assert.equal(first.body.data.changes.length, 50)
+
+    const firstIds = first.body.data.changes.map(
+      (row) => String(row.id)
+    )
+
+    assert.deepEqual(firstIds, seededIds.slice(0, 50))
+    assert.equal(
+      String(first.body.data.next_before_id),
+      firstIds[firstIds.length - 1]
+    )
+
+    const second = await request({
+      query:
+        '/history?before_id=' +
+        encodeURIComponent(first.body.data.next_before_id),
+    })
+
+    assert.equal(second.status, 200)
+
+    const secondIds = second.body.data.changes.map(
+      (row) => String(row.id)
+    )
+
+    assert.deepEqual(secondIds.slice(0, 5), seededIds.slice(50))
+
+    const allIds = [...firstIds, ...secondIds]
+
+    assert.equal(new Set(allIds).size, allIds.length)
+
+    for (const cursor of [
+      '',
+      '0',
+      '-1',
+      '1.5',
+      'abc',
+      '9007199254740992',
+    ]) {
+      const invalid = await request({
+        query: '/history?before_id=' + encodeURIComponent(cursor),
+      })
+
+      assert.equal(invalid.status, 400)
+      assert.equal(
+        invalid.body.error.code,
+        'INVALID_MEMBER_HISTORY_CURSOR'
+      )
+    }
+  } finally {
+    await pool.query(
+      'DELETE FROM salon_membership_changes WHERE id = ANY($1::bigint[])',
+      [seededIds]
+    )
+  }
+})
+
+test('member history HTTP: revoked administrator loses history access on next request', async () => {
+  const member = await findTestMembership('admin')
+
+  try {
+    const allowed = await request({
+      userId: users.admin,
+      query: '/history',
+    })
+
+    assert.equal(allowed.status, 200)
+
+    const revoked = await patchTestMembership({
+      membershipId: member.id,
+      action: 'active',
+      body: { active: false },
+    })
+
+    assert.equal(revoked.status, 200)
+
+    const denied = await request({
+      userId: users.admin,
+      query: '/history',
+    })
+
+    assert.equal(denied.status, 403)
+    assert.equal(denied.body.error.code, 'SALON_ACCESS_DENIED')
+    assert.equal(Object.hasOwn(denied.body, 'data'), false)
+  } finally {
+    await pool.query(
+      'UPDATE salon_memberships SET active = $2 WHERE id = $1',
+      [member.id, member.active]
+    )
+  }
+})
