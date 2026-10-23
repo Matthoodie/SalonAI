@@ -886,3 +886,155 @@ test('invitation HTTP: list paginates without duplicates and rejects invalid cur
     )
   })
 })
+
+test('invitation HTTP: eligible profiles require authenticated owner or admin', async () => {
+  await fixture(async ({ request, users, employeeId }) => {
+    const anonymous = await request('/eligible-employees', {
+      method: 'GET',
+      userId: null,
+    })
+
+    assert.equal(anonymous.status, 401)
+
+    const employee = await request('/eligible-employees', {
+      method: 'GET',
+      userId: users.employee.id,
+    })
+
+    assert.equal(employee.status, 403)
+    assert.equal(
+      employee.body.error.code,
+      'INSUFFICIENT_SALON_ROLE'
+    )
+
+    const outsider = await request('/eligible-employees', {
+      method: 'GET',
+      userId: users.outsider.id,
+    })
+
+    assert.equal(outsider.status, 403)
+
+    for (const userId of [users.owner.id, users.admin.id]) {
+      const result = await request('/eligible-employees', {
+        method: 'GET',
+        userId,
+      })
+
+      assert.equal(result.status, 200)
+      assert.equal(
+        result.headers.get('cache-control'),
+        'no-store'
+      )
+
+      assert.deepEqual(
+        result.body.data.employees.map((item) => Number(item.id)),
+        [employeeId]
+      )
+
+      assert.deepEqual(
+        Object.keys(result.body.data.employees[0]).sort(),
+        ['id', 'name']
+      )
+    }
+  })
+})
+
+test('invitation HTTP: eligible profiles exclude foreign, inactive and linked profiles including inactive memberships', async () => {
+  await fixture(async ({
+    request,
+    users,
+    salonId,
+    otherSalonId,
+    employeeId,
+  }) => {
+    await pool.query(
+      `
+        INSERT INTO employees (salon_id, name, active)
+        VALUES ($1, 'Inactive Invitation Profile', false)
+      `,
+      [salonId]
+    )
+
+    await pool.query(
+      `
+        UPDATE salon_memberships
+        SET active = false
+        WHERE user_id = $1 AND salon_id = $2
+      `,
+      [users.employee.id, salonId]
+    )
+
+    const result = await request(
+      `/eligible-employees?salon_id=${otherSalonId}`,
+      {
+        method: 'GET',
+        selectedSalonId: salonId,
+      }
+    )
+
+    assert.equal(result.status, 200)
+
+    assert.deepEqual(
+      result.body.data.employees.map((item) => Number(item.id)),
+      [employeeId]
+    )
+  })
+})
+
+test('invitation HTTP: open and expired invitations reserve profiles until revocation', async () => {
+  await fixture(async ({
+    create,
+    request,
+    employeeId,
+  }) => {
+    const created = await create()
+
+    assert.equal(created.status, 201)
+
+    const invitationId = created.body.data.invitation.id
+
+    const pending = await request('/eligible-employees', {
+      method: 'GET',
+    })
+
+    assert.equal(pending.status, 200)
+    assert.deepEqual(pending.body.data.employees, [])
+
+    await pool.query(
+      `
+        UPDATE salon_invitations
+        SET
+          created_at = CURRENT_TIMESTAMP - INTERVAL '2 days',
+          expires_at = CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE id = $1
+      `,
+      [invitationId]
+    )
+
+    const expired = await request('/eligible-employees', {
+      method: 'GET',
+    })
+
+    assert.equal(expired.status, 200)
+    assert.deepEqual(expired.body.data.employees, [])
+
+    const revoked = await request(
+      `/${invitationId}/revoke`
+    )
+
+    assert.equal(revoked.status, 200)
+
+    const availableAgain = await request('/eligible-employees', {
+      method: 'GET',
+    })
+
+    assert.equal(availableAgain.status, 200)
+
+    assert.deepEqual(
+      availableAgain.body.data.employees.map(
+        (item) => Number(item.id)
+      ),
+      [employeeId]
+    )
+  })
+})

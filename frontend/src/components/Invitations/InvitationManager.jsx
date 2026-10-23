@@ -3,11 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 import {
   createInvitation,
   revokeInvitation,
+  fetchInvitationEligibleEmployees,
 } from '../../api/invitationApi'
 
 function InvitationManager({
   employeeList = [],
   onChanged,
+  refreshToken = 0,
 }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('employee')
@@ -16,6 +18,10 @@ function InvitationManager({
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [eligibleEmployees, setEligibleEmployees] = useState([])
+  const [profilesLoading, setProfilesLoading] = useState(true)
+  const [profilesError, setProfilesError] = useState('')
+  const [profilesRevision, setProfilesRevision] = useState(0)
 
   const mountedRef = useRef(false)
   const busyRef = useRef(false)
@@ -28,9 +34,45 @@ function InvitationManager({
     }
   }, [])
 
-  const activeEmployees = employeeList.filter(
-    (employee) => employee.active !== false
-  )
+  useEffect(() => {
+    const controller = new AbortController()
+    let cancelled = false
+
+    setProfilesLoading(true)
+    setProfilesError('')
+    setEligibleEmployees([])
+    setEmployeeId('')
+
+    async function loadProfiles() {
+      try {
+        const employees = await fetchInvitationEligibleEmployees({
+          signal: controller.signal,
+        })
+
+        if (!cancelled) {
+          setEligibleEmployees(employees)
+        }
+      } catch (requestError) {
+        if (
+          !cancelled &&
+          !requestWasCancelled(requestError)
+        ) {
+          setProfilesError(requestError.message)
+        }
+      } finally {
+        if (!cancelled) {
+          setProfilesLoading(false)
+        }
+      }
+    }
+
+    loadProfiles()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [employeeList, refreshToken, profilesRevision])
 
   function requestWasCancelled(requestError) {
     return (
@@ -42,7 +84,24 @@ function InvitationManager({
   async function handleCreate(event) {
     event.preventDefault()
 
-    if (busyRef.current || created) {
+    if (
+      busyRef.current ||
+      created ||
+      profilesLoading ||
+      profilesError
+    ) {
+      return
+    }
+
+    if (
+      employeeId &&
+      !eligibleEmployees.some(
+        (employee) => String(employee.id) === String(employeeId)
+      )
+    ) {
+      setError(
+        'Odabrani profil više nije dostupan. Osvježite popis profila.'
+      )
       return
     }
 
@@ -281,34 +340,21 @@ function InvitationManager({
             </label>
 
             <select
-              id="invitation-role"
-              value={role}
-              onChange={(event) => setRole(event.target.value)}
-              disabled={isBusy}
-            >
-              <option value="employee">Zaposlenik</option>
-              <option value="admin">Administrator</option>
-            </select>
-
-            <label htmlFor="invitation-employee">
-              Profil zaposlenika
-              {role === 'admin' ? ' — neobavezno' : ''}
-            </label>
-
-            <select
               id="invitation-employee"
               value={employeeId}
               onChange={(event) => setEmployeeId(event.target.value)}
               required={role === 'employee'}
-              disabled={isBusy}
+              disabled={isBusy || profilesLoading || Boolean(profilesError)}
             >
               <option value="">
-                {role === 'admin'
-                  ? 'Bez profila zaposlenika'
-                  : 'Odaberite zaposlenika'}
+                {profilesLoading
+                  ? 'Učitavanje profila…'
+                  : role === 'admin'
+                    ? 'Bez profila zaposlenika'
+                    : 'Odaberite zaposlenika'}
               </option>
 
-              {activeEmployees.map((employee) => (
+              {eligibleEmployees.map((employee) => (
                 <option
                   key={employee.id}
                   value={String(employee.id)}
@@ -318,13 +364,45 @@ function InvitationManager({
               ))}
             </select>
 
+            {profilesError && (
+              <p role="alert">{profilesError}</p>
+            )}
+
+            {!profilesLoading &&
+              !profilesError &&
+              eligibleEmployees.length === 0 && (
+                <p>
+                  Nema slobodnih aktivnih profila zaposlenika.
+                  Dodajte novi profil ili opozovite postojeću
+                  otvorenu pozivnicu za željeni profil.
+                  Administratora možete pozvati bez profila.
+                </p>
+              )}
+
+            <button
+              type="button"
+              disabled={isBusy || profilesLoading}
+              onClick={() =>
+                setProfilesRevision((value) => value + 1)
+              }
+            >
+              Osvježi slobodne profile
+            </button>
+
             <p>
-              Za zaposlenika najprije mora postojati profil.
-              Profil koji je već povezan s računom nije moguće
-              dodijeliti drugoj osobi.
+              Prikazani su aktivni profili bez povezanog računa
+              i bez otvorene pozivnice.
             </p>
 
-            <button type="submit" disabled={isBusy}>
+            <button
+              type="submit"
+              disabled={
+                isBusy ||
+                profilesLoading ||
+                Boolean(profilesError) ||
+                (role === 'employee' && !employeeId)
+              }
+            >
               {isBusy ? 'Kreiranje…' : 'Kreiraj pozivnicu'}
             </button>
           </form>

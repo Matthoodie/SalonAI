@@ -34,6 +34,13 @@ export function createInvitationRouter({
   router.use(authenticate)
 
   router.get(
+    '/eligible-employees',
+    requireCurrentSalon,
+    requireSalonRole('owner', 'admin'),
+    controller.eligibleEmployees
+  )
+
+  router.get(
     '/',
     requireCurrentSalon,
     requireSalonRole('owner', 'admin'),

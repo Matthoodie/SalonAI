@@ -398,3 +398,61 @@ export async function listSalonInvitations({
     db.release()
   }
 }
+
+export async function listInvitationEligibleEmployees({
+  salonId,
+  actorUserId,
+}) {
+  const numericSalonId = positiveId(salonId, 'salonId')
+  const numericActorId = positiveId(actorUserId, 'actorUserId')
+
+  const db = await pool.connect()
+
+  try {
+    await db.query('BEGIN')
+
+    await assertIssuer(
+      db,
+      numericSalonId,
+      numericActorId
+    )
+
+    const result = await db.query(
+      `
+        SELECT
+          e.id,
+          e.name
+        FROM employees e
+        WHERE e.salon_id = $1
+          AND e.active = true
+
+          AND NOT EXISTS (
+            SELECT 1
+            FROM salon_memberships sm
+            WHERE sm.employee_id = e.id
+          )
+
+          AND NOT EXISTS (
+            SELECT 1
+            FROM salon_invitations i
+            WHERE i.salon_id = e.salon_id
+              AND i.employee_id = e.id
+              AND i.accepted_at IS NULL
+              AND i.revoked_at IS NULL
+          )
+
+        ORDER BY e.name, e.id
+      `,
+      [numericSalonId]
+    )
+
+    await db.query('COMMIT')
+
+    return result.rows
+  } catch (error) {
+    await db.query('ROLLBACK').catch(() => {})
+    throw error
+  } finally {
+    db.release()
+  }
+}

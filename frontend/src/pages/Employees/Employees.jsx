@@ -349,6 +349,7 @@ function Employees({
             <>
               <InvitationManager
                 employeeList={employeeList}
+                refreshToken={invitationsRevision}
                 onChanged={() =>
                   setInvitationsRevision((value) => value + 1)
                 }
@@ -356,6 +357,9 @@ function Employees({
 
               <InvitationList
                 refreshToken={invitationsRevision}
+                onChanged={() =>
+                  setInvitationsRevision((value) => value + 1)
+                }
               />
             </>
           )}

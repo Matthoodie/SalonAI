@@ -132,3 +132,19 @@ export async function fetchInvitations({
     'Pozivnice nije moguće učitati.'
   )
 }
+
+export async function fetchInvitationEligibleEmployees({
+  signal,
+} = {}) {
+  const response = await salonFetch(
+    '/api/invitations/eligible-employees',
+    { signal }
+  )
+
+  const data = await readResponse(
+    response,
+    'Slobodne profile zaposlenika nije moguće učitati.'
+  )
+
+  return data.employees
+}

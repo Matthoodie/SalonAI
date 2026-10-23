@@ -25,7 +25,10 @@ function isCancelled(error) {
   )
 }
 
-function InvitationList({ refreshToken = 0 }) {
+function InvitationList({
+  refreshToken = 0,
+  onChanged,
+}) {
   const [invitations, setInvitations] = useState([])
   const [nextBeforeId, setNextBeforeId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -186,7 +189,12 @@ function InvitationList({ refreshToken = 0 }) {
       }
 
       setNotice('Pozivnica je opozvana.')
-      setReloadToken((value) => value + 1)
+
+      if (onChanged) {
+        onChanged()
+      } else {
+        setReloadToken((value) => value + 1)
+      }
     } catch (requestError) {
       if (
         mountedRef.current &&

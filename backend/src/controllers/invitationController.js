@@ -2,6 +2,7 @@ import {
   createSalonInvitation,
   revokeSalonInvitation,
   listSalonInvitations,
+  listInvitationEligibleEmployees,
 } from '../services/invitationManagementService.js'
 
 import {
@@ -12,6 +13,23 @@ export function createInvitationController({
   acceptInvitation = acceptSalonInvitation,
 } = {}) {
   return {
+    async eligibleEmployees(req, res, next) {
+      try {
+        const employees = await listInvitationEligibleEmployees({
+          salonId: req.currentSalon?.id,
+          actorUserId: req.currentUser?.id,
+        })
+
+        return res.status(200).json({
+          data: {
+            employees,
+          },
+        })
+      } catch (error) {
+        return next(error)
+      }
+    },
+
     async list(req, res, next) {
       try {
         const result = await listSalonInvitations({
