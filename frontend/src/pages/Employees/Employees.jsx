@@ -20,6 +20,7 @@ import EmployeeCard from '../../components/EmployeeCard/EmployeeCard'
 import EmployeeForm from '../../components/EmployeeForm/EmployeeForm'
 import InvitationManager from '../../components/Invitations/InvitationManager'
 import InvitationList from '../../components/Invitations/InvitationList'
+import SalonMemberList from '../../components/Members/SalonMemberList'
 
 import './Employees.css'
 
@@ -360,6 +361,9 @@ function Employees({
                 onChanged={() =>
                   setInvitationsRevision((value) => value + 1)
                 }
+              />
+              <SalonMemberList
+                refreshToken={invitationsRevision}
               />
             </>
           )}

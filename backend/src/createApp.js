@@ -10,6 +10,7 @@ import employeeRoutes from './routes/employeeRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
 import invitationRoutes from './routes/invitationRoutes.js'
+import salonMemberRoutes from './routes/salonMemberRoutes.js'
 
 import {
   errorHandler,
@@ -80,6 +81,12 @@ export function createApp({
     '/api/clients',
     ...privateRouteMiddleware,
     clientRoutes
+  )
+
+  app.use(
+    '/api/members',
+    ...privateRouteMiddleware,
+    salonMemberRoutes
   )
 
   app.use(notFoundHandler)

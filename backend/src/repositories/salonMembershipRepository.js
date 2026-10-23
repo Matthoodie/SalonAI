@@ -29,3 +29,48 @@ export async function findMembershipsByUserId(
 
   return result.rows
 }
+
+export async function findMembersBySalonId(salonId) {
+  const result = await pool.query(
+    `
+      SELECT
+        sm.id,
+        sm.salon_id,
+        sm.user_id,
+        sm.role,
+        sm.active AS membership_active,
+        sm.created_at,
+
+        u.email,
+        u.display_name,
+        u.active AS user_active,
+
+        sm.employee_id,
+        e.name AS employee_name,
+        e.active AS employee_active
+
+      FROM salon_memberships sm
+
+      JOIN users u
+        ON u.id = sm.user_id
+
+      LEFT JOIN employees e
+        ON e.id = sm.employee_id
+        AND e.salon_id = sm.salon_id
+
+      WHERE sm.salon_id = $1
+
+      ORDER BY
+        CASE sm.role
+          WHEN 'owner' THEN 0
+          WHEN 'admin' THEN 1
+          ELSE 2
+        END,
+        lower(u.email),
+        sm.id
+    `,
+    [salonId]
+  )
+
+  return result.rows
+}
