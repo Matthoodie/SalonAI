@@ -409,6 +409,7 @@ function SalonWorkspace({ authContext }) {
           path="/employees"
           element={
             <Employees
+              memberManagementContext={authContext}
               canManageEmployees={canManage}
               canManageAdminInvitations={
                 authContext.membership.role === 'owner'

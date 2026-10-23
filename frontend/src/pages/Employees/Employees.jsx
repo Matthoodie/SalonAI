@@ -32,6 +32,7 @@ function Employees({
   salonTimezone,
   canManageEmployees = false,
   canManageAdminInvitations = false,
+  memberManagementContext = null,
   isLoading = false,
   loadError = null,
 }) {
@@ -367,6 +368,7 @@ function Employees({
               />
               <SalonMemberList
                 refreshToken={invitationsRevision}
+                managementContext={memberManagementContext}
               />
             </>
           )}

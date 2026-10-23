@@ -2,6 +2,8 @@ import { Router } from 'express'
 
 import {
   listSalonMembers,
+  changeSalonMemberRole,
+  changeSalonMemberActive,
 } from '../controllers/salonMemberController.js'
 
 import {
@@ -19,6 +21,18 @@ router.get(
   '/',
   requireSalonRole('owner', 'admin'),
   listSalonMembers
+)
+
+router.patch(
+  '/:id/role',
+  requireSalonRole('owner'),
+  changeSalonMemberRole
+)
+
+router.patch(
+  '/:id/active',
+  requireSalonRole('owner', 'admin'),
+  changeSalonMemberActive
 )
 
 export default router

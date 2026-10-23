@@ -425,3 +425,370 @@ test('members HTTP: revoked admin membership blocks the next request', async () 
     )
   }
 })
+
+async function findTestMembership(label) {
+  const result = await pool.query(
+    `
+      SELECT *
+      FROM salon_memberships
+      WHERE user_id = $1
+        AND salon_id = $2
+    `,
+    [
+      users[label],
+      label === 'foreignOwner' ? salonIds[2] : salonIds[0],
+    ]
+  )
+
+  assert.ok(result.rows[0])
+  return result.rows[0]
+}
+
+async function patchTestMembership({
+  membershipId,
+  action,
+  body,
+  userId = users.owner,
+  salonId = salonIds[0],
+}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Salon-Id': String(salonId),
+  }
+
+  if (userId !== null) {
+    headers['x-test-user-id'] = String(userId)
+  }
+
+  const response = await fetch(
+    `${baseUrl}/api/members/${membershipId}/${action}`,
+    {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+    }
+  )
+
+  return {
+    status: response.status,
+    body: await response.json(),
+  }
+}
+
+async function readTestMemberAudit(membershipId) {
+  const result = await pool.query(
+    `
+      SELECT *
+      FROM salon_membership_changes
+      WHERE salon_id = $1 AND membership_id = $2
+      ORDER BY id
+    `,
+    [salonIds[0], membershipId]
+  )
+
+  return result.rows
+}
+
+test('members HTTP: owner changes role and audit uses authenticated actor', async () => {
+  const member = await findTestMembership('employee')
+  const before = await readTestMemberAudit(member.id)
+
+  try {
+    const promoted = await patchTestMembership({
+      membershipId: member.id,
+      action: 'role',
+      body: {
+        role: 'admin',
+        actorUserId: users.foreignOwner,
+        salon_id: salonIds[2],
+        employee_id: null,
+      },
+    })
+
+    assert.equal(promoted.status, 200)
+    assert.equal(promoted.body.data.changed, true)
+    assert.equal(promoted.body.data.membership.role, 'admin')
+    assert.equal(
+      promoted.body.data.membership.employee_id,
+      member.employee_id
+    )
+
+    const demoted = await patchTestMembership({
+      membershipId: member.id,
+      action: 'role',
+      body: { role: 'employee' },
+    })
+
+    assert.equal(demoted.status, 200)
+    assert.equal(demoted.body.data.membership.role, 'employee')
+
+    const audit = await readTestMemberAudit(member.id)
+    const changes = audit.slice(before.length)
+
+    assert.equal(changes.length, 2)
+
+    for (const change of changes) {
+      assert.equal(Number(change.actor_user_id), users.owner)
+      assert.equal(Number(change.salon_id), salonIds[0])
+      assert.equal(change.actor_role, 'owner')
+    }
+
+    assert.equal(changes[0].old_role, 'employee')
+    assert.equal(changes[0].new_role, 'admin')
+    assert.equal(changes[1].new_role, 'employee')
+  } finally {
+    await pool.query(
+      'UPDATE salon_memberships SET role = $2 WHERE id = $1',
+      [member.id, member.role]
+    )
+  }
+})
+
+test('members HTTP: admin cannot change roles even with owner fields in body', async () => {
+  const member = await findTestMembership('employee')
+  const before = await readTestMemberAudit(member.id)
+
+  const result = await patchTestMembership({
+    membershipId: member.id,
+    action: 'role',
+    userId: users.admin,
+    body: {
+      role: 'admin',
+      actorUserId: users.owner,
+      actor_role: 'owner',
+    },
+  })
+
+  assert.equal(result.status, 403)
+  assert.equal(
+    result.body.error.code,
+    'INSUFFICIENT_SALON_ROLE'
+  )
+
+  assert.equal(
+    (await findTestMembership('employee')).role,
+    'employee'
+  )
+
+  assert.equal(
+    (await readTestMemberAudit(member.id)).length,
+    before.length
+  )
+})
+
+test('members HTTP: admin changes employee activity and next request loses salon access', async () => {
+  const member = await findTestMembership('employee')
+
+  try {
+    const disabled = await patchTestMembership({
+      membershipId: member.id,
+      action: 'active',
+      userId: users.admin,
+      body: { active: false },
+    })
+
+    assert.equal(disabled.status, 200)
+    assert.equal(disabled.body.data.membership.active, false)
+
+    const blocked = await request({
+      userId: users.employee,
+    })
+
+    assert.equal(blocked.status, 403)
+    assert.equal(blocked.body.error.code, 'SALON_ACCESS_DENIED')
+
+    const enabled = await patchTestMembership({
+      membershipId: member.id,
+      action: 'active',
+      userId: users.admin,
+      body: { active: true },
+    })
+
+    assert.equal(enabled.status, 200)
+    assert.equal(enabled.body.data.membership.active, true)
+
+    // Salon access is restored, but employees still cannot list members.
+    const restricted = await request({
+      userId: users.employee,
+    })
+
+    assert.equal(restricted.status, 403)
+    assert.equal(
+      restricted.body.error.code,
+      'INSUFFICIENT_SALON_ROLE'
+    )
+  } finally {
+    await pool.query(
+      'UPDATE salon_memberships SET active = $2 WHERE id = $1',
+      [member.id, member.active]
+    )
+  }
+})
+
+test('members HTTP: admin cannot reactivate another admin but owner can', async () => {
+  const member = await findTestMembership('inactiveMembership')
+
+  try {
+    const denied = await patchTestMembership({
+      membershipId: member.id,
+      action: 'active',
+      userId: users.admin,
+      body: { active: true },
+    })
+
+    assert.equal(denied.status, 403)
+    assert.equal(denied.body.error.code, 'MEMBER_OWNER_REQUIRED')
+
+    const allowed = await patchTestMembership({
+      membershipId: member.id,
+      action: 'active',
+      body: { active: true },
+    })
+
+    assert.equal(allowed.status, 200)
+    assert.equal(allowed.body.data.membership.active, true)
+
+    const revoked = await patchTestMembership({
+      membershipId: member.id,
+      action: 'active',
+      body: { active: false },
+    })
+
+    assert.equal(revoked.status, 200)
+    assert.equal(revoked.body.data.membership.active, false)
+  } finally {
+    await pool.query(
+      'UPDATE salon_memberships SET active = $2 WHERE id = $1',
+      [member.id, member.active]
+    )
+  }
+})
+
+test('members HTTP: anonymous and employee requests cannot change memberships', async () => {
+  const member = await findTestMembership('admin')
+  const before = await readTestMemberAudit(member.id)
+
+  for (const action of ['role', 'active']) {
+    const body =
+      action === 'role'
+        ? { role: 'employee' }
+        : { active: false }
+
+    const anonymous = await patchTestMembership({
+      membershipId: member.id,
+      action,
+      body,
+      userId: null,
+    })
+
+    assert.equal(anonymous.status, 401)
+
+    const employee = await patchTestMembership({
+      membershipId: member.id,
+      action,
+      body,
+      userId: users.employee,
+    })
+
+    assert.equal(employee.status, 403)
+    assert.equal(
+      employee.body.error.code,
+      'INSUFFICIENT_SALON_ROLE'
+    )
+  }
+
+  const unchanged = await findTestMembership('admin')
+
+  assert.equal(unchanged.role, member.role)
+  assert.equal(unchanged.active, member.active)
+  assert.equal(
+    (await readTestMemberAudit(member.id)).length,
+    before.length
+  )
+})
+
+test('members HTTP: self change, owner target and foreign membership are rejected', async () => {
+  const owner = await findTestMembership('owner')
+  const foreign = await findTestMembership('foreignOwner')
+
+  const self = await patchTestMembership({
+    membershipId: owner.id,
+    action: 'active',
+    body: { active: false },
+  })
+
+  assert.equal(self.status, 403)
+  assert.equal(self.body.error.code, 'MEMBER_SELF_CHANGE_FORBIDDEN')
+
+  const protectedOwner = await patchTestMembership({
+    membershipId: owner.id,
+    action: 'active',
+    userId: users.admin,
+    body: { active: false },
+  })
+
+  assert.equal(protectedOwner.status, 403)
+  assert.equal(
+    protectedOwner.body.error.code,
+    'MEMBER_OWNER_PROTECTED'
+  )
+
+  const foreignTarget = await patchTestMembership({
+    membershipId: foreign.id,
+    action: 'active',
+    body: {
+      active: false,
+      salon_id: salonIds[2],
+    },
+  })
+
+  assert.equal(foreignTarget.status, 404)
+  assert.equal(foreignTarget.body.error.code, 'MEMBER_NOT_FOUND')
+
+  assert.equal((await findTestMembership('owner')).active, true)
+  assert.equal(
+    (await findTestMembership('foreignOwner')).active,
+    true
+  )
+})
+
+test('members HTTP: invalid input and demotion without profile return clear errors', async () => {
+  const member = await findTestMembership('admin')
+
+  const cases = [
+    {
+      action: 'role',
+      body: { role: 'owner' },
+      status: 400,
+      code: 'INVALID_MEMBER_ROLE',
+    },
+    {
+      action: 'active',
+      body: { active: 'false' },
+      status: 400,
+      code: 'INVALID_MEMBER_ACTIVE',
+    },
+    {
+      action: 'role',
+      body: { role: 'employee' },
+      status: 409,
+      code: 'MEMBER_EMPLOYEE_PROFILE_REQUIRED',
+    },
+  ]
+
+  for (const entry of cases) {
+    const result = await patchTestMembership({
+      membershipId: member.id,
+      action: entry.action,
+      body: entry.body,
+    })
+
+    assert.equal(result.status, entry.status)
+    assert.equal(result.body.error.code, entry.code)
+  }
+
+  const unchanged = await findTestMembership('admin')
+
+  assert.equal(unchanged.role, member.role)
+  assert.equal(unchanged.active, member.active)
+})
