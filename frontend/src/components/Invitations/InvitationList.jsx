@@ -28,6 +28,7 @@ function isCancelled(error) {
 function InvitationList({
   refreshToken = 0,
   onChanged,
+  canManageAdminInvitations = false,
 }) {
   const [invitations, setInvitations] = useState([])
   const [nextBeforeId, setNextBeforeId] = useState(null)
@@ -170,6 +171,16 @@ function InvitationList({
       return
     }
 
+    if (
+      invitation.role === 'admin' &&
+      !canManageAdminInvitations
+    ) {
+      setError(
+        'Samo vlasnik salona može opozvati administratorsku pozivnicu.'
+      )
+      return
+    }
+
     if (!window.confirm(
       `Opozvati pozivnicu za ${invitation.email_normalized}?`
     )) {
@@ -284,8 +295,14 @@ function InvitationList({
             <tbody>
               {invitations.map((invitation) => {
                 const canRevoke =
-                  invitation.status === 'pending' ||
-                  invitation.status === 'expired'
+                  (
+                    invitation.status === 'pending' ||
+                    invitation.status === 'expired'
+                  ) &&
+                  (
+                    invitation.role === 'employee' ||
+                    canManageAdminInvitations
+                  )
 
                 return (
                   <tr key={invitation.id}>

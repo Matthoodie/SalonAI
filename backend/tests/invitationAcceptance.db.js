@@ -441,3 +441,79 @@ test('invitation acceptance: identity failure leaves invitation and membership u
     await assertNotAccepted(context)
   })
 })
+
+test('invitation acceptance: administrator invitation requires issuer to remain owner', async () => {
+  for (const issuerRole of ['owner', 'admin']) {
+    await fixture(async (context) => {
+      await pool.query(
+        `
+          UPDATE salon_invitations
+          SET role = 'admin', employee_id = NULL
+          WHERE id = $1
+        `,
+        [context.invitationId]
+      )
+
+      await pool.query(
+        `
+          UPDATE salon_memberships
+          SET role = $3
+          WHERE user_id = $1 AND salon_id = $2
+        `,
+        [
+          context.issuerId,
+          context.salonId,
+          issuerRole,
+        ]
+      )
+
+      if (issuerRole === 'owner') {
+        const result = await context.accept({
+          currentUserId: context.recipientId,
+          token: context.token,
+        })
+
+        assert.equal(result.membership.role, 'admin')
+        assert.equal(result.membership.employee_id, null)
+      } else {
+        await assert.rejects(
+          () => context.accept({
+            currentUserId: context.recipientId,
+            token: context.token,
+          }),
+          {
+            code: 'INVITATION_ISSUER_UNAUTHORIZED',
+            statusCode: 403,
+          }
+        )
+
+        await assertNoRecipientMembership(context)
+        await assertNotAccepted(context)
+      }
+    })
+  }
+})
+
+test('invitation acceptance: active admin can still sponsor an employee invitation', async () => {
+  await fixture(async (context) => {
+    await pool.query(
+      `
+        UPDATE salon_memberships
+        SET role = 'admin'
+        WHERE user_id = $1 AND salon_id = $2
+      `,
+      [context.issuerId, context.salonId]
+    )
+
+    const result = await context.accept({
+      currentUserId: context.recipientId,
+      token: context.token,
+    })
+
+    assert.equal(result.membership.role, 'employee')
+    assert.equal(
+      Number(result.membership.employee_id),
+      context.employeeId
+    )
+  })
+})

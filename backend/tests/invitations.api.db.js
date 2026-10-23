@@ -364,21 +364,36 @@ test('invitation HTTP: creation uses selected salon and authenticated actor, ign
   })
 })
 
-test('invitation HTTP: admin can create an admin invitation', async () => {
-  await fixture(async ({ create, users }) => {
+test('invitation HTTP: admin cannot create an admin invitation by spoofing owner fields', async () => {
+  await fixture(async ({ create, users, salonId }) => {
     const result = await create(
       {
         role: 'admin',
         employee_id: null,
+        actorUserId: users.owner.id,
+        created_by_user_id: users.owner.id,
       },
       {
         userId: users.admin.id,
       }
     )
 
-    assert.equal(result.status, 201)
-    assert.equal(result.body.data.invitation.role, 'admin')
-    assert.equal(result.body.data.invitation.employee_id, null)
+    assert.equal(result.status, 403)
+    assert.equal(
+      result.body.error.code,
+      'INVITATION_OWNER_REQUIRED'
+    )
+
+    const stored = await pool.query(
+      `
+        SELECT COUNT(*)::integer AS count
+        FROM salon_invitations
+        WHERE salon_id = $1
+      `,
+      [salonId]
+    )
+
+    assert.equal(stored.rows[0].count, 0)
   })
 })
 
@@ -1036,5 +1051,69 @@ test('invitation HTTP: open and expired invitations reserve profiles until revoc
       ),
       [employeeId]
     )
+  })
+})
+
+test('invitation HTTP: owner can grant admin membership through invitation acceptance', async () => {
+  await fixture(async ({ create, request, users }) => {
+    const created = await create({
+      role: 'admin',
+      employee_id: null,
+    })
+
+    assert.equal(created.status, 201)
+
+    const accepted = await request('/accept', {
+      userId: users.recipient.id,
+      selectedSalonId: null,
+      body: {
+        token: created.body.data.token,
+      },
+    })
+
+    assert.equal(accepted.status, 200)
+    assert.equal(accepted.body.data.membership.role, 'admin')
+    assert.equal(
+      accepted.body.data.membership.employee_id,
+      null
+    )
+  })
+})
+
+test('invitation HTTP: admin cannot revoke admin invitation but owner can', async () => {
+  await fixture(async ({ create, request, users }) => {
+    const created = await create({
+      role: 'admin',
+      employee_id: null,
+    })
+
+    assert.equal(created.status, 201)
+
+    const invitationId = created.body.data.invitation.id
+
+    const denied = await request(
+      `/${invitationId}/revoke`,
+      { userId: users.admin.id }
+    )
+
+    assert.equal(denied.status, 403)
+    assert.equal(
+      denied.body.error.code,
+      'INVITATION_OWNER_REQUIRED'
+    )
+
+    const stored = await pool.query(
+      'SELECT revoked_at FROM salon_invitations WHERE id = $1',
+      [invitationId]
+    )
+
+    assert.equal(stored.rows[0].revoked_at, null)
+
+    const allowed = await request(
+      `/${invitationId}/revoke`
+    )
+
+    assert.equal(allowed.status, 200)
+    assert.ok(allowed.body.data.invitation.revoked_at)
   })
 })

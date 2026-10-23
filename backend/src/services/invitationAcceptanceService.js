@@ -171,7 +171,7 @@ export function createInvitationAcceptanceService({
 
       const issuerResult = await db.query(
         `
-          SELECT sm.id
+          SELECT sm.id, sm.role
           FROM salon_memberships sm
           JOIN users u ON u.id = sm.user_id
           WHERE sm.user_id = $1
@@ -187,7 +187,15 @@ export function createInvitationAcceptanceService({
         ]
       )
 
-      if (!issuerResult.rows[0]) {
+      const issuer = issuerResult.rows[0]
+
+      if (
+        !issuer ||
+        (
+          invitation.role === 'admin' &&
+          issuer.role !== 'owner'
+        )
+      ) {
         throw fail(
           'The invitation issuer no longer has permission.',
           'INVITATION_ISSUER_UNAUTHORIZED',

@@ -42,7 +42,12 @@ function positiveId(value, field) {
   return number
 }
 
-async function assertIssuer(db, salonId, actorUserId) {
+async function assertIssuer(
+  db,
+  salonId,
+  actorUserId,
+  invitationRole
+) {
   const salonResult = await db.query(
     `
       SELECT id, active
@@ -63,7 +68,7 @@ async function assertIssuer(db, salonId, actorUserId) {
 
   const result = await db.query(
     `
-      SELECT sm.id
+      SELECT sm.id, sm.role
       FROM salon_memberships sm
       JOIN users u
         ON u.id = sm.user_id
@@ -77,10 +82,23 @@ async function assertIssuer(db, salonId, actorUserId) {
     [actorUserId, salonId]
   )
 
-  if (!result.rows[0]) {
+  const issuer = result.rows[0]
+
+  if (!issuer) {
     throw fail(
       'Your salon role does not allow managing invitations.',
       'INVITATION_ISSUER_UNAUTHORIZED',
+      403
+    )
+  }
+
+  if (
+    invitationRole === 'admin' &&
+    issuer.role !== 'owner'
+  ) {
+    throw fail(
+      'Only the salon owner can manage administrator invitations.',
+      'INVITATION_OWNER_REQUIRED',
       403
     )
   }
@@ -140,10 +158,11 @@ export async function createSalonInvitation({
   try {
     await db.query('BEGIN')
 
-    await assertIssuer(
+     await assertIssuer(
       db,
       numericSalonId,
-      numericActorId
+      numericActorId,
+      role
     )
 
     if (numericEmployeeId !== null) {
@@ -276,7 +295,8 @@ export async function revokeSalonInvitation({
     await assertIssuer(
       db,
       numericSalonId,
-      numericActorId
+      numericActorId,
+      invitationResult.rows[0]?.role
     )
 
     const invitation = invitationResult.rows[0]

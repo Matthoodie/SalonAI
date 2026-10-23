@@ -1,6 +1,8 @@
 import { salonFetch } from './salonApiContext'
 
 const invitationMessages = {
+  INVITATION_OWNER_REQUIRED:
+    'Samo vlasnik salona može kreirati ili opozivati administratorske pozivnice.',
   INVITATION_ALREADY_OPEN:
     'Za ovaj e-mail ili profil već postoji otvorena pozivnica. Prije ponovnog pozivanja potrebno ju je opozvati.',
 

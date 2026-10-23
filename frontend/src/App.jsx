@@ -410,6 +410,9 @@ function SalonWorkspace({ authContext }) {
           element={
             <Employees
               canManageEmployees={canManage}
+              canManageAdminInvitations={
+                authContext.membership.role === 'owner'
+              }
               isLoading={false}
               loadError={null}
               employeeList={employeeList}

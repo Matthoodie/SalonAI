@@ -219,59 +219,19 @@ test('invitation management: owner creates employee invitation with hash only in
   })
 })
 
-test('invitation management: admin can invite another admin without an employee profile', async () => {
-  await fixture(async ({ create, adminId }) => {
+test('invitation management: owner can invite an admin without an employee profile', async () => {
+  await fixture(async ({ create, ownerId }) => {
     const result = await create({
-      actorUserId: adminId,
       role: 'admin',
       employeeId: null,
     })
 
     assert.equal(result.invitation.role, 'admin')
     assert.equal(result.invitation.employee_id, null)
-    assert.equal(Number(result.invitation.created_by_user_id), adminId)
-  })
-})
-
-test('invitation management: employee and outsider cannot create or revoke invitations', async () => {
-  await fixture(async ({
-    create,
-    revoke,
-    employeeUserId,
-    outsiderId,
-    salonId,
-  }) => {
-    const original = await create()
-
-    for (const actorUserId of [employeeUserId, outsiderId]) {
-      await assert.rejects(
-        () => create({ actorUserId }),
-        {
-          code: 'INVITATION_ISSUER_UNAUTHORIZED',
-          statusCode: 403,
-        }
-      )
-
-      await assert.rejects(
-        () => revoke(original.invitation.id, { actorUserId }),
-        {
-          code: 'INVITATION_ISSUER_UNAUTHORIZED',
-          statusCode: 403,
-        }
-      )
-    }
-
-    const result = await pool.query(
-      `
-        SELECT revoked_at
-        FROM salon_invitations
-        WHERE salon_id = $1
-      `,
-      [salonId]
+    assert.equal(
+      Number(result.invitation.created_by_user_id),
+      ownerId
     )
-
-    assert.equal(result.rows.length, 1)
-    assert.equal(result.rows[0].revoked_at, null)
   })
 })
 
@@ -525,5 +485,94 @@ test('invitation management: concurrent duplicate creation produces one invitati
     )
 
     assert.equal(count.rows[0].count, 1)
+  })
+})
+
+test('invitation management: admin cannot create administrator invitations with or without a profile', async () => {
+  await fixture(async ({
+    create,
+    adminId,
+    employeeId,
+    salonId,
+  }) => {
+    for (const profileId of [null, employeeId]) {
+      await assert.rejects(
+        () => create({
+          actorUserId: adminId,
+          role: 'admin',
+          employeeId: profileId,
+        }),
+        {
+          code: 'INVITATION_OWNER_REQUIRED',
+          statusCode: 403,
+        }
+      )
+    }
+
+    const result = await pool.query(
+      `
+        SELECT COUNT(*)::integer AS count
+        FROM salon_invitations
+        WHERE salon_id = $1
+      `,
+      [salonId]
+    )
+
+    assert.equal(result.rows[0].count, 0)
+  })
+})
+
+test('invitation management: admin retains employee invitation creation and revocation', async () => {
+  await fixture(async ({ create, revoke, adminId }) => {
+    const result = await create({
+      actorUserId: adminId,
+    })
+
+    assert.equal(result.invitation.role, 'employee')
+
+    const revoked = await revoke(
+      result.invitation.id,
+      { actorUserId: adminId }
+    )
+
+    assert.ok(revoked.revoked_at)
+    assert.equal(
+      Number(revoked.revoked_by_user_id),
+      adminId
+    )
+  })
+})
+
+test('invitation management: only owner can revoke an administrator invitation', async () => {
+  await fixture(async ({ create, revoke, adminId, ownerId }) => {
+    const result = await create({
+      role: 'admin',
+      employeeId: null,
+    })
+
+    await assert.rejects(
+      () => revoke(result.invitation.id, {
+        actorUserId: adminId,
+      }),
+      {
+        code: 'INVITATION_OWNER_REQUIRED',
+        statusCode: 403,
+      }
+    )
+
+    const unchanged = await pool.query(
+      'SELECT revoked_at FROM salon_invitations WHERE id = $1',
+      [result.invitation.id]
+    )
+
+    assert.equal(unchanged.rows[0].revoked_at, null)
+
+    const revoked = await revoke(result.invitation.id)
+
+    assert.ok(revoked.revoked_at)
+    assert.equal(
+      Number(revoked.revoked_by_user_id),
+      ownerId
+    )
   })
 })

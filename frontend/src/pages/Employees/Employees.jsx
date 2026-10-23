@@ -31,6 +31,7 @@ function Employees({
   salonId,
   salonTimezone,
   canManageEmployees = false,
+  canManageAdminInvitations = false,
   isLoading = false,
   loadError = null,
 }) {
@@ -349,6 +350,7 @@ function Employees({
           {canManageEmployees && (
             <>
               <InvitationManager
+                canManageAdminInvitations={canManageAdminInvitations}
                 employeeList={employeeList}
                 refreshToken={invitationsRevision}
                 onChanged={() =>
@@ -357,6 +359,7 @@ function Employees({
               />
 
               <InvitationList
+                canManageAdminInvitations={canManageAdminInvitations}
                 refreshToken={invitationsRevision}
                 onChanged={() =>
                   setInvitationsRevision((value) => value + 1)

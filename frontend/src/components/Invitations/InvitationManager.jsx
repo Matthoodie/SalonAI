@@ -10,6 +10,7 @@ function InvitationManager({
   employeeList = [],
   onChanged,
   refreshToken = 0,
+  canManageAdminInvitations = false,
 }) {
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('employee')
@@ -105,6 +106,13 @@ function InvitationManager({
       return
     }
 
+    if (role === 'admin' && !canManageAdminInvitations) {
+      setError(
+        'Samo vlasnik salona može pozvati administratora.'
+      )
+      return
+    }
+
     if (role === 'employee' && !employeeId) {
       setError('Odaberite profil zaposlenika.')
       return
@@ -155,6 +163,16 @@ function InvitationManager({
 
   async function handleRevoke() {
     if (busyRef.current || !created) {
+      return
+    }
+
+    if (
+      created.invitation.role === 'admin' &&
+      !canManageAdminInvitations
+    ) {
+      setError(
+        'Samo vlasnik salona može opozvati administratorsku pozivnicu.'
+      )
       return
     }
 
@@ -300,13 +318,18 @@ function InvitationManager({
               Kopiraj kod
             </button>
 
-            <button
-              type="button"
-              onClick={handleRevoke}
-              disabled={isBusy}
-            >
-              {isBusy ? 'Opozivanje…' : 'Opozovi pozivnicu'}
-            </button>
+            {(
+              created.invitation.role === 'employee' ||
+              canManageAdminInvitations
+            ) && (
+              <button
+                type="button"
+                onClick={handleRevoke}
+                disabled={isBusy}
+              >
+                {isBusy ? 'Opozivanje…' : 'Opozovi pozivnicu'}
+              </button>
+            )}
 
             <button
               type="button"
@@ -337,6 +360,28 @@ function InvitationManager({
 
             <label htmlFor="invitation-role">
               Uloga
+            </label>
+
+            <select
+              id="invitation-role"
+              value={role}
+              onChange={(event) => setRole(event.target.value)}
+              disabled={isBusy}
+            >
+              <option value="employee">
+                Zaposlenik
+              </option>
+
+              {canManageAdminInvitations && (
+                <option value="admin">
+                  Administrator
+                </option>
+              )}
+            </select>
+
+            <label htmlFor="invitation-employee">
+              Profil zaposlenika
+              {role === 'admin' ? ' — neobavezno' : ''}
             </label>
 
             <select
@@ -375,7 +420,9 @@ function InvitationManager({
                   Nema slobodnih aktivnih profila zaposlenika.
                   Dodajte novi profil ili opozovite postojeću
                   otvorenu pozivnicu za željeni profil.
-                  Administratora možete pozvati bez profila.
+                  {canManageAdminInvitations && (
+                    <> Administratora možete pozvati bez profila.</>
+                  )}
                 </p>
               )}
 
