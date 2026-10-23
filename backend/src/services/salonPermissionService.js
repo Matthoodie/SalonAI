@@ -1,4 +1,9 @@
 import {
+  findMemberPermissionOverride,
+} from '../repositories/salonMemberPermissionRepository.js'
+
+
+import {
   PERMISSION_VALUES,
   SALON_PERMISSION_KEYS,
   SALON_PERMISSION_ALLOWED_VALUES,
@@ -26,6 +31,7 @@ export async function resolveSalonPermission({
   salonId,
   role,
   permissionKey,
+  membershipId,
 }) {
   const numericSalonId =
     Number(salonId)
@@ -96,12 +102,8 @@ export async function resolveSalonPermission({
       permissionKey,
     })
 
-  if (!override) {
-    return defaultValue
-  }
-
   const overrideValue =
-    override.permission_value
+    override?.permission_value ?? defaultValue
 
   if (
     !allowedValues.includes(
@@ -122,6 +124,52 @@ export async function resolveSalonPermission({
       'Employee permissions cannot grant access to other employees.',
       'INVALID_SALON_PERMISSION_OVERRIDE'
     )
+  }
+
+  const individualKeys = [
+    SALON_PERMISSION_KEYS.APPOINTMENT_CREATE,
+    SALON_PERMISSION_KEYS.APPOINTMENT_RESCHEDULE,
+    SALON_PERMISSION_KEYS.APPOINTMENT_CHANGE_STATUS,
+    SALON_PERMISSION_KEYS.APPOINTMENT_CHANGE_CLIENT,
+  ]
+
+  if (
+    normalizedRole === 'employee' &&
+    membershipId !== undefined &&
+    individualKeys.includes(permissionKey)
+  ) {
+    if (
+      !['string', 'number'].includes(typeof membershipId) ||
+      !/^[1-9]\d*$/.test(String(membershipId)) ||
+      !Number.isSafeInteger(Number(membershipId))
+    ) {
+      throw createPermissionError(
+        'A valid membership ID is required.',
+        'INVALID_PERMISSION_MEMBERSHIP_ID'
+      )
+    }
+
+    const individual = await findMemberPermissionOverride({
+      salonId: numericSalonId,
+      membershipId: Number(membershipId),
+      permissionKey,
+    })
+
+    if (individual) {
+      if (
+        ![
+          PERMISSION_VALUES.DENY,
+          PERMISSION_VALUES.SELF,
+        ].includes(individual.permission_value)
+      ) {
+        throw createPermissionError(
+          'The individual permission value is invalid.',
+          'INVALID_MEMBER_PERMISSION_OVERRIDE'
+        )
+      }
+
+      return individual.permission_value
+    }
   }
 
   return overrideValue
@@ -150,6 +198,7 @@ export async function resolveAppointmentPermissionScope({
       salonId,
       role: membership.role,
       permissionKey,
+      membershipId: membership.id,
     })
 
   if (
@@ -226,6 +275,7 @@ export async function resolveAppointmentPermissionScope({
 export async function resolveAppointmentPermissions({
   salonId,
   role,
+  membershipId,
 }) {
   const keys = [
     SALON_PERMISSION_KEYS.APPOINTMENT_CREATE,
@@ -240,6 +290,7 @@ export async function resolveAppointmentPermissions({
         salonId,
         role,
         permissionKey,
+        membershipId,
       })
 
       return [permissionKey, value]

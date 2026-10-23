@@ -13,6 +13,7 @@ export async function getCurrentAuth(req, res, next) {
     const permissions = await resolveAppointmentPermissions({
       salonId: currentSalon.id,
       role: currentMembership.role,
+      membershipId: currentMembership.id,
     })
 
     return res.status(200).json({
