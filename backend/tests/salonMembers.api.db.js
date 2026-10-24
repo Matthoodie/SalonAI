@@ -1515,3 +1515,331 @@ test('permission HTTP: invalid value missing value and protected targets are rej
     'PERMISSION_SELF_CHANGE_FORBIDDEN'
   )
 })
+
+
+test('permission history HTTP: owner and admin receive member changes and delegation events', async () => {
+  await clearPermissionHttpFixtures()
+
+  const member = await findTestMembership('employee')
+
+  try {
+    const delegation = await permissionHttpRequest({
+      path: '/permission-delegations',
+      method: 'PUT',
+      body: {
+        permission_key: 'appointment.reschedule',
+        enabled: true,
+      },
+    })
+
+    assert.equal(delegation.status, 200)
+
+    const changed = await permissionHttpRequest({
+      path: `/${member.id}/permissions`,
+      method: 'PATCH',
+      userId: users.admin,
+      body: {
+        permission_key: 'appointment.reschedule',
+        value: 'self',
+      },
+    })
+
+    assert.equal(changed.status, 200)
+
+    const restored = await permissionHttpRequest({
+      path: `/${member.id}/permissions`,
+      method: 'PATCH',
+      body: {
+        permission_key: 'appointment.reschedule',
+        value: null,
+      },
+    })
+
+    assert.equal(restored.status, 200)
+
+    const expectedFields = [
+      'id',
+      'salon_id',
+      'actor_user_id',
+      'actor_role',
+      'membership_id',
+      'target_user_id',
+      'action',
+      'permission_key',
+      'previous_value',
+      'next_value',
+      'created_at',
+      'actor_email',
+      'actor_display_name',
+      'target_email',
+      'target_display_name',
+    ].sort()
+
+    for (const userId of [users.owner, users.admin]) {
+      const result = await permissionHttpRequest({
+        path: '/permission-history',
+        userId,
+      })
+
+      assert.equal(result.status, 200)
+      assert.equal(
+        result.headers.get('cache-control'),
+        'no-store'
+      )
+
+      const changes = result.body.data.changes
+
+      assert.equal(changes.length, 3)
+      assert.equal(result.body.data.next_before_id, null)
+
+      for (const change of changes) {
+        assert.deepEqual(
+          Object.keys(change).sort(),
+          expectedFields
+        )
+
+        assert.equal(Number(change.salon_id), salonIds[0])
+        assert.equal(typeof change.actor_email, 'string')
+      }
+
+      const [inheritance, employeeChange, delegationChange] = changes
+
+      assert.equal(inheritance.action, 'member_override')
+      assert.equal(inheritance.previous_value, 'self')
+      assert.equal(inheritance.next_value, null)
+      assert.equal(Number(inheritance.actor_user_id), users.owner)
+
+      assert.equal(employeeChange.actor_role, 'admin')
+      assert.equal(Number(employeeChange.actor_user_id), users.admin)
+      assert.equal(Number(employeeChange.target_user_id), users.employee)
+      assert.equal(
+        Number(employeeChange.membership_id),
+        Number(member.id)
+      )
+      assert.equal(employeeChange.previous_value, null)
+      assert.equal(employeeChange.next_value, 'self')
+      assert.equal(typeof employeeChange.target_email, 'string')
+
+      assert.equal(delegationChange.action, 'admin_delegation')
+      assert.equal(delegationChange.actor_role, 'owner')
+      assert.equal(delegationChange.membership_id, null)
+      assert.equal(delegationChange.target_user_id, null)
+      assert.equal(delegationChange.target_email, null)
+      assert.equal(delegationChange.previous_value, 'disabled')
+      assert.equal(delegationChange.next_value, 'enabled')
+    }
+  } finally {
+    await clearPermissionHttpFixtures()
+  }
+})
+
+test('permission history HTTP: anonymous employee and inactive users cannot read history', async () => {
+  for (const entry of [
+    { userId: null, status: 401 },
+    { userId: users.employee, status: 403 },
+    { userId: users.inactiveAccount, status: 403 },
+    { userId: users.inactiveMembership, status: 403 },
+  ]) {
+    const result = await permissionHttpRequest({
+      path: '/permission-history',
+      userId: entry.userId,
+    })
+
+    assert.equal(result.status, entry.status)
+    assert.equal(Object.hasOwn(result.body, 'data'), false)
+  }
+})
+
+test('permission history HTTP: selected salon isolates records and ignores query spoofing', async () => {
+  await clearPermissionHttpFixtures()
+
+  try {
+    const created = await permissionHttpRequest({
+      path: '/permission-delegations',
+      method: 'PUT',
+      body: {
+        permission_key: 'appointment.reschedule',
+        enabled: true,
+      },
+    })
+
+    assert.equal(created.status, 200)
+
+    const denied = await permissionHttpRequest({
+      path: '/permission-history',
+      salonId: salonIds[2],
+    })
+
+    assert.equal(denied.status, 403)
+    assert.equal(denied.body.error.code, 'SALON_ACCESS_DENIED')
+
+    const spoofed = await permissionHttpRequest({
+      path:
+        `/permission-history?salon_id=${salonIds[2]}` +
+        `&actorUserId=${users.foreignOwner}`,
+    })
+
+    assert.equal(spoofed.status, 200)
+    assert.equal(spoofed.body.data.changes.length, 1)
+
+    assert.ok(
+      spoofed.body.data.changes.every(
+        (change) => Number(change.salon_id) === salonIds[0]
+      )
+    )
+
+    const foreignOwner = await permissionHttpRequest({
+      path: '/permission-history',
+      userId: users.foreignOwner,
+      salonId: salonIds[2],
+    })
+
+    assert.equal(foreignOwner.status, 200)
+    assert.deepEqual(foreignOwner.body.data.changes, [])
+    assert.equal(foreignOwner.body.data.next_before_id, null)
+
+    const employeeElsewhere = await permissionHttpRequest({
+      path: '/permission-history',
+      userId: users.owner,
+      salonId: salonIds[1],
+    })
+
+    assert.equal(employeeElsewhere.status, 403)
+    assert.equal(
+      employeeElsewhere.body.error.code,
+      'INSUFFICIENT_SALON_ROLE'
+    )
+  } finally {
+    await clearPermissionHttpFixtures()
+  }
+})
+
+test('permission history HTTP: cursor pagination has no duplicates and rejects invalid cursors', async () => {
+  await clearPermissionHttpFixtures()
+
+  try {
+    const inserted = await pool.query(
+      `
+        INSERT INTO salon_permission_changes (
+          salon_id,
+          actor_user_id,
+          actor_role,
+          action,
+          permission_key,
+          previous_value,
+          next_value
+        )
+        SELECT
+          $1::bigint,
+          $2::bigint,
+          'owner',
+          'admin_delegation',
+          'appointment.reschedule',
+          'disabled',
+          'enabled'
+        FROM generate_series(1, 55)
+        RETURNING id
+      `,
+      [salonIds[0], users.owner]
+    )
+
+    const expectedIds = inserted.rows
+      .map((row) => String(row.id))
+      .sort((a, b) => Number(b) - Number(a))
+
+    const first = await permissionHttpRequest({
+      path: '/permission-history',
+    })
+
+    assert.equal(first.status, 200)
+    assert.equal(first.body.data.changes.length, 50)
+
+    const firstIds = first.body.data.changes.map(
+      (change) => String(change.id)
+    )
+
+    assert.deepEqual(firstIds, expectedIds.slice(0, 50))
+    assert.equal(
+      String(first.body.data.next_before_id),
+      firstIds[firstIds.length - 1]
+    )
+
+    const second = await permissionHttpRequest({
+      path:
+        '/permission-history?before_id=' +
+        encodeURIComponent(first.body.data.next_before_id),
+    })
+
+    assert.equal(second.status, 200)
+
+    const secondIds = second.body.data.changes.map(
+      (change) => String(change.id)
+    )
+
+    assert.deepEqual(secondIds, expectedIds.slice(50))
+    assert.equal(second.body.data.next_before_id, null)
+
+    const combined = [...firstIds, ...secondIds]
+
+    assert.equal(combined.length, 55)
+    assert.equal(new Set(combined).size, 55)
+
+    for (const cursor of [
+      '',
+      '0',
+      '-1',
+      '1.5',
+      'abc',
+      '9007199254740992',
+    ]) {
+      const invalid = await permissionHttpRequest({
+        path:
+          '/permission-history?before_id=' +
+          encodeURIComponent(cursor),
+      })
+
+      assert.equal(invalid.status, 400)
+      assert.equal(
+        invalid.body.error.code,
+        'INVALID_PERMISSION_HISTORY_CURSOR'
+      )
+    }
+  } finally {
+    await clearPermissionHttpFixtures()
+  }
+})
+
+test('permission history HTTP: revoked admin membership blocks the next request', async () => {
+  const admin = await findTestMembership('admin')
+
+  try {
+    const allowed = await permissionHttpRequest({
+      path: '/permission-history',
+      userId: users.admin,
+    })
+
+    assert.equal(allowed.status, 200)
+
+    const revoked = await patchTestMembership({
+      membershipId: admin.id,
+      action: 'active',
+      body: { active: false },
+    })
+
+    assert.equal(revoked.status, 200)
+
+    const denied = await permissionHttpRequest({
+      path: '/permission-history',
+      userId: users.admin,
+    })
+
+    assert.equal(denied.status, 403)
+    assert.equal(denied.body.error.code, 'SALON_ACCESS_DENIED')
+    assert.equal(Object.hasOwn(denied.body, 'data'), false)
+  } finally {
+    await pool.query(
+      'UPDATE salon_memberships SET active = $2 WHERE id = $1',
+      [admin.id, admin.active]
+    )
+  }
+})

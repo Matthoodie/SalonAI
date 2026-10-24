@@ -1,6 +1,8 @@
 import { salonFetch } from './salonApiContext'
 
 const messages = {
+  INVALID_PERMISSION_HISTORY_CURSOR:
+    'Starije promjene nije moguće učitati. Osvježite povijest.',
   INSUFFICIENT_SALON_ROLE:
     'Nemate ovlasti za ovu radnju.',
   SALON_ACCESS_DENIED:
@@ -114,4 +116,42 @@ export async function savePermissionDelegation({
   )
 
   return readResponse(response)
+}
+
+
+export async function fetchPermissionHistory({
+  beforeId,
+  signal,
+} = {}) {
+  let query = ''
+
+  if (beforeId !== undefined && beforeId !== null) {
+    if (
+      !['string', 'number'].includes(typeof beforeId) ||
+      !/^[1-9]\d*$/.test(String(beforeId)) ||
+      !Number.isSafeInteger(Number(beforeId))
+    ) {
+      throw new Error('Pokazivač povijesti nije valjan.')
+    }
+
+    query = `?before_id=${encodeURIComponent(String(beforeId))}`
+  }
+
+  const response = await salonFetch(
+    `/api/members/permission-history${query}`,
+    { signal }
+  )
+
+  const data = await readResponse(response)
+
+  if (
+    !Array.isArray(data?.changes) ||
+    !Object.hasOwn(data, 'next_before_id')
+  ) {
+    throw new Error(
+      'Poslužitelj nije vratio valjanu povijest ovlasti.'
+    )
+  }
+
+  return data
 }

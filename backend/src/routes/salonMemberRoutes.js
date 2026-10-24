@@ -9,6 +9,7 @@ import {
 
 import {
   getPermissionSettings,
+  listPermissionHistory,
   changeMemberPermission,
   changePermissionDelegation,
 } from '../controllers/salonPermissionManagementController.js'
@@ -28,6 +29,13 @@ router.get(
   '/permission-settings',
   requireSalonRole('owner', 'admin'),
   getPermissionSettings
+)
+
+
+router.get(
+  '/permission-history',
+  requireSalonRole('owner', 'admin'),
+  listPermissionHistory
 )
 
 router.put(

@@ -1,3 +1,5 @@
+import PermissionHistory from '../../components/Settings/PermissionHistory'
+
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -39,7 +41,10 @@ function wasCancelled(error) {
   )
 }
 
-function Settings({ salonId }) {
+function Settings({
+  salonId,
+  salonTimezone = 'Europe/Zagreb',
+}) {
   const [data, setData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isBusy, setIsBusy] = useState(false)
@@ -496,6 +501,11 @@ function Settings({ salonId }) {
           )}
         </>
       )}
+
+      <PermissionHistory
+        refreshToken={reloadToken}
+        salonTimezone={salonTimezone}
+      />
     </div>
   )
 }

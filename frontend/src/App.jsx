@@ -369,7 +369,10 @@ function SalonWorkspace({ authContext }) {
           path="/settings"
           element={
             canManage ? (
-              <Settings salonId={salonId} />
+              <Settings
+                salonId={salonId}
+                salonTimezone={salonTimezone}
+              />
             ) : (
               <p role="alert">
                 Nemate pristup upravljanju postavkama salona.

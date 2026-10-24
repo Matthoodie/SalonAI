@@ -532,3 +532,86 @@ export async function getPermissionManagementSettings({
     }
   })
 }
+
+
+export async function getPermissionChangeHistory({
+  salonId,
+  actorUserId,
+  beforeId,
+}) {
+  const salon = positiveId(salonId)
+  const actorId = positiveId(actorUserId)
+
+  let cursor = null
+
+  if (beforeId !== undefined) {
+    if (
+      !['string', 'number'].includes(typeof beforeId) ||
+      !/^[1-9]\d*$/.test(String(beforeId)) ||
+      !Number.isSafeInteger(Number(beforeId))
+    ) {
+      throw fail(
+        'The history cursor is invalid.',
+        'INVALID_PERMISSION_HISTORY_CURSOR',
+        400
+      )
+    }
+
+    cursor = Number(beforeId)
+  }
+
+  return inTransaction(async (db) => {
+    await lockSalonAndActor(db, salon, actorId)
+
+    const result = await db.query(
+      `
+        SELECT
+          h.id,
+          h.salon_id,
+          h.actor_user_id,
+          h.actor_role,
+          h.membership_id,
+          h.target_user_id,
+          h.action,
+          h.permission_key,
+          h.previous_value,
+          h.next_value,
+          h.created_at,
+
+          actor_user.email AS actor_email,
+          actor_user.display_name AS actor_display_name,
+
+          target_user.email AS target_email,
+          target_user.display_name AS target_display_name
+
+        FROM salon_permission_changes h
+
+        LEFT JOIN users actor_user
+          ON actor_user.id = h.actor_user_id
+
+        LEFT JOIN users target_user
+          ON target_user.id = h.target_user_id
+
+        WHERE h.salon_id = $1
+          AND (
+            $2::bigint IS NULL
+            OR h.id < $2::bigint
+          )
+
+        ORDER BY h.id DESC
+        LIMIT 51
+      `,
+      [salon, cursor]
+    )
+
+    const changes = result.rows.slice(0, 50)
+
+    return {
+      changes,
+      next_before_id:
+        result.rows.length > 50
+          ? changes[changes.length - 1].id
+          : null,
+    }
+  })
+}
