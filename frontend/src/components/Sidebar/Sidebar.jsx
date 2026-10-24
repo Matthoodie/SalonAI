@@ -73,6 +73,16 @@ function Sidebar({
     Kalendar
   </Link>
 </li>
+          {canAccessFullCrm && (
+            <li>
+              <Link
+                to="/settings"
+                onClick={onCloseMobileMenu}
+              >
+                Postavke
+              </Link>
+            </li>
+          )}
 
         </ul>
       </nav>

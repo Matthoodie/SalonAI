@@ -37,6 +37,7 @@ import Calendar from './pages/Calendar/Calendar'
 import Clients from './pages/Clients/Clients'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Employees from './pages/Employees/Employees'
+import Settings from './pages/Settings/Settings'
 
 function formatDateKey(date) {
   const year = date.getFullYear()
@@ -364,6 +365,18 @@ function SalonWorkspace({ authContext }) {
       )}
 
       <Routes>
+        <Route
+          path="/settings"
+          element={
+            canManage ? (
+              <Settings salonId={salonId} />
+            ) : (
+              <p role="alert">
+                Nemate pristup upravljanju postavkama salona.
+              </p>
+            )
+          }
+        />
         <Route
           path="/"
           element={
