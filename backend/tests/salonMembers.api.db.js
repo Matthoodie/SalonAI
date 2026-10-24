@@ -1071,3 +1071,447 @@ test('member history HTTP: revoked administrator loses history access on next re
     )
   }
 })
+
+
+async function permissionHttpRequest({
+  path = '/permission-settings',
+  method = 'GET',
+  body,
+  userId = users.owner,
+  salonId = salonIds[0],
+} = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Salon-Id': String(salonId),
+  }
+
+  if (userId !== null) {
+    headers['x-test-user-id'] = String(userId)
+  }
+
+  const response = await fetch(
+    `${baseUrl}/api/members${path}`,
+    {
+      method,
+      headers,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }
+  )
+
+  return {
+    status: response.status,
+    headers: response.headers,
+    body: await response.json(),
+  }
+}
+
+async function clearPermissionHttpFixtures() {
+  await pool.query(
+    `
+      DELETE FROM salon_member_permission_overrides
+      WHERE salon_id = $1
+    `,
+    [salonIds[0]]
+  )
+
+  await pool.query(
+    `
+      DELETE FROM salon_permission_admin_delegations
+      WHERE salon_id = $1
+    `,
+    [salonIds[0]]
+  )
+
+  await pool.query(
+    `
+      DELETE FROM salon_permission_changes
+      WHERE salon_id = $1
+    `,
+    [salonIds[0]]
+  )
+}
+
+test('permission HTTP: owner and admin receive settings with different editing rights', async () => {
+  await clearPermissionHttpFixtures()
+
+  for (const actor of ['owner', 'admin']) {
+    const result = await permissionHttpRequest({
+      userId: users[actor],
+    })
+
+    assert.equal(result.status, 200)
+    assert.equal(
+      result.headers.get('cache-control'),
+      'no-store'
+    )
+
+    const data = result.body.data
+
+    assert.equal(Number(data.salon_id), salonIds[0])
+    assert.equal(data.can_manage_delegation, actor === 'owner')
+    assert.equal(data.permissions.length, 4)
+    assert.equal(data.members.length, 1)
+
+    for (const permission of data.permissions) {
+      assert.equal(permission.can_edit, actor === 'owner')
+      assert.equal(permission.admin_delegated, false)
+    }
+
+    const member = data.members[0]
+
+    assert.equal(Number(member.user_id), users.employee)
+
+    assert.deepEqual(Object.keys(member).sort(), [
+      'id',
+      'user_id',
+      'employee_id',
+      'email',
+      'display_name',
+      'user_active',
+      'employee_name',
+      'employee_active',
+      'overrides',
+      'effective_permissions',
+    ].sort())
+
+    assert.equal(
+      member.effective_permissions['appointment.create'],
+      'self'
+    )
+
+    assert.equal(
+      member.effective_permissions['appointment.reschedule'],
+      'deny'
+    )
+
+    assert.equal(
+      member.overrides['appointment.reschedule'],
+      null
+    )
+  }
+})
+
+test('permission HTTP: anonymous and employee cannot read or change settings', async () => {
+  await clearPermissionHttpFixtures()
+
+  const member = await findTestMembership('employee')
+
+  for (const entry of [
+    {
+      path: '/permission-settings',
+      method: 'GET',
+    },
+    {
+      path: `/${member.id}/permissions`,
+      method: 'PATCH',
+      body: {
+        permission_key: 'appointment.reschedule',
+        value: 'self',
+      },
+    },
+    {
+      path: '/permission-delegations',
+      method: 'PUT',
+      body: {
+        permission_key: 'appointment.reschedule',
+        enabled: true,
+      },
+    },
+  ]) {
+    for (const userId of [null, users.employee]) {
+      const result = await permissionHttpRequest({
+        ...entry,
+        userId,
+      })
+
+      assert.equal(result.status, userId === null ? 401 : 403)
+      assert.equal(Object.hasOwn(result.body, 'data'), false)
+    }
+  }
+})
+
+test('permission HTTP: owner changes individual value and restores inheritance with authenticated audit', async () => {
+  await clearPermissionHttpFixtures()
+
+  const member = await findTestMembership('employee')
+
+  try {
+    const saved = await permissionHttpRequest({
+      path: `/${member.id}/permissions`,
+      method: 'PATCH',
+      body: {
+        permission_key: 'appointment.reschedule',
+        value: 'self',
+        actorUserId: users.foreignOwner,
+        salon_id: salonIds[2],
+      },
+    })
+
+    assert.equal(saved.status, 200)
+    assert.equal(saved.body.data.changed, true)
+
+    const settings = await permissionHttpRequest()
+    const target = settings.body.data.members[0]
+
+    assert.equal(target.overrides['appointment.reschedule'], 'self')
+    assert.equal(
+      target.effective_permissions['appointment.reschedule'],
+      'self'
+    )
+
+    const restored = await permissionHttpRequest({
+      path: `/${member.id}/permissions`,
+      method: 'PATCH',
+      body: {
+        permission_key: 'appointment.reschedule',
+        value: null,
+      },
+    })
+
+    assert.equal(restored.status, 200)
+
+    const inherited = await permissionHttpRequest()
+
+    assert.equal(
+      inherited.body.data.members[0]
+        .effective_permissions['appointment.reschedule'],
+      'deny'
+    )
+
+    const audit = await pool.query(
+      `
+        SELECT *
+        FROM salon_permission_changes
+        WHERE salon_id = $1
+        ORDER BY id
+      `,
+      [salonIds[0]]
+    )
+
+    assert.equal(audit.rows.length, 2)
+
+    for (const change of audit.rows) {
+      assert.equal(Number(change.actor_user_id), users.owner)
+      assert.equal(Number(change.target_user_id), users.employee)
+      assert.equal(Number(change.salon_id), salonIds[0])
+    }
+
+    assert.equal(audit.rows[0].previous_value, null)
+    assert.equal(audit.rows[0].next_value, 'self')
+    assert.equal(audit.rows[1].next_value, null)
+  } finally {
+    await clearPermissionHttpFixtures()
+  }
+})
+
+test('permission HTTP: owner delegation grants one admin capability and revocation removes it', async () => {
+  await clearPermissionHttpFixtures()
+
+  const member = await findTestMembership('employee')
+
+  const changeAsAdmin = (key = 'appointment.reschedule') =>
+    permissionHttpRequest({
+      path: `/${member.id}/permissions`,
+      method: 'PATCH',
+      userId: users.admin,
+      body: {
+        permission_key: key,
+        value: 'self',
+      },
+    })
+
+  try {
+    const denied = await changeAsAdmin()
+
+    assert.equal(denied.status, 403)
+    assert.equal(
+      denied.body.error.code,
+      'PERMISSION_ADMIN_DELEGATION_REQUIRED'
+    )
+
+    const grant = await permissionHttpRequest({
+      path: '/permission-delegations',
+      method: 'PUT',
+      body: {
+        permission_key: 'appointment.reschedule',
+        enabled: true,
+      },
+    })
+
+    assert.equal(grant.status, 200)
+
+    const settings = await permissionHttpRequest({
+      userId: users.admin,
+    })
+
+    for (const permission of settings.body.data.permissions) {
+      assert.equal(
+        permission.can_edit,
+        permission.key === 'appointment.reschedule'
+      )
+    }
+
+    assert.equal((await changeAsAdmin()).status, 200)
+
+    const unrelated = await changeAsAdmin('appointment.change_status')
+
+    assert.equal(unrelated.status, 403)
+
+    const revoke = await permissionHttpRequest({
+      path: '/permission-delegations',
+      method: 'PUT',
+      body: {
+        permission_key: 'appointment.reschedule',
+        enabled: false,
+      },
+    })
+
+    assert.equal(revoke.status, 200)
+    assert.equal((await changeAsAdmin()).status, 403)
+
+    const retained = await permissionHttpRequest()
+
+    assert.equal(
+      retained.body.data.members[0]
+        .overrides['appointment.reschedule'],
+      'self'
+    )
+  } finally {
+    await clearPermissionHttpFixtures()
+  }
+})
+
+test('permission HTTP: admin cannot delegate permissions or spoof owner identity', async () => {
+  await clearPermissionHttpFixtures()
+
+  const result = await permissionHttpRequest({
+    path: '/permission-delegations',
+    method: 'PUT',
+    userId: users.admin,
+    body: {
+      permission_key: 'appointment.reschedule',
+      enabled: true,
+      actorUserId: users.owner,
+      role: 'owner',
+    },
+  })
+
+  assert.equal(result.status, 403)
+  assert.equal(
+    result.body.error.code,
+    'INSUFFICIENT_SALON_ROLE'
+  )
+
+  const settings = await permissionHttpRequest()
+
+  assert.ok(
+    settings.body.data.permissions.every(
+      (permission) => permission.admin_delegated === false
+    )
+  )
+})
+
+test('permission HTTP: selected salon prevents foreign reads and writes', async () => {
+  await clearPermissionHttpFixtures()
+
+  const foreignMember = await findTestMembership('foreignOwner')
+
+  const foreignRead = await permissionHttpRequest({
+    salonId: salonIds[2],
+  })
+
+  assert.equal(foreignRead.status, 403)
+  assert.equal(foreignRead.body.error.code, 'SALON_ACCESS_DENIED')
+
+  const foreignWrite = await permissionHttpRequest({
+    path: `/${foreignMember.id}/permissions`,
+    method: 'PATCH',
+    body: {
+      permission_key: 'appointment.reschedule',
+      value: 'self',
+      salon_id: salonIds[2],
+    },
+  })
+
+  assert.equal(foreignWrite.status, 404)
+  assert.equal(
+    foreignWrite.body.error.code,
+    'PERMISSION_TARGET_NOT_FOUND'
+  )
+
+  const spoofedRead = await permissionHttpRequest({
+    path: `/permission-settings?salon_id=${salonIds[2]}`,
+  })
+
+  assert.equal(spoofedRead.status, 200)
+  assert.equal(Number(spoofedRead.body.data.salon_id), salonIds[0])
+
+  assert.equal(
+    spoofedRead.body.data.members.some(
+      (member) => Number(member.user_id) === users.foreignOwner
+    ),
+    false
+  )
+
+  const differentRole = await permissionHttpRequest({
+    userId: users.owner,
+    salonId: salonIds[1],
+  })
+
+  assert.equal(differentRole.status, 403)
+})
+
+test('permission HTTP: invalid value missing value and protected targets are rejected', async () => {
+  await clearPermissionHttpFixtures()
+
+  const employee = await findTestMembership('employee')
+  const admin = await findTestMembership('admin')
+  const owner = await findTestMembership('owner')
+
+  for (const body of [
+    { permission_key: 'appointment.reschedule', value: 'all' },
+    { permission_key: 'appointment.reschedule' },
+  ]) {
+    const result = await permissionHttpRequest({
+      path: `/${employee.id}/permissions`,
+      method: 'PATCH',
+      body,
+    })
+
+    assert.equal(result.status, 400)
+    assert.equal(
+      result.body.error.code,
+      'INVALID_MEMBER_PERMISSION_VALUE'
+    )
+  }
+
+  const adminTarget = await permissionHttpRequest({
+    path: `/${admin.id}/permissions`,
+    method: 'PATCH',
+    body: {
+      permission_key: 'appointment.reschedule',
+      value: 'self',
+    },
+  })
+
+  assert.equal(adminTarget.status, 409)
+  assert.equal(
+    adminTarget.body.error.code,
+    'PERMISSION_TARGET_NOT_EMPLOYEE'
+  )
+
+  const self = await permissionHttpRequest({
+    path: `/${owner.id}/permissions`,
+    method: 'PATCH',
+    body: {
+      permission_key: 'appointment.reschedule',
+      value: 'self',
+    },
+  })
+
+  assert.equal(self.status, 403)
+  assert.equal(
+    self.body.error.code,
+    'PERMISSION_SELF_CHANGE_FORBIDDEN'
+  )
+})

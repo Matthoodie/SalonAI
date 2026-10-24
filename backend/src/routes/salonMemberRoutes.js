@@ -8,6 +8,12 @@ import {
 } from '../controllers/salonMemberController.js'
 
 import {
+  getPermissionSettings,
+  changeMemberPermission,
+  changePermissionDelegation,
+} from '../controllers/salonPermissionManagementController.js'
+
+import {
   requireSalonRole,
 } from '../middleware/roleMiddleware.js'
 
@@ -17,6 +23,24 @@ router.use((req, res, next) => {
   res.set('Cache-Control', 'no-store')
   next()
 })
+
+router.get(
+  '/permission-settings',
+  requireSalonRole('owner', 'admin'),
+  getPermissionSettings
+)
+
+router.put(
+  '/permission-delegations',
+  requireSalonRole('owner'),
+  changePermissionDelegation
+)
+
+router.patch(
+  '/:id/permissions',
+  requireSalonRole('owner', 'admin'),
+  changeMemberPermission
+)
 
 router.get(
   '/history',
