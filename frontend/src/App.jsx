@@ -1,4 +1,5 @@
 import {
+  lazy,
   useEffect,
   useRef,
   useState,
@@ -31,13 +32,32 @@ import { mapServicesToFrontend } from './api/serviceMapper'
 import Layout from './components/Layout/Layout'
 import InvitationAcceptance from './components/Invitations/InvitationAcceptance'
 
-import Services from './pages/Services/Services'
-import Appointments from './pages/Appointments/Appointments'
-import Calendar from './pages/Calendar/Calendar'
-import Clients from './pages/Clients/Clients'
+import PageBoundary from './components/PageBoundary/PageBoundary'
 import Dashboard from './pages/Dashboard/Dashboard'
-import Employees from './pages/Employees/Employees'
-import Settings from './pages/Settings/Settings'
+
+const Services = lazy(
+  () => import('./pages/Services/Services')
+)
+
+const Appointments = lazy(
+  () => import('./pages/Appointments/Appointments')
+)
+
+const Calendar = lazy(
+  () => import('./pages/Calendar/Calendar')
+)
+
+const Clients = lazy(
+  () => import('./pages/Clients/Clients')
+)
+
+const Employees = lazy(
+  () => import('./pages/Employees/Employees')
+)
+
+const Settings = lazy(
+  () => import('./pages/Settings/Settings')
+)
 
 function formatDateKey(date) {
   const year = date.getFullYear()
@@ -363,8 +383,8 @@ function SalonWorkspace({ authContext }) {
           </label>
         </div>
       )}
-
-      <Routes>
+      <PageBoundary>
+        <Routes>
         <Route
           path="/settings"
           element={
@@ -480,7 +500,8 @@ function SalonWorkspace({ authContext }) {
             />
           }
         />
-      </Routes>
+        </Routes>
+      </PageBoundary>
     </>
   )
 }
