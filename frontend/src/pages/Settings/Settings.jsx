@@ -56,6 +56,7 @@ function Settings({
 
   const mountedRef = useRef(false)
   const busyRef = useRef(false)
+  const pendingDraftsRef = useRef(null)
 
   useEffect(() => {
     mountedRef.current = true
@@ -68,10 +69,10 @@ function Settings({
   useEffect(() => {
     let cancelled = false
     const controller = new AbortController()
+    const pending = pendingDraftsRef.current
 
     setIsLoading(true)
     setData(null)
-    setDrafts({})
     setError('')
 
     async function load() {
@@ -85,20 +86,71 @@ function Settings({
         }
 
         if (String(result.salon_id) !== String(salonId)) {
-          throw new Error('Postavke ne pripadaju odabranom salonu.')
+          throw new Error(
+            'Postavke ne pripadaju odabranom salonu.'
+          )
+        }
+
+        const sameSalon =
+          pending &&
+          String(pending.salonId) === String(salonId)
+
+        const previousMember = sameSalon
+          ? result.members.find(
+              (member) =>
+                String(member.id) === pending.memberId
+            )
+          : null
+
+        const nextMember =
+          previousMember || result.members[0] || null
+
+        const retainedDrafts = {}
+        let discardedCount = 0
+
+        if (sameSalon) {
+          for (const [key, choice] of Object.entries(
+            pending.drafts
+          )) {
+            const permission = result.permissions.find(
+              (item) => item.key === key
+            )
+
+            if (
+              !previousMember ||
+              permission?.can_edit !== true ||
+              !['inherit', 'deny', 'self'].includes(choice)
+            ) {
+              discardedCount += 1
+              continue
+            }
+
+            const stored =
+              previousMember.overrides[key] ?? 'inherit'
+
+            if (choice !== stored) {
+              retainedDrafts[key] = choice
+            }
+          }
         }
 
         setData(result)
-
-        setSelectedId((current) =>
-          result.members.some(
-            (member) => String(member.id) === current
-          )
-            ? current
-            : result.members[0]
-              ? String(result.members[0].id)
-              : ''
+        setSelectedId(
+          nextMember ? String(nextMember.id) : ''
         )
+        setDrafts(retainedDrafts)
+        pendingDraftsRef.current = null
+
+        if (discardedCount > 0) {
+          setNotice((current) =>
+            [
+              current,
+              'Neki nespremljeni izbori uklonjeni su jer članstvo ili ovlast uređivanja više nisu dostupni.',
+            ]
+              .filter(Boolean)
+              .join(' ')
+          )
+        }
       } catch (requestError) {
         if (!cancelled && !wasCancelled(requestError)) {
           setError(requestError.message)
@@ -137,16 +189,47 @@ function Settings({
     )
   }
 
-  function refreshSettings() {
-    if (busyRef.current || isLoading || !confirmDiscard()) {
+  function rememberDrafts(savedKey = null) {
+    // Ako prethodno učitavanje nije uspjelo, zadrži
+    // već pripremljene izbore za ponovni pokušaj.
+    if (!data) {
       return
     }
 
+    const unsaved = {}
+
+    for (const [key, choice] of Object.entries(drafts)) {
+      if (
+        key !== savedKey &&
+        choice !== storedChoice(key)
+      ) {
+        unsaved[key] = choice
+      }
+    }
+
+    pendingDraftsRef.current = {
+      salonId: String(salonId),
+      memberId: selectedId,
+      drafts: unsaved,
+    }
+  }
+
+  function refreshSettings() {
+    if (busyRef.current || isLoading) {
+      return
+    }
+
+    rememberDrafts()
     setNotice('')
+    setIsLoading(true)
     setReloadToken((value) => value + 1)
   }
 
-  async function runChange(operation, successMessage) {
+  async function runChange(
+    operation,
+    successMessage,
+    savedKey = null
+  ) {
     if (busyRef.current || isLoading) {
       return
     }
@@ -163,15 +246,18 @@ function Settings({
         return
       }
 
+      rememberDrafts(savedKey)
+
       setNotice(
         result.changed
           ? successMessage
           : 'Postavka već ima odabranu vrijednost.'
       )
 
-      // Remove the old view before reloading authoritative values.
+      // Ponovno učitaj stvarno spremljena pravila.
+      // Ostali nespremljeni izbori čekaju u referenci.
+      setIsLoading(true)
       setData(null)
-      setDrafts({})
       setReloadToken((value) => value + 1)
     } catch (requestError) {
       if (
@@ -192,6 +278,7 @@ function Settings({
   function savePermission(permission) {
     if (
       busyRef.current ||
+      isLoading ||
       !selectedMember ||
       permission.can_edit !== true
     ) {
@@ -205,12 +292,6 @@ function Settings({
       return
     }
 
-    const otherUnsaved = Object.keys(drafts).some(
-      (key) =>
-        key !== permission.key &&
-        drafts[key] !== storedChoice(key)
-    )
-
     const label = permissionLabels[permission.key]
     const name =
       selectedMember.display_name || selectedMember.email
@@ -221,12 +302,7 @@ function Settings({
         : valueLabels[choice]
 
     const question =
-      `Spremiti "${label}: ${choiceLabel}" za ${name}?` +
-      (
-        otherUnsaved
-          ? '\nOstali nespremljeni izbori bit će odbačeni nakon osvježavanja.'
-          : ''
-      )
+      `Spremiti "${label}: ${choiceLabel}" za ${name}?`
 
     if (!window.confirm(question)) {
       return
@@ -240,15 +316,16 @@ function Settings({
         permissionKey: permission.key,
         value: choice === 'inherit' ? null : choice,
       }),
-      'Ovlast je spremljena. Korisnik treba osvježiti svoju stranicu radi novog prikaza gumba.'
+      'Ovlast je spremljena. Ostali nespremljeni izbori ostaju u obrascu. Korisnik treba osvježiti svoju stranicu radi novog prikaza gumba.',
+      permission.key
     )
   }
 
   function changeDelegation(permission) {
     if (
       busyRef.current ||
-      data?.can_manage_delegation !== true ||
-      !confirmDiscard()
+      isLoading ||
+      data?.can_manage_delegation !== true
     ) {
       return
     }
@@ -330,6 +407,7 @@ function Settings({
                       return
                     }
 
+                    pendingDraftsRef.current = null
                     setSelectedId(event.target.value)
                     setDrafts({})
                     setError('')
@@ -445,8 +523,12 @@ function Settings({
                     </div>
 
                     <p>
-                      Svaki redak sprema se zasebno.
-                      Rezultirajuće pravilo prikazuje stanje spremljeno na poslužitelju.
+                      Svaki redak sprema se zasebno. Spremanje jednog
+                      retka i gumb „Osvježi postavke” čuvaju ostale
+                      nespremljene izbore dok ih još smijete uređivati.
+                      Rezultirajuće pravilo prikazuje stanje spremljeno
+                      na poslužitelju. Nespremljeni izbori ne čuvaju se
+                      nakon osvježavanja cijele stranice ili promjene salona.
                     </p>
                   </>
                 )}
