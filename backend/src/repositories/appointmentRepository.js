@@ -39,12 +39,12 @@ export async function findAllAppointments(
   return result.rows
 }
 
-export async function findAppointmentById(
-  id,
+export async function findAppointmentById(id,
   salonId,
-  employeeId = null
+  employeeId = null,
+    db = pool
 ) {
-  const result = await pool.query(
+  const result = await db.query(
     `
       SELECT
         a.id,
@@ -80,8 +80,10 @@ export async function findAppointmentById(
   return result.rows[0] ?? null
 }
 
-export async function findServiceById(serviceId) {
-    const result = await pool.query(
+export async function findServiceById(serviceId,
+    db = pool
+) {
+    const result = await db.query(
         `
       SELECT
         id,
@@ -174,8 +176,10 @@ export async function insertAppointment({
     return result.rows[0]
 }
 
-export async function findEmployeeById(employeeId) {
-    const result = await pool.query(
+export async function findEmployeeById(employeeId,
+    db = pool
+) {
+    const result = await db.query(
         `
       SELECT
         id,
@@ -192,11 +196,11 @@ export async function findEmployeeById(employeeId) {
     return result.rows[0] ?? null
 }
 
-export async function findEmployeeDateOverride(
-    employeeId,
-    date
+export async function findEmployeeDateOverride(employeeId,
+    date,
+    db = pool
 ) {
-    const result = await pool.query(
+    const result = await db.query(
         `
       SELECT
         employee_id,
@@ -218,11 +222,11 @@ export async function findEmployeeDateOverride(
     return result.rows[0] ?? null
 }
 
-export async function findEmployeeTimeOff(
-    employeeId,
-    date
+export async function findEmployeeTimeOff(employeeId,
+    date,
+    db = pool
 ) {
-    const result = await pool.query(
+    const result = await db.query(
         `
       SELECT
         id,
@@ -246,12 +250,12 @@ export async function findEmployeeTimeOff(
     return result.rows[0] ?? null
 }
 
-export async function findEmployeeBlockedTimeOverlap(
-    employeeId,
+export async function findEmployeeBlockedTimeOverlap(employeeId,
     startsAt,
-    endsAt
+    endsAt,
+    db = pool
 ) {
-    const result = await pool.query(
+    const result = await db.query(
         `
       SELECT
         id,
@@ -276,11 +280,11 @@ export async function findEmployeeBlockedTimeOverlap(
     return result.rows[0] ?? null
 }
 
-export async function findEmployeeWorkingHours(
-    employeeId,
-    dayOfWeek
+export async function findEmployeeWorkingHours(employeeId,
+    dayOfWeek,
+    db = pool
 ) {
-    const result = await pool.query(
+    const result = await db.query(
         `
       SELECT
         employee_id,
@@ -302,8 +306,10 @@ export async function findEmployeeWorkingHours(
 }
 
 
-export async function findSalonById(salonId) {
-    const result = await pool.query(
+export async function findSalonById(salonId,
+    db = pool
+) {
+    const result = await db.query(
         `
       SELECT
         id,
@@ -365,14 +371,14 @@ export async function updateAppointmentStatus(
     return result.rows[0] ?? null
 }
 
-export async function updateAppointmentSchedule(
-    appointmentId,
+export async function updateAppointmentSchedule(appointmentId,
     salonId,
     startsAt,
     endsAt,
-    employeeId = null
+    employeeId = null,
+    db = pool
 ) {
-    const result = await pool.query(
+    const result = await db.query(
         `
       UPDATE appointments
       SET

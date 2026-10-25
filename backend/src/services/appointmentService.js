@@ -1,3 +1,6 @@
+import { withAppointmentTransaction } from './appointmentTransaction.js'
+import { findEmployeeForUpdate } from '../repositories/employeeRepository.js'
+
 import {
     mapDatabaseError,
 } from '../errors/databaseErrorMapper.js'
@@ -73,6 +76,7 @@ async function validateAppointmentAvailability({
     startsAt,
     endsAt,
     salonTimezone,
+    db,
 }) {
     const localStart = getZonedDateTimeParts(
         startsAt,
@@ -85,10 +89,10 @@ async function validateAppointmentAvailability({
     )
 
     const dateOverride =
-        await findEmployeeDateOverride(
-            employeeId,
-            localStart.date
-        )
+        await findEmployeeDateOverride(employeeId,
+            localStart.date,
+    db
+)
 
     if (dateOverride && !dateOverride.enabled) {
         return {
@@ -109,10 +113,10 @@ async function validateAppointmentAvailability({
         workingEndTime = dateOverride.end_time
     } else {
         const workingHours =
-            await findEmployeeWorkingHours(
-                employeeId,
-                localStart.dayOfWeek
-            )
+            await findEmployeeWorkingHours(employeeId,
+                localStart.dayOfWeek,
+    db
+)
 
         if (!workingHours) {
             return {
@@ -155,10 +159,10 @@ async function validateAppointmentAvailability({
     }
 
     const timeOff =
-        await findEmployeeTimeOff(
-            employeeId,
-            localStart.date
-        )
+        await findEmployeeTimeOff(employeeId,
+            localStart.date,
+    db
+)
 
     if (timeOff) {
         return {
@@ -172,11 +176,11 @@ async function validateAppointmentAvailability({
     }
 
     const blockedTime =
-        await findEmployeeBlockedTimeOverlap(
-            employeeId,
+        await findEmployeeBlockedTimeOverlap(employeeId,
             startsAt,
-            endsAt
-        )
+            endsAt,
+    db
+)
 
     if (blockedTime) {
         return {
@@ -319,17 +323,17 @@ const appointment =
     }
 }
 
-export async function rescheduleAppointment(
-    appointmentId,
+async function rescheduleInTransaction(appointmentId,
     salonId,
     startsAtInput,
-    employeeId = null
+    employeeId = null,
+    db
 ) {
     const appointment =
-        await findAppointmentById(
-    appointmentId,
+        await findAppointmentById(appointmentId,
     salonId,
-    employeeId
+    employeeId,
+    db
 )
 
     if (!appointment) {
@@ -344,7 +348,9 @@ export async function rescheduleAppointment(
     }
 
     const employee =
-        await findEmployeeById(appointment.employee_id)
+        await findEmployeeById(appointment.employee_id,
+    db
+)
 
     if (!employee) {
         return {
@@ -367,7 +373,9 @@ export async function rescheduleAppointment(
     }
 
     const salon =
-        await findSalonById(appointment.salon_id)
+        await findSalonById(appointment.salon_id,
+    db
+)
 
     if (!salon) {
         return {
@@ -393,6 +401,7 @@ export async function rescheduleAppointment(
             startsAt,
             endsAt,
             salonTimezone: salon.timezone,
+            db,
         })
 
     if (availabilityResult.error) {
@@ -400,12 +409,12 @@ export async function rescheduleAppointment(
     }
 
     const updatedAppointment =
-        await updateAppointmentSchedule(
-    appointmentId,
+        await updateAppointmentSchedule(appointmentId,
     salonId,
     startsAt,
     endsAt,
-    employeeId
+    employeeId,
+    db
 )
 
     return {
@@ -488,7 +497,7 @@ export async function changeAppointmentClient(
     }
 }
 
-export async function prepareAppointmentCreation({
+async function createInTransaction({
     salon_id,
     client_id,
     employee_id,
@@ -497,7 +506,9 @@ export async function prepareAppointmentCreation({
     notes,
 }, db) {
 
-    const salon = await findSalonById(salon_id)
+    const salon = await findSalonById(salon_id,
+    db
+)
 
     if (!salon) {
         return {
@@ -519,7 +530,9 @@ export async function prepareAppointmentCreation({
         }
     }
 
-    const service = await findServiceById(service_id)
+    const service = await findServiceById(service_id,
+    db
+)
 
     if (!service) {
         return {
@@ -552,7 +565,9 @@ export async function prepareAppointmentCreation({
         }
     }
 
-    const employee = await findEmployeeById(employee_id)
+    const employee = await findEmployeeById(employee_id,
+    db
+)
 
     if (!employee) {
         return {
@@ -615,6 +630,7 @@ const startsAt = new Date(starts_at)
             startsAt,
             endsAt,
             salonTimezone: salon.timezone,
+            db,
         })
 
     if (availabilityResult.error) {
@@ -657,4 +673,52 @@ const startsAt = new Date(starts_at)
 
         throw error
     }
+}
+
+export async function prepareAppointmentCreation(input, db) {
+  if (!db) {
+    return withAppointmentTransaction((client) =>
+      prepareAppointmentCreation(input, client)
+    )
+  }
+
+  await findEmployeeForUpdate(db, {
+    employeeId: input.employee_id,
+    salonId: input.salon_id,
+  })
+
+  return createInTransaction(input, db)
+}
+
+export async function rescheduleAppointment(
+  appointmentId,
+  salonId,
+  startsAtInput,
+  employeeId = null
+) {
+  return withAppointmentTransaction(async (db) => {
+    const appointment = await findAppointmentById(
+      appointmentId, salonId, employeeId, db
+    )
+
+    if (!appointment) {
+      return {
+        error: {
+          status: 404,
+          code: 'APPOINTMENT_NOT_FOUND',
+          message: 'Appointment was not found.',
+        },
+      }
+    }
+
+    await findEmployeeForUpdate(db, {
+      employeeId: appointment.employee_id,
+      salonId,
+    })
+
+    // Ponovno procitaj termin i dostupnost nakon dobivenog zakljucavanja.
+    return rescheduleInTransaction(
+      appointmentId, salonId, startsAtInput, employeeId, db
+    )
+  })
 }
