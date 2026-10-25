@@ -1,3 +1,4 @@
+import { prepareManualTimeOffReplacement } from './approvedTimeOffProtectionService.js'
 import { assertEmployeeTimeOffAvailable } from './employeeTimeOffConflictService.js'
 
 import pool from '../database/pool.js'
@@ -928,7 +929,15 @@ export async function updateEmployeeForSalon({
       throw error
     }
 
+    let manualTimeOff = timeOff
+
     if (timeOff !== undefined) {
+      manualTimeOff = await prepareManualTimeOffReplacement(client, {
+        salonId,
+        employeeId,
+        timeOff,
+      })
+
       await assertEmployeeTimeOffAvailable(client, {
         salonId,
         employeeId,
@@ -1032,7 +1041,7 @@ export async function updateEmployeeForSalon({
         client,
         {
           employeeId,
-          timeOff,
+          timeOff: manualTimeOff,
         }
       )
     }

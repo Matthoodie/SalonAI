@@ -101,6 +101,8 @@ export async function findEmployeesBySalonId(
               json_build_object(
                 'id',
                 eto.id,
+                'source_request_id',
+                eto.source_request_id,
                 'start_date',
                 eto.start_date,
                 'end_date',
@@ -444,6 +446,7 @@ export async function deleteEmployeeTimeOff(
     `
       DELETE FROM employee_time_off
       WHERE employee_id = $1
+        AND source_request_id IS NULL
     `,
     [employeeId]
   )
