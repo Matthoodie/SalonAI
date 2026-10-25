@@ -1,3 +1,5 @@
+import { assertEmployeeTimeOffAvailable } from './employeeTimeOffConflictService.js'
+
 import pool from '../database/pool.js'
 
 import {
@@ -924,6 +926,14 @@ export async function updateEmployeeForSalon({
       error.statusCode = 404
 
       throw error
+    }
+
+    if (timeOff !== undefined) {
+      await assertEmployeeTimeOffAvailable(client, {
+        salonId,
+        employeeId,
+        timeOff,
+      })
     }
 
     const employee =
