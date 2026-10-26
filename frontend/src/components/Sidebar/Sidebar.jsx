@@ -73,6 +73,11 @@ function Sidebar({
     Kalendar
   </Link>
 </li>
+          <li>
+            <Link to="/time-off-requests" onClick={onCloseMobileMenu}>
+              Zahtjevi za odsutnost
+            </Link>
+          </li>
           {canAccessFullCrm && (
             <li>
               <Link

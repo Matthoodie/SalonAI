@@ -1,0 +1,46 @@
+.time-off-page { max-width: 1100px; margin: 0 auto; padding: 20px; text-align: left; color: var(--text-h, #171321); }
+.time-off-page h1 { font-size: clamp(26px, 3vw, 36px); line-height: 1.2; margin: 6px 0 12px; letter-spacing: -.5px; }
+.time-off-page h2 { margin: 0 0 10px; font-size: 22px; }
+.time-off-page h3 { margin: 0 0 8px; font-size: 18px; font-weight: 650; overflow-wrap: anywhere; }
+.time-off-page p { margin: 8px 0; }
+.time-off-header, .time-off-toolbar, .time-off-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+.time-off-header { margin-bottom: 24px; }
+.time-off-eyebrow { font-size: 14px; color: var(--text, #62596c); }
+.time-off-toolbar { align-items: center; margin: 28px 0 16px; }
+.time-off-toolbar label { min-width: 180px; }
+.time-off-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.time-off-panel { border: 1px solid var(--border, #ddd); border-radius: 12px; padding: 20px; margin-bottom: 16px; background: var(--bg, white); }
+.time-off-list { display: grid; gap: 0; }
+.time-off-page label { display: flex; flex-direction: column; gap: 7px; font-weight: 600; font-size: 15px; }
+.time-off-page input, .time-off-page select, .time-off-page textarea { font: inherit; color: var(--text-h, #171321); background: var(--bg, white); border: 1px solid var(--border, #ccc); border-radius: 7px; padding: 10px 12px; min-height: 44px; width: 100%; }
+.time-off-page textarea { resize: vertical; }
+.time-off-page button { font: inherit; font-size: 15px; font-weight: 600; min-height: 44px; padding: 10px 15px; border: 1px solid var(--border, #ccc); border-radius: 8px; background: var(--bg, white); color: var(--text-h, #171321); cursor: pointer; }
+.time-off-page button:hover:not(:disabled) { background: var(--accent-bg, #f4eaff); }
+.time-off-page button.time-off-primary { color: #fff; background: #7626b5; border-color: #7626b5; }
+.time-off-page button.time-off-primary:hover:not(:disabled) { background: #602091; }
+.time-off-page button.time-off-reject { color: #b42318; border-color: #dc8b85; }
+.time-off-page button:disabled, .time-off-page fieldset:disabled { opacity: .55; cursor: not-allowed; }
+.time-off-page :is(button, input, select, textarea):focus-visible { outline: 3px solid var(--accent, #7626b5); outline-offset: 3px; }
+.time-off-page fieldset { border: 0; padding: 0; margin: 16px 0 12px; min-width: 0; }
+.time-off-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 16px; }
+.time-off-help { color: var(--text, #62596c); font-size: 14px; }
+.time-off-note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.time-off-notice, .time-off-error { padding: 14px 16px; border-radius: 8px; border: 1px solid; }
+.time-off-notice { background: #e9f8ef; color: #175c32; border-color: #9bcdb0; }
+.time-off-error { background: #fff0ef; color: #9a241a; border-color: #e5a099; }
+.time-off-status { display: inline-flex; border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.time-off-status-pending { color: #744700; background: #fff0cc; }
+.time-off-status-approved { color: #175c32; background: #e9f8ef; }
+.time-off-status-rejected { color: #9a241a; background: #fff0ef; }
+.time-off-status-withdrawn { color: #45404d; background: #eeeaf2; }
+.time-off-empty { padding: 36px 20px; border: 1px dashed var(--border, #ddd); border-radius: 12px; text-align: center; }
+.time-off-review { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border, #ddd); }
+.time-off-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@media (max-width: 680px) {
+  .time-off-page { padding: 14px 8px; }
+  .time-off-panel { padding: 16px; }
+  .time-off-form-grid { grid-template-columns: 1fr; }
+  .time-off-toolbar label { width: 100%; }
+  .time-off-actions { width: 100%; }
+  .time-off-actions button { flex: 1 1 auto; }
+}

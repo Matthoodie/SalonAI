@@ -55,6 +55,10 @@ const Employees = lazy(
   () => import('./pages/Employees/Employees')
 )
 
+const TimeOffRequests = lazy(
+  () => import('./pages/TimeOffRequests/TimeOffRequests')
+)
+
 const Settings = lazy(
   () => import('./pages/Settings/Settings')
 )
@@ -305,6 +309,12 @@ function SalonWorkspace({ authContext }) {
     }
   }
 
+  async function refreshEmployeesAfterApproval() {
+    const rows = await fetchEmployees()
+    if (!mountedRef.current) return
+    setEmployeeList(mapEmployeesToFrontend(rows, salonTimezone))
+  }
+
   function exportSalonData() {
     if (!canManage || isLoading || loadError) {
       return
@@ -385,6 +395,16 @@ function SalonWorkspace({ authContext }) {
       )}
       <PageBoundary>
         <Routes>
+        <Route
+          path="/time-off-requests"
+          element={
+            <TimeOffRequests
+              authContext={authContext}
+              employeeList={employeeList}
+              onApproved={refreshEmployeesAfterApproval}
+            />
+          }
+        />
         <Route
           path="/settings"
           element={
