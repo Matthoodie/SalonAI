@@ -93,3 +93,46 @@ export async function withdrawTimeOffRequest(db, salonId, requestId) {
   `, [salonId, requestId])
   return result.rows[0] ?? null
 }
+
+// Explicit response projection: do not expose future internal columns by default.
+const REQUEST_VIEW_COLUMNS = `
+  r.id, r.salon_id, r.employee_id, e.name AS employee_name,
+  r.requester_membership_id, r.requested_by_user_id,
+  r.start_date::text AS start_date, r.end_date::text AS end_date,
+  r.type, r.note, r.status, r.created_at, r.decided_at,
+  r.decided_by_user_id, r.decision_actor_role, r.decision_note, r.withdrawn_at
+`
+
+export async function findTimeOffRequestPage(db, {
+  salonId, requesterMembershipId, actorUserId, status, beforeId,
+}) {
+  const result = await db.query(`
+    SELECT ${REQUEST_VIEW_COLUMNS}
+    FROM employee_time_off_requests r
+    JOIN employees e ON e.id = r.employee_id AND e.salon_id = r.salon_id
+    WHERE r.salon_id = $1
+      AND ($2::bigint IS NULL OR (
+        r.requester_membership_id = $2 AND r.requested_by_user_id = $3
+      ))
+      AND ($4::varchar IS NULL OR r.status = $4)
+      AND ($5::bigint IS NULL OR r.id < $5)
+    ORDER BY r.id DESC
+    LIMIT 51
+  `, [salonId, requesterMembershipId, actorUserId, status, beforeId])
+  return result.rows
+}
+
+export async function findVisibleTimeOffRequest(db, {
+  salonId, requestId, requesterMembershipId, actorUserId,
+}) {
+  const result = await db.query(`
+    SELECT ${REQUEST_VIEW_COLUMNS}
+    FROM employee_time_off_requests r
+    JOIN employees e ON e.id = r.employee_id AND e.salon_id = r.salon_id
+    WHERE r.salon_id = $1 AND r.id = $2
+      AND ($3::bigint IS NULL OR (
+        r.requester_membership_id = $3 AND r.requested_by_user_id = $4
+      ))
+  `, [salonId, requestId, requesterMembershipId, actorUserId])
+  return result.rows[0] ?? null
+}

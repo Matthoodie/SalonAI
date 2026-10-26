@@ -7,6 +7,7 @@ import bookingRoutes from './routes/bookingRoutes.js'
 import calendarRoutes from './routes/calendarRoutes.js'
 import serviceRoutes from './routes/serviceRoutes.js'
 import employeeRoutes from './routes/employeeRoutes.js'
+import employeeTimeOffRequestRoutes from './routes/employeeTimeOffRequestRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
 import invitationRoutes from './routes/invitationRoutes.js'
@@ -87,6 +88,12 @@ export function createApp({
     '/api/members',
     ...privateRouteMiddleware,
     salonMemberRoutes
+  )
+
+  app.use(
+    '/api/time-off-requests',
+    ...privateRouteMiddleware,
+    employeeTimeOffRequestRoutes
   )
 
   app.use(notFoundHandler)

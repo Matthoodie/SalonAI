@@ -6,6 +6,7 @@ import {
   lockTimeOffSalon, readTimeOffRequest, lockTimeOffIdentities,
   lockTimeOffEmployee, insertTimeOffRequest, hasOverlappingTimeOff,
   decideTimeOffRequest, insertApprovedTimeOff, withdrawTimeOffRequest,
+  findTimeOffRequestPage, findVisibleTimeOffRequest,
 } from '../repositories/employeeTimeOffRequestRepository.js'
 
 function fail(message, code, statusCode = 403) {
@@ -185,5 +186,58 @@ export async function decideEmployeeTimeOffRequest({
     if (!updated) throw fail('The request has already been resolved.', 'TIME_OFF_REQUEST_NOT_PENDING', 409)
     const timeOff = decision === 'approved' ? await insertApprovedTimeOff(db, updated) : null
     return { request: updated, timeOff }
+  })
+}
+
+async function readScope(db, salonId, actorUserId) {
+  await beginSalon(db, salonId)
+  const { actor } = await context(db, salonId, actorUserId)
+  const canReview = ['owner', 'admin'].includes(actor.role) &&
+    await permission(db, salonId, actor) === 'direct'
+  // Reading one's submitted history remains possible after permission denial,
+  // profile deactivation or a changed employee link. Membership must be active.
+  return {
+    requesterMembershipId: canReview ? null : actor.id,
+    scope: canReview ? 'salon' : 'self',
+  }
+}
+
+export async function listEmployeeTimeOffRequests({
+  salonId, actorUserId, status, beforeId,
+}) {
+  const salon = id(salonId)
+  const actorId = id(actorUserId)
+  if (status !== undefined && !['pending', 'approved', 'rejected', 'withdrawn'].includes(status)) {
+    throw fail('The request status filter is invalid.', 'TIME_OFF_INVALID_INPUT', 400)
+  }
+  const cursor = beforeId === undefined ? null : id(beforeId)
+  return withAppointmentTransaction(async db => {
+    const scope = await readScope(db, salon, actorId)
+    const rows = await findTimeOffRequestPage(db, {
+      salonId: salon, actorUserId: actorId,
+      requesterMembershipId: scope.requesterMembershipId,
+      status: status ?? null, beforeId: cursor,
+    })
+    const requests = rows.slice(0, 50)
+    return {
+      requests,
+      scope: scope.scope,
+      nextBeforeId: rows.length > 50 ? requests[requests.length - 1].id : null,
+    }
+  })
+}
+
+export async function getEmployeeTimeOffRequest({ salonId, actorUserId, requestId }) {
+  const salon = id(salonId)
+  const actorId = id(actorUserId)
+  const requestKey = id(requestId)
+  return withAppointmentTransaction(async db => {
+    const scope = await readScope(db, salon, actorId)
+    const request = await findVisibleTimeOffRequest(db, {
+      salonId: salon, actorUserId: actorId, requestId: requestKey,
+      requesterMembershipId: scope.requesterMembershipId,
+    })
+    if (!request) throw fail('The request was not found.', 'TIME_OFF_REQUEST_NOT_FOUND', 404)
+    return { request }
   })
 }
