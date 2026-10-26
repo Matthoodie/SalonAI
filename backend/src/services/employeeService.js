@@ -1,3 +1,4 @@
+import { assertEmployeeBlockedTimesAvailable } from './employeeBlockedTimeConflictService.js'
 import { prepareManualTimeOffReplacement } from './approvedTimeOffProtectionService.js'
 import { assertEmployeeTimeOffAvailable } from './employeeTimeOffConflictService.js'
 
@@ -927,6 +928,16 @@ export async function updateEmployeeForSalon({
       error.statusCode = 404
 
       throw error
+    }
+
+    // Validate the replacement while holding the employee lock, before any
+    // profile or schedule mutation. Booking uses this same row lock.
+    if (blockedTimes !== undefined) {
+      await assertEmployeeBlockedTimesAvailable(client, {
+        salonId,
+        employeeId,
+        blockedTimes,
+      })
     }
 
     let manualTimeOff = timeOff
