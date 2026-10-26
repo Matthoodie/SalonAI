@@ -55,6 +55,8 @@ const Employees = lazy(
   () => import('./pages/Employees/Employees')
 )
 
+const BlockedTimeRequests = lazy(() => import('./pages/BlockedTimeRequests/BlockedTimeRequests'))
+
 const TimeOffRequests = lazy(
   () => import('./pages/TimeOffRequests/TimeOffRequests')
 )
@@ -399,6 +401,16 @@ function SalonWorkspace({ authContext }) {
           path="/time-off-requests"
           element={
             <TimeOffRequests
+              authContext={authContext}
+              employeeList={employeeList}
+              onApproved={refreshEmployeesAfterApproval}
+            />
+          }
+        />
+        <Route
+          path="/blocked-time-requests"
+          element={
+            <BlockedTimeRequests
               authContext={authContext}
               employeeList={employeeList}
               onApproved={refreshEmployeesAfterApproval}

@@ -6,6 +6,7 @@ import availabilityRoutes from './routes/availabilityRoutes.js'
 import bookingRoutes from './routes/bookingRoutes.js'
 import calendarRoutes from './routes/calendarRoutes.js'
 import serviceRoutes from './routes/serviceRoutes.js'
+import employeeBlockedTimeRequestRoutes from './routes/employeeBlockedTimeRequestRoutes.js'
 import employeeRoutes from './routes/employeeRoutes.js'
 import employeeTimeOffRequestRoutes from './routes/employeeTimeOffRequestRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
@@ -95,6 +96,8 @@ export function createApp({
     ...privateRouteMiddleware,
     employeeTimeOffRequestRoutes
   )
+
+  app.use('/api/blocked-time-requests', ...privateRouteMiddleware, employeeBlockedTimeRequestRoutes)
 
   app.use(notFoundHandler)
   app.use(errorHandler)

@@ -1,10 +1,10 @@
 import {
   getSalonLocalDateParts,
-} from './salonDateTime'
+} from './salonDateTime.js'
 
 import {
   salonDateTimeToUtcIso,
-} from './appointmentDateTime'
+} from './appointmentDateTime.js'
 
 const dayKeyByNumber = {
   1: 'monday',
@@ -165,6 +165,10 @@ export function mapEmployeeToFrontend(
           id:
             Number(item.id),
 
+          sourceRequestId: item.source_request_id ?? null,
+          originalStartsAt: item.source_request_id ? item.starts_at : null,
+          originalEndsAt: item.source_request_id ? item.ends_at : null,
+          endDate: end.date,
           date:
             start.date,
 
@@ -294,15 +298,16 @@ export function mapEmployeeToCreatePayload(
   const blockedTimes =
   (employee.blockedTimes ?? []).map(
     (item) => ({
+      ...(item.sourceRequestId != null ? { id: item.id, source_request_id: item.sourceRequestId } : {}),
       starts_at:
-        salonDateTimeToUtcIso(
+        item.sourceRequestId != null ? item.originalStartsAt : salonDateTimeToUtcIso(
           item.date,
           item.startTime,
           salonTimezone
         ),
 
       ends_at:
-        salonDateTimeToUtcIso(
+        item.sourceRequestId != null ? item.originalEndsAt : salonDateTimeToUtcIso(
           item.date,
           item.endTime,
           salonTimezone

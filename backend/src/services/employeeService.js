@@ -1,3 +1,4 @@
+import { prepareManualBlockedTimeReplacement } from './approvedBlockedTimeProtectionService.js'
 import { assertEmployeeBlockedTimesAvailable } from './employeeBlockedTimeConflictService.js'
 import { prepareManualTimeOffReplacement } from './approvedTimeOffProtectionService.js'
 import { assertEmployeeTimeOffAvailable } from './employeeTimeOffConflictService.js'
@@ -930,6 +931,11 @@ export async function updateEmployeeForSalon({
       throw error
     }
 
+    let manualBlockedTimes = blockedTimes
+    if (blockedTimes !== undefined) {
+      manualBlockedTimes = await prepareManualBlockedTimeReplacement(client, { salonId, employeeId, blockedTimes })
+    }
+
     // Validate the replacement while holding the employee lock, before any
     // profile or schedule mutation. Booking uses this same row lock.
     if (blockedTimes !== undefined) {
@@ -1067,7 +1073,7 @@ export async function updateEmployeeForSalon({
         client,
         {
           employeeId,
-          blockedTimes,
+          blockedTimes: manualBlockedTimes,
         }
       )
     }

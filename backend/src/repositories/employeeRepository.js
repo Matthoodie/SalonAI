@@ -126,6 +126,8 @@ export async function findEmployeesBySalonId(
               json_build_object(
                 'id',
                 ebt.id,
+                'source_request_id',
+                ebt.source_request_id,
                 'starts_at',
                 ebt.starts_at,
                 'ends_at',
@@ -460,6 +462,7 @@ export async function deleteEmployeeBlockedTimes(
     `
       DELETE FROM employee_blocked_times
       WHERE employee_id = $1
+        AND source_request_id IS NULL
     `,
     [employeeId]
   )

@@ -78,6 +78,11 @@ function Sidebar({
               Zahtjevi za odsutnost
             </Link>
           </li>
+          <li>
+            <Link to="/blocked-time-requests" onClick={onCloseMobileMenu}>
+              Zahtjevi za blokirano vrijeme
+            </Link>
+          </li>
           {canAccessFullCrm && (
             <li>
               <Link

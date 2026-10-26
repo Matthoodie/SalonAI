@@ -358,6 +358,8 @@ function validateBlockedTimes(
   }
 
   for (const blockedTime of blockedTimes) {
+    // Protected intervals retain their original UTC instants, including DST.
+    if (blockedTime.sourceRequestId != null) continue
     if (
       !blockedTime.date ||
       !blockedTime.startTime ||
@@ -406,6 +408,7 @@ function validateBlockedTimes(
       const secondBlockedTime =
         blockedTimes[secondIndex]
 
+      if (firstBlockedTime.sourceRequestId != null || secondBlockedTime.sourceRequestId != null) continue
       if (
         firstBlockedTime.date !==
         secondBlockedTime.date
@@ -1887,7 +1890,7 @@ else {
                   <span>
                     {blockedTime.startTime}
                     {'–'}
-                    {blockedTime.endTime}
+                    {blockedTime.endDate && blockedTime.endDate !== blockedTime.date ? `${formatDate(blockedTime.endDate)} ` : ''}{blockedTime.endTime}
                     {' · '}
                     {getBlockedTimeTypeLabel(
                       blockedTime.type
@@ -1901,7 +1904,9 @@ else {
                   )}
                 </div>
 
-                <button
+                {blockedTime.sourceRequestId != null ? (
+                  <small>Odobreno zahtjevom #{blockedTime.sourceRequestId}. Otkazivanje je dostupno na stranici „Zahtjevi za blokirano vrijeme”.</small>
+                ) : <button
                   type="button"
                   className="employee-blocked-time-remove"
                   onClick={() =>
@@ -1911,7 +1916,7 @@ else {
                   }
                 >
                   Obriši
-                </button>
+                </button>}
               </div>
             ))}
         </div>
