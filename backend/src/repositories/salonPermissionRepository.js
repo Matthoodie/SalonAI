@@ -4,9 +4,9 @@ export async function findSalonPermissionOverride({
   salonId,
   role,
   permissionKey,
-}) {
+}, db = pool) {
   const result =
-    await pool.query(
+    await db.query(
       `
         SELECT
           permission_value

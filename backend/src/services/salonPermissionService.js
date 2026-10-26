@@ -1,3 +1,5 @@
+import pool from '../database/pool.js'
+
 import {
   findMemberPermissionOverride,
 } from '../repositories/salonMemberPermissionRepository.js'
@@ -32,7 +34,7 @@ export async function resolveSalonPermission({
   role,
   permissionKey,
   membershipId,
-}) {
+}, db = pool) {
   const numericSalonId =
     Number(salonId)
 
@@ -100,7 +102,7 @@ export async function resolveSalonPermission({
       role:
         normalizedRole,
       permissionKey,
-    })
+    }, db)
 
   const overrideValue =
     override?.permission_value ?? defaultValue
@@ -153,7 +155,7 @@ export async function resolveSalonPermission({
       salonId: numericSalonId,
       membershipId: Number(membershipId),
       permissionKey,
-    })
+    }, db)
 
     if (individual) {
       if (

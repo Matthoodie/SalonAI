@@ -4,8 +4,8 @@ export async function findMemberPermissionOverride({
   salonId,
   membershipId,
   permissionKey,
-}) {
-  const result = await pool.query(
+}, db = pool) {
+  const result = await db.query(
     `
       SELECT p.permission_value
 
