@@ -4,6 +4,7 @@ import {
   submitEmployeeTimeOffRequest,
   withdrawEmployeeTimeOffRequest,
   decideEmployeeTimeOffRequest,
+  cancelEmployeeTimeOffRequest,
 } from '../services/employeeTimeOffRequestService.js'
 
 function fail(message, code, statusCode) {
@@ -84,4 +85,13 @@ export const decideTimeOffRequest = endpoint(async (req, res, actor) => {
     decision: body.decision, decisionNote: body.decision_note,
   })
   res.status(200).json({ data: { request: result.request, time_off: result.timeOff } })
+})
+
+export const cancelTimeOffRequest = endpoint(async (req, res, actor) => {
+  fields(req.query, [])
+  const body = fields(req.body, ['cancellation_note'])
+  const result = await cancelEmployeeTimeOffRequest({
+    ...actor, requestId: req.params.id, cancellationNote: body.cancellation_note,
+  })
+  res.status(200).json({ data: result.request })
 })

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { createSalonApiContext } from '../src/api/salonApiContext.js'
 import { createTimeOffRequestApi } from '../src/api/timeOffRequestApi.js'
 import {
+  canCancelRequest, validateCancellationNote,
   validateRequestDraft, formatRequestDate, formatRequestTimestamp,
   requestActions, assertRequestPage, appendRequestPage,
 } from '../src/pages/TimeOffRequests/timeOffRequestView.js'
@@ -135,4 +136,61 @@ test('API: changing salon during response body read also rejects stale data', as
   context.setSalon(20)
   resolveBody(JSON.stringify({ data: [row()], meta: { scope: 'self', next_before_id: null } }))
   await assert.rejects(pending, { code: 'STALE_SALON_CONTEXT' })
+})
+
+test('cancellation: only salon reviewer of another approved request sees action', () => {
+  const approved = row({ status: 'approved', requested_by_user_id: 2, employee_id: 2000 })
+  assert.equal(canCancelRequest(approved, 'salon', auth), true)
+  for (const [record, scope] of [[approved, 'self'], [row({ status: 'approved' }), 'salon'],
+    [{ ...approved, employee_id: 1000 }, 'salon'], [{ ...approved, salon_id: 20 }, 'salon'],
+    [{ ...approved, status: 'cancelled' }, 'salon'], [{ ...approved, status: 'pending' }, 'salon']]) {
+    assert.equal(canCancelRequest(record, scope, auth), false)
+  }
+})
+test('cancellation: reason is required bounded and rejects NUL', () => {
+  assert.equal(validateCancellationNote('  Promjena plana  '), '')
+  assert.equal(validateCancellationNote('x'.repeat(500)), '')
+  for (const value of ['', ' \n\t ', null, 1, 'x'.repeat(501), 'bad\0']) assert.notEqual(validateCancellationNote(value), '')
+})
+test('cancellation: history accepts cancelled status without reopening actions', () => {
+  const cancelled = row({ status: 'cancelled' })
+  assert.doesNotThrow(() => assertRequestPage({ scope: 'self', requests: [cancelled] }, auth))
+  assert.deepEqual(requestActions(cancelled, 'salon', auth), { withdraw: false, review: false })
+})
+test('cancellation: sends trimmed reason and validates audit response', async () => {
+  const controller = new AbortController()
+  const api = createTimeOffRequestApi({ request: async (path, options) => {
+    assert.equal(path, '/api/time-off-requests/5/cancel')
+    assert.equal(options.method, 'POST')
+    assert.equal(options.signal, controller.signal)
+    assert.deepEqual(JSON.parse(options.body), { cancellation_note: 'Promjena' })
+    return response({ data: row({ status: 'cancelled', cancelled_at: '2030-01-01T12:00:00Z', cancelled_by_user_id: 2, cancellation_note: 'Promjena' }) })
+  } })
+  assert.equal((await api.cancel(5, ' Promjena ', { signal: controller.signal })).status, 'cancelled')
+})
+test('cancellation: invalid reason and id never reach network', async () => {
+  const api = createTimeOffRequestApi({ request: () => assert.fail('Unexpected request') })
+  for (const reason of ['', '  ', undefined, 'x'.repeat(501), 'bad\0']) await assert.rejects(api.cancel(5, reason))
+  await assert.rejects(api.cancel('1e2', 'Promjena'))
+})
+test('cancellation: approved or unaudited response fails closed', async () => {
+  for (const data of [row({ status: 'approved' }), row({ status: 'cancelled' }), null]) {
+    const api = createTimeOffRequestApi({ request: async () => response({ data }) })
+    await assert.rejects(api.cancel(5, 'Promjena'), { code: 'TIME_OFF_RESPONSE_INVALID' })
+  }
+})
+test('cancellation: filters cancelled records and translates stale state', async () => {
+  const api = createTimeOffRequestApi({ request: async path => {
+    assert.equal(path, '/api/time-off-requests?status=cancelled')
+    return response({ data: [], meta: { scope: 'self', next_before_id: null } })
+  } })
+  await api.list({ status: 'cancelled' })
+  const conflict = createTimeOffRequestApi({ request: async () => response({ error: { code: 'TIME_OFF_REQUEST_NOT_APPROVED' } }, 409) })
+  await assert.rejects(conflict.cancel(5, 'Promjena'), error => error.statusCode === 409 && error.message.includes('više nije odobren'))
+})
+test('cancellation: network failure never retries a destructive action', async () => {
+  let calls = 0
+  const api = createTimeOffRequestApi({ request: async () => { calls++; throw new TypeError('Offline') } })
+  await assert.rejects(api.cancel(5, 'Promjena'), { code: 'TIME_OFF_NETWORK_ERROR' })
+  assert.equal(calls, 1)
 })

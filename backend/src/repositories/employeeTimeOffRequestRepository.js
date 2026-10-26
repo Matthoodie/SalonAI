@@ -100,7 +100,8 @@ const REQUEST_VIEW_COLUMNS = `
   r.requester_membership_id, r.requested_by_user_id,
   r.start_date::text AS start_date, r.end_date::text AS end_date,
   r.type, r.note, r.status, r.created_at, r.decided_at,
-  r.decided_by_user_id, r.decision_actor_role, r.decision_note, r.withdrawn_at
+  r.decided_by_user_id, r.decision_actor_role, r.decision_note, r.withdrawn_at,
+  r.cancelled_at, r.cancelled_by_user_id, r.cancellation_actor_role, r.cancellation_note
 `
 
 export async function findTimeOffRequestPage(db, {
@@ -134,5 +135,27 @@ export async function findVisibleTimeOffRequest(db, {
         r.requester_membership_id = $3 AND r.requested_by_user_id = $4
       ))
   `, [salonId, requestId, requesterMembershipId, actorUserId])
+  return result.rows[0] ?? null
+}
+
+export async function deleteRequestTimeOff(db, salonId, request) {
+  const result = await db.query(`
+    DELETE FROM employee_time_off t
+    USING employees e
+    WHERE t.employee_id = e.id AND e.salon_id = $1
+      AND t.source_request_id = $2 AND t.employee_id = $3
+    RETURNING t.id
+  `, [salonId, request.id, request.employee_id])
+  return result.rowCount
+}
+
+export async function cancelApprovedTimeOffRequest(db, data) {
+  const result = await db.query(`
+    UPDATE employee_time_off_requests
+    SET status = 'cancelled', cancelled_at = clock_timestamp(),
+        cancelled_by_user_id = $3, cancellation_actor_role = $4, cancellation_note = $5
+    WHERE salon_id = $1 AND id = $2 AND status = 'approved'
+    RETURNING *, start_date::text AS start_date, end_date::text AS end_date
+  `, [data.salonId, data.requestId, data.actorUserId, data.role, data.note])
   return result.rows[0] ?? null
 }

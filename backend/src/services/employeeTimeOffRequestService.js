@@ -7,6 +7,7 @@ import {
   lockTimeOffEmployee, insertTimeOffRequest, hasOverlappingTimeOff,
   decideTimeOffRequest, insertApprovedTimeOff, withdrawTimeOffRequest,
   findTimeOffRequestPage, findVisibleTimeOffRequest,
+  deleteRequestTimeOff, cancelApprovedTimeOffRequest,
 } from '../repositories/employeeTimeOffRequestRepository.js'
 
 function fail(message, code, statusCode = 403) {
@@ -207,7 +208,7 @@ export async function listEmployeeTimeOffRequests({
 }) {
   const salon = id(salonId)
   const actorId = id(actorUserId)
-  if (status !== undefined && !['pending', 'approved', 'rejected', 'withdrawn'].includes(status)) {
+  if (status !== undefined && !['pending', 'approved', 'rejected', 'withdrawn', 'cancelled'].includes(status)) {
     throw fail('The request status filter is invalid.', 'TIME_OFF_INVALID_INPUT', 400)
   }
   const cursor = beforeId === undefined ? null : id(beforeId)
@@ -239,5 +240,48 @@ export async function getEmployeeTimeOffRequest({ salonId, actorUserId, requestI
     })
     if (!request) throw fail('The request was not found.', 'TIME_OFF_REQUEST_NOT_FOUND', 404)
     return { request }
+  })
+}
+
+export async function cancelEmployeeTimeOffRequest({
+  salonId, actorUserId, requestId, cancellationNote,
+}) {
+  const salon = id(salonId)
+  const actorId = id(actorUserId)
+  const requestKey = id(requestId)
+  const reason = note(cancellationNote)
+  if (!reason) {
+    throw fail('A cancellation reason is required.', 'TIME_OFF_CANCELLATION_NOTE_REQUIRED', 400)
+  }
+  return withAppointmentTransaction(async db => {
+    await beginSalon(db, salon)
+    const initial = await readTimeOffRequest(db, salon, requestKey)
+    const { actor } = await context(db, salon, actorId, initial)
+    if (!['owner', 'admin'].includes(actor.role) || await permission(db, salon, actor) !== 'direct') {
+      throw fail('Your permissions do not allow cancelling approved requests.', 'TIME_OFF_CANCEL_FORBIDDEN')
+    }
+    if (!initial) {
+      throw fail('The request was not found.', 'TIME_OFF_REQUEST_NOT_FOUND', 404)
+    }
+    if (same(initial.requested_by_user_id, actorId) || same(initial.employee_id, actor.employee_id)) {
+      throw fail('You cannot cancel your own approved request.', 'TIME_OFF_SELF_CANCEL_FORBIDDEN')
+    }
+    // Inactive or unlinked requesters must not prevent authorised schedule cleanup.
+    // Use the same employee lock as approvals and appointment creation.
+    await lockTimeOffEmployee(db, salon, initial.employee_id)
+    const request = await readTimeOffRequest(db, salon, requestKey, true)
+    if (!request || request.status !== 'approved') {
+      throw fail('Only an approved request can be cancelled.', 'TIME_OFF_REQUEST_NOT_APPROVED', 409)
+    }
+    // The source FK references status=approved; delete its child BEFORE changing
+    // the status. Both writes roll back together on every failure.
+    if (await deleteRequestTimeOff(db, salon, request) !== 1) {
+      throw fail('The linked absence is missing or inconsistent.', 'TIME_OFF_SOURCE_INCONSISTENT', 409)
+    }
+    const updated = await cancelApprovedTimeOffRequest(db, {
+      salonId: salon, requestId: requestKey, actorUserId: actorId, role: actor.role, note: reason,
+    })
+    if (!updated) throw fail('Only an approved request can be cancelled.', 'TIME_OFF_REQUEST_NOT_APPROVED', 409)
+    return { request: updated }
   })
 }

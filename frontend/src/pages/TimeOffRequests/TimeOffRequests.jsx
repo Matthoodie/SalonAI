@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { timeOffRequestApi, wasTimeOffRequestCancelled } from '../../api/timeOffRequestApi.js'
 import {
+  canCancelRequest, validateCancellationNote,
   timeOffTypes, requestStatuses, validateRequestDraft, formatRequestDate,
   formatRequestTimestamp, requestActions, assertRequestPage, appendRequestPage,
 } from './timeOffRequestView.js'
@@ -98,7 +99,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
     }
   }, [loadPage])
 
-  async function runChange(operation, successMessage, { created = false, approved = false } = {}) {
+  async function runChange(operation, successMessage, { created = false, scheduleChanged = false } = {}) {
     if (busyRef.current || loadingRef.current || uncertain || !data) return
     busyRef.current = true
     setBusy(true)
@@ -114,7 +115,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
       setDecisionNote('')
       if (created) { setDraft(emptyDraft()); setFormOpen(false) }
       // A failed refresh must not be presented as a failed persisted decision.
-      if (approved) {
+      if (scheduleChanged) {
         try { await onApproved() } catch (refreshError) {
           if (mounted.current && !wasTimeOffRequestCancelled(refreshError)) {
             setNotice(`${successMessage} Profil zaposlenika nije osvježen. Osvježite aplikaciju prije uređivanja njegova rasporeda.`)
@@ -130,7 +131,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
       if (requestError.statusCode === 403 || requestError.statusCode === 404 || requestError.statusCode === 409) {
         await loadPage()
         if (!mounted.current) return
-        if (['TIME_OFF_REQUEST_NOT_PENDING', 'TIME_OFF_REQUEST_NOT_FOUND', 'TIME_OFF_REVIEW_FORBIDDEN'].includes(requestError.code)) setReviewId(null)
+        if (['TIME_OFF_REQUEST_NOT_PENDING', 'TIME_OFF_REQUEST_NOT_FOUND', 'TIME_OFF_REVIEW_FORBIDDEN', 'TIME_OFF_CANCEL_FORBIDDEN', 'TIME_OFF_REQUEST_NOT_APPROVED', 'TIME_OFF_SELF_CANCEL_FORBIDDEN'].includes(requestError.code)) setReviewId(null)
       } else if (requestError.statusCode === 401) {
         currentData.current = null
         setData(null)
@@ -165,8 +166,17 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
     runChange(
       signal => timeOffRequestApi.decide(row.id, decision, decisionNote, { signal }),
       decision === 'approved' ? 'Zahtjev je odobren. Odsutnost je spremljena u raspored.' : 'Zahtjev je odbijen.',
-      { approved: decision === 'approved' }
+      { scheduleChanged: decision === 'approved' }
     )
+  }
+
+  function cancelRequest(row) {
+    if (!canCancelRequest(row, data?.scope, authContext)) return
+    const validation = validateCancellationNote(decisionNote)
+    if (validation) { setError(validation); return }
+    if (!window.confirm(`Otkazati odobrenu odsutnost zaposlenika ${row.employee_name || ''} za ${formatRequestDate(row.start_date)} – ${formatRequestDate(row.end_date)}? Odsutnost će biti uklonjena iz rasporeda, a povijest ostaje spremljena.`)) return
+    runChange(signal => timeOffRequestApi.cancel(row.id, decisionNote, { signal }),
+      'Odobrena odsutnost je otkazana i uklonjena iz rasporeda.', { scheduleChanged: true })
   }
 
   const disabled = loading || busy || uncertain || !data
@@ -241,6 +251,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
           <div className="time-off-list">
             {data.requests.map(row => {
               const actions = requestActions(row, data.scope, authContext)
+              const canCancel = canCancelRequest(row, data.scope, authContext)
               return (
                 <article key={row.id} className="time-off-panel" aria-label={`Zahtjev ${row.id}`}>
                   <div className="time-off-card-heading">
@@ -251,20 +262,23 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
                   {row.note && <p className="time-off-note"><strong>Napomena:</strong> {row.note}</p>}
                   {row.decided_at && <p className="time-off-help">Odluka: {formatRequestTimestamp(row.decided_at, timezone)}</p>}
                   {row.decision_note && <p className="time-off-note"><strong>Napomena uz odluku:</strong> {row.decision_note}</p>}
+                  {row.cancelled_at && <p className="time-off-help">Otkazano: {formatRequestTimestamp(row.cancelled_at, timezone)} · {row.cancellation_actor_role === 'owner' ? 'Vlasnik' : 'Administrator'} (korisnik #{row.cancelled_by_user_id})</p>}
+                  {row.cancellation_note && <p className="time-off-note"><strong>Razlog otkazivanja:</strong> {row.cancellation_note}</p>}
                   {row.withdrawn_at && <p className="time-off-help">Povučeno: {formatRequestTimestamp(row.withdrawn_at, timezone)}</p>}
                   <div className="time-off-actions">
                     {actions.withdraw && <button type="button" disabled={disabled} onClick={() => withdrawRequest(row)}>Povuci zahtjev</button>}
-                    {actions.review && String(reviewId) !== String(row.id) && <button type="button" disabled={disabled} onClick={() => {
+                    {(actions.review || canCancel) && String(reviewId) !== String(row.id) && <button type="button" disabled={disabled} onClick={() => {
                       if (decisionNote && !window.confirm('Odbaciti napomenu uz prethodnu odluku?')) return
                       setReviewId(row.id); setDecisionNote('')
-                    }}>Pregledaj i odluči</button>}
+                    }}>{canCancel ? 'Otkaži odobrenu odsutnost' : 'Pregledaj i odluči'}</button>}
                   </div>
-                  {actions.review && String(reviewId) === String(row.id) && (
+                  {(actions.review || canCancel) && String(reviewId) === String(row.id) && (
                     <div className="time-off-review">
-                      <label>Napomena uz odluku (neobavezno)<textarea ref={reviewField} rows={3} maxLength={500} disabled={disabled} value={decisionNote} onChange={event => setDecisionNote(event.target.value)} /></label>
+                      <label>{canCancel ? 'Razlog otkazivanja (obavezno)' : 'Napomena uz odluku (neobavezno)'}<textarea required={canCancel} ref={reviewField} rows={3} maxLength={500} disabled={disabled} value={decisionNote} onChange={event => setDecisionNote(event.target.value)} /></label>
                       <div className="time-off-actions">
+                        {canCancel ? <button type="button" className="time-off-reject" disabled={disabled} onClick={() => cancelRequest(row)}>Potvrdi otkazivanje</button> : <>
                         <button type="button" className="time-off-primary" disabled={disabled} onClick={() => decideRequest(row, 'approved')}>Odobri</button>
-                        <button type="button" className="time-off-reject" disabled={disabled} onClick={() => decideRequest(row, 'rejected')}>Odbij</button>
+                        <button type="button" className="time-off-reject" disabled={disabled} onClick={() => decideRequest(row, 'rejected')}>Odbij</button></>}
                         <button type="button" disabled={busy} onClick={() => { setReviewId(null); setDecisionNote('') }}>Odustani</button>
                       </div>
                     </div>

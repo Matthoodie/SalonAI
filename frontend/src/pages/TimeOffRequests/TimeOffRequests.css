@@ -44,3 +44,5 @@
   .time-off-actions { width: 100%; }
   .time-off-actions button { flex: 1 1 auto; }
 }
+
+.time-off-status-cancelled { background: var(--bg-secondary, #f3f4f6); color: var(--text-primary, #374151); border: 1px solid currentColor; }

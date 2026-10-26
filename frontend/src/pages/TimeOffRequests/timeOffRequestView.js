@@ -3,7 +3,7 @@ export const timeOffTypes = {
   personal: 'Osobni razlozi', other: 'Ostalo',
 }
 export const requestStatuses = {
-  pending: 'Na čekanju', approved: 'Odobreno', rejected: 'Odbijeno', withdrawn: 'Povučeno',
+  pending: 'Na čekanju', approved: 'Odobreno', rejected: 'Odbijeno', withdrawn: 'Povučeno', cancelled: 'Otkazano',
 }
 export function validDateKey(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value) || value < '0001-01-01') return false
@@ -53,4 +53,18 @@ export function appendRequestPage(previous, next) {
   const rows = new Map(previous.requests.map(row => [String(row.id), row]))
   for (const row of next.requests) rows.set(String(row.id), row)
   return { ...next, requests: [...rows.values()] }
+}
+
+export function canCancelRequest(row, scope, authContext) {
+  return row.status === 'approved' && scope === 'salon' &&
+    String(row.salon_id) === String(authContext.current_salon.id) &&
+    String(row.requested_by_user_id) !== String(authContext.user.id) &&
+    (authContext.membership.employee_id == null ||
+      String(row.employee_id) !== String(authContext.membership.employee_id))
+}
+
+export function validateCancellationNote(value) {
+  if (typeof value !== 'string' || !value.trim()) return 'Unesite razlog otkazivanja.'
+  if ([...value].length > 500 || value.includes('\0')) return 'Razlog može sadržavati najviše 500 znakova.'
+  return ''
 }

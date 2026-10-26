@@ -1,6 +1,11 @@
 import { salonFetch } from './salonApiContext.js'
 
 const messages = {
+  TIME_OFF_CANCELLATION_NOTE_REQUIRED: 'Unesite razlog otkazivanja.',
+  TIME_OFF_CANCEL_FORBIDDEN: 'Više nemate ovlast za otkazivanje odobrene odsutnosti.',
+  TIME_OFF_SELF_CANCEL_FORBIDDEN: 'Vlastitu odobrenu odsutnost mora otkazati drugi ovlašteni član.',
+  TIME_OFF_REQUEST_NOT_APPROVED: 'Zahtjev više nije odobren. Osvježite popis.',
+  TIME_OFF_SOURCE_INCONSISTENT: 'Povezana odsutnost nije pronađena. Otkazivanje nije spremljeno; potrebna je provjera podataka.',
   TIME_OFF_INVALID_INPUT: 'Provjerite datume, vrstu odsutnosti i duljinu napomene.',
   TIME_OFF_AUTH_REQUIRED: 'Prijavite se ponovno.',
   TIME_OFF_SALON_CONTEXT_REQUIRED: 'Ponovno odaberite salon.',
@@ -61,7 +66,7 @@ export function createTimeOffRequestApi({ request = salonFetch } = {}) {
 
   return {
     async list({ status = '', beforeId = null, signal } = {}) {
-      if (status && !['pending', 'approved', 'rejected', 'withdrawn'].includes(status)) throw new Error('Status nije valjan.')
+      if (status && !['pending', 'approved', 'rejected', 'withdrawn', 'cancelled'].includes(status)) throw new Error('Status nije valjan.')
       const query = new URLSearchParams()
       if (status) query.set('status', status)
       if (beforeId !== null && beforeId !== undefined) {
@@ -86,6 +91,21 @@ export function createTimeOffRequestApi({ request = salonFetch } = {}) {
     async withdraw(id, { signal } = {}) {
       const body = await write(`/api/time-off-requests/${requestId(id)}/withdraw`, {}, signal)
       if (String(body?.data?.id) !== String(id) || body.data.status !== 'withdrawn') throw Object.assign(new Error('Nije moguće potvrditi povlačenje. Osvježite popis.'), { code: 'TIME_OFF_RESPONSE_INVALID' })
+      return body.data
+    },
+    async cancel(id, cancellationNote, { signal } = {}) {
+      if (typeof cancellationNote !== 'string' || !cancellationNote.trim() ||
+          [...cancellationNote].length > 500 || cancellationNote.includes('\0')) {
+        throw new Error('Unesite razlog otkazivanja do 500 znakova.')
+      }
+      const body = await write(`/api/time-off-requests/${requestId(id)}/cancel`, {
+        cancellation_note: cancellationNote.trim(),
+      }, signal)
+      if (String(body?.data?.id) !== String(id) || body.data.status !== 'cancelled' ||
+          !body.data.cancelled_at || !validId(body.data.cancelled_by_user_id) ||
+          body.data.cancellation_note !== cancellationNote.trim()) {
+        throw Object.assign(new Error('Nije moguće potvrditi otkazivanje. Osvježite popis.'), { code: 'TIME_OFF_RESPONSE_INVALID' })
+      }
       return body.data
     },
     async decide(id, decision, decisionNote, { signal } = {}) {
