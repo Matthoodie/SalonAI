@@ -1,3 +1,4 @@
+import { assertEmployeeScheduleAvailable } from './employeeScheduleConflictService.js'
 import { prepareManualBlockedTimeReplacement } from './approvedBlockedTimeProtectionService.js'
 import { assertEmployeeBlockedTimesAvailable } from './employeeBlockedTimeConflictService.js'
 import { prepareManualTimeOffReplacement } from './approvedTimeOffProtectionService.js'
@@ -961,6 +962,13 @@ export async function updateEmployeeForSalon({
         timeOff,
       })
     }
+
+    await assertEmployeeScheduleAvailable(client, {
+      salonId,
+      employeeId,
+      workingHours,
+      dateOverrides,
+    })
 
     const employee =
       await updateEmployee(
