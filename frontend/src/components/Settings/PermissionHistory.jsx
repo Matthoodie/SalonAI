@@ -16,12 +16,6 @@ const roleLabels = {
   admin: 'Administrator',
 }
 
-const cellStyle = {
-  padding: '12px',
-  borderBottom: '1px solid #e5e7eb',
-  textAlign: 'left',
-  verticalAlign: 'top',
-}
 
 function wasCancelled(error) {
   return (
@@ -208,12 +202,7 @@ function PermissionHistory({
       onToggle={(event) => {
         setIsOpen(event.currentTarget.open)
       }}
-      style={{
-        padding: '20px',
-        border: '1px solid #d1d5db',
-        borderRadius: '12px',
-        marginBottom: '20px',
-      }}
+      className="settings-panel permission-history"
     >
       <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
         Povijest promjena ovlasti i delegacija
@@ -244,97 +233,30 @@ function PermissionHistory({
             !error && <p>Još nema zabilježenih promjena ovlasti.</p>
           ) : (
             <>
-              <div style={{
-                overflowX: 'auto',
-                marginTop: '12px',
-              }}>
-                <table style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                }}>
-                  <thead>
-                    <tr>
-                      {[
-                        'Vrijeme',
-                        'Izvršitelj',
-                        'Vrsta promjene',
-                        'Odnosi se na',
-                        'Postavka',
-                        'Prije',
-                        'Poslije',
-                      ].map((label) => (
-                        <th key={label} scope="col" style={cellStyle}>
-                          {label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {changes.map((change) => (
-                      <tr key={change.id}>
-                        <td style={cellStyle}>
-                          {new Date(change.created_at).toLocaleString(
-                            'hr-HR',
-                            { timeZone: salonTimezone }
-                          )}
-                        </td>
-
-                        <td style={cellStyle}>
-                          <div>
-                            {personLabel(
-                              change.actor_display_name,
-                              change.actor_email,
-                              change.actor_user_id
-                            )}
-                          </div>
-
-                          <small>
-                            Uloga pri promjeni:{' '}
-                            {roleLabels[change.actor_role] ||
-                              change.actor_role}
-                          </small>
-                        </td>
-
-                        <td style={cellStyle}>
-                          {change.action === 'admin_delegation'
-                            ? 'Delegacija administratorima'
-                            : 'Ovlast zaposlenika'}
-                        </td>
-
-                        <td style={cellStyle}>
-                          {change.action === 'admin_delegation'
-                            ? 'Administratori ovog salona'
-                            : personLabel(
-                                change.target_display_name,
-                                change.target_email,
-                                change.target_user_id
-                              )}
-                        </td>
-
-                        <td style={cellStyle}>
-                          {permissionLabels[change.permission_key] ||
-                            change.permission_key}
-                        </td>
-
-                        <td style={cellStyle}>
-                          {valueLabel(
-                            change.previous_value,
-                            change.action
-                          )}
-                        </td>
-
-                        <td style={cellStyle}>
-                          {valueLabel(
-                            change.next_value,
-                            change.action
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ol className="history-list">
+                {changes.map((change) => (
+                  <li className="history-card" key={change.id}>
+                    <div className="history-heading">
+                      <strong>{permissionLabels[change.permission_key] || change.permission_key}</strong>
+                      <time dateTime={change.created_at}>
+                        {new Date(change.created_at).toLocaleString('hr-HR', { timeZone: salonTimezone })}
+                      </time>
+                    </div>
+                    <p className="history-kind">{change.action === 'admin_delegation' ? 'Delegacija administratorima' : 'Ovlast zaposlenika'}</p>
+                    <dl className="history-details">
+                      <div><dt>Odnosi se na</dt><dd>{change.action === 'admin_delegation'
+                        ? 'Administratori ovog salona'
+                        : personLabel(change.target_display_name, change.target_email, change.target_user_id)}</dd></div>
+                      <div><dt>Promijenio/la</dt><dd>{personLabel(change.actor_display_name, change.actor_email, change.actor_user_id)}
+                        <small>Uloga pri promjeni: {roleLabels[change.actor_role] || change.actor_role}</small></dd></div>
+                    </dl>
+                    <dl className="history-transition">
+                      <div><dt>Prije</dt><dd>{valueLabel(change.previous_value, change.action)}</dd></div>
+                      <div><dt>Poslije</dt><dd>{valueLabel(change.next_value, change.action)}</dd></div>
+                    </dl>
+                  </li>
+                ))}
+              </ol>
 
               {nextBeforeId !== null && (
                 <button

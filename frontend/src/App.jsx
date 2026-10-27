@@ -30,6 +30,8 @@ import { mapEmployeesToFrontend } from './api/employeeMapper'
 import { mapServicesToFrontend } from './api/serviceMapper'
 
 import Layout from './components/Layout/Layout'
+import AccountSettings from './components/Settings/AccountSettings'
+import './pages/Settings/Settings.css'
 import InvitationAcceptance from './components/Invitations/InvitationAcceptance'
 
 import PageBoundary from './components/PageBoundary/PageBoundary'
@@ -143,7 +145,7 @@ function isCancelledRequest(error) {
   )
 }
 
-function SalonWorkspace({ authContext }) {
+function SalonWorkspace({ authContext, onInvitationAccepted }) {
   const salonId = authContext.current_salon.id
   const salonTimezone = authContext.current_salon.timezone
 
@@ -375,26 +377,6 @@ function SalonWorkspace({ authContext }) {
 
   return (
     <>
-      {canManage && (
-        <div className="data-tools">
-          <button
-            type="button"
-            onClick={exportSalonData}
-          >
-            Export podataka
-          </button>
-
-          <label>
-            Import podataka (privremeno nedostupno)
-
-            <input
-              type="file"
-              accept="application/json,.json"
-              disabled
-            />
-          </label>
-        </div>
-      )}
       <PageBoundary>
         <Routes>
         <Route
@@ -420,16 +402,16 @@ function SalonWorkspace({ authContext }) {
         <Route
           path="/settings"
           element={
-            canManage ? (
-              <Settings
-                salonId={salonId}
-                salonTimezone={salonTimezone}
+            <div className="settings-page">
+              <AccountSettings
+                authContext={authContext}
+                onAccepted={onInvitationAccepted}
+                onExport={canManage ? exportSalonData : undefined}
               />
-            ) : (
-              <p role="alert">
-                Nemate pristup upravljanju postavkama salona.
-              </p>
-            )
+              {canManage && (
+                <Settings salonId={salonId} salonTimezone={salonTimezone} />
+              )}
+            </div>
           }
         />
         <Route
@@ -736,17 +718,9 @@ function App() {
     <Layout
       currentUser={authContext?.user || user}
       canAccessFullCrm={canAccessFullCrm}
-    >
-      {workspaces.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '12px',
-            marginBottom: '20px',
-          }}
-        >
+      role={authContext?.membership?.role}
+      workspaceControl={workspaces.length > 0 && (
+        <div className="workspace-select">
           <label htmlFor="active-salon">
             Salon
           </label>
@@ -778,6 +752,8 @@ function App() {
           </select>
         </div>
       )}
+    >
+
 
       {isBusy && (
         <p role="status">
@@ -806,7 +782,7 @@ function App() {
         </p>
       )}
 
-      {!isBusy && user && (
+      {!isBusy && user && !authContext && (
         <InvitationAcceptance
           key={user.id}
           currentUser={user}
@@ -823,6 +799,10 @@ function App() {
             `${authContext.user.id}:${authContext.current_salon.id}`
           }
           authContext={authContext}
+          onInvitationAccepted={(salonId) => {
+            saveSelectedSalon(user.id, salonId)
+            window.location.assign('/')
+          }}
         />
       )}
     </Layout>

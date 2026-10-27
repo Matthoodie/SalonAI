@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import './InvitationAcceptance.css'
 
 import {
   acceptInvitation,
@@ -72,20 +73,12 @@ function InvitationAcceptance({
   }
 
   return (
-    <details style={{ marginBottom: '24px' }}>
-      <summary style={{ cursor: 'pointer' }}>
-        Imam kod pozivnice
+    <details className="invitation-acceptance">
+      <summary>
+        Pridruži se salonu kodom pozivnice
       </summary>
 
-      <div
-        style={{
-          padding: '16px',
-          border: '1px solid #d1d5db',
-          borderRadius: '12px',
-          marginTop: '12px',
-          maxWidth: '640px',
-        }}
-      >
+      <div className="invitation-acceptance-body">
         <h2>Pridruživanje salonu</h2>
 
         <p>

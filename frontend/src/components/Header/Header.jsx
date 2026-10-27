@@ -1,18 +1,11 @@
+import ProfileIdentity from '../Profile/ProfileIdentity'
 import './Header.css'
 
-function Header({ currentUser }) {
-  const userLabel =
-    currentUser?.display_name?.trim() ||
-    currentUser?.email ||
-    'Korisnik'
-
+export default function Header({ currentUser, role, workspaceControl }) {
   return (
     <header className="header">
-      <div className="user">
-        {userLabel}
-      </div>
+      <ProfileIdentity currentUser={currentUser} role={role} />
+      {workspaceControl}
     </header>
   )
 }
-
-export default Header

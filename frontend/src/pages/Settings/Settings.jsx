@@ -20,19 +20,6 @@ const valueLabels = {
   self: 'Vlastiti termini',
 }
 
-const sectionStyle = {
-  padding: '20px',
-  border: '1px solid #d1d5db',
-  borderRadius: '12px',
-  marginBottom: '20px',
-}
-
-const cellStyle = {
-  padding: '12px',
-  borderBottom: '1px solid #e5e7eb',
-  textAlign: 'left',
-  verticalAlign: 'top',
-}
 
 function wasCancelled(error) {
   return (
@@ -351,8 +338,8 @@ function Settings({
   }
 
   return (
-    <div style={{ maxWidth: '1100px' }}>
-      <h1>Postavke</h1>
+    <div className="salon-permission-settings">
+      <h2 className="settings-section-title">Upravljanje ovlastima</h2>
 
       <p>
         Operativne ovlasti zaposlenika u odabranom salonu.
@@ -375,8 +362,8 @@ function Settings({
 
       {!isLoading && data && (
         <>
-          <section style={sectionStyle}>
-            <h2>Ovlasti zaposlenika</h2>
+          <section className="settings-panel">
+            <h3>Ovlasti zaposlenika</h3>
 
             <p>
               „Naslijedi pravilo uloge” koristi zajedničko pravilo
@@ -433,44 +420,20 @@ function Settings({
                       </p>
                     )}
 
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={{
-                        width: '100%',
-                        borderCollapse: 'collapse',
-                      }}>
-                        <thead>
-                          <tr>
-                            {[
-                              'Radnja',
-                              'Pravilo uloge',
-                              'Pojedinačna postavka',
-                              'Spremljeno rezultirajuće pravilo',
-                              'Spremanje',
-                            ].map((label) => (
-                              <th key={label} scope="col" style={cellStyle}>
-                                {label}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-
-                        <tbody>
-                          {data.permissions.map((permission) => {
-                            const key = permission.key
-                            const choice = drafts[key] ?? storedChoice(key)
-                            const changed = choice !== storedChoice(key)
-
-                            return (
-                              <tr key={key}>
-                                <th scope="row" style={cellStyle}>
-                                  {permissionLabels[key] || key}
-                                </th>
-
-                                <td style={cellStyle}>
-                                  {valueLabels[permission.inherited_value]}
-                                </td>
-
-                                <td style={cellStyle}>
+                    <div className="permission-cards">
+                      {data.permissions.map((permission) => {
+                        const key = permission.key
+                        const choice = drafts[key] ?? storedChoice(key)
+                        const changed = choice !== storedChoice(key)
+                        return (
+                          <article className="permission-card" key={key}>
+                            <h4>{permissionLabels[key] || key}</h4>
+                            <dl className="permission-values">
+                              <div><dt>Pravilo uloge</dt><dd>{valueLabels[permission.inherited_value]}</dd></div>
+                              <div><dt>Trenutačno spremljeno</dt><dd>{valueLabels[selectedMember.effective_permissions[key]]}</dd></div>
+                            </dl>
+                            <div className="permission-choice">
+                              <span className="field-caption">Pojedinačna postavka</span>
                                   <select
                                     aria-label={`Ovlast: ${permissionLabels[key]}`}
                                     value={choice}
@@ -494,15 +457,8 @@ function Settings({
                                   </select>
 
                                   {changed && <div><small>Nespremljen izbor</small></div>}
-                                </td>
-
-                                <td style={cellStyle}>
-                                  {valueLabels[
-                                    selectedMember.effective_permissions[key]
-                                  ]}
-                                </td>
-
-                                <td style={cellStyle}>
+                            </div>
+                            <div className="permission-save">
                                   {permission.can_edit === true ? (
                                     <button
                                       type="button"
@@ -514,22 +470,15 @@ function Settings({
                                   ) : (
                                     <small>Uređivanje nije delegirano.</small>
                                   )}
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
+                            </div>
+                          </article>
+                        )
+                      })}
                     </div>
-
-                    <p>
-                      Svaki redak sprema se zasebno. Spremanje jednog
-                      retka i gumb „Osvježi postavke” čuvaju ostale
-                      nespremljene izbore dok ih još smijete uređivati.
-                      Rezultirajuće pravilo prikazuje stanje spremljeno
-                      na poslužitelju. Nespremljeni izbori ne čuvaju se
-                      nakon osvježavanja cijele stranice ili promjene salona.
-                    </p>
+                    <details className="settings-help">
+                      <summary>Kako se spremaju promjene?</summary>
+                      <p>Svaka ovlast sprema se zasebno. Spremanje i osvježavanje postavki čuvaju druge nespremljene izbore dok ih smijete uređivati. Osvježavanje cijele stranice i promjena salona odbacuju nespremljene izbore.</p>
+                    </details>
                   </>
                 )}
               </>
@@ -537,8 +486,8 @@ function Settings({
           </section>
 
           {data.can_manage_delegation === true && (
-            <section style={sectionStyle}>
-              <h2>Delegacija administratorima</h2>
+            <section className="settings-panel">
+              <h3>Delegacija administratorima</h3>
 
               <p>
                 Odaberite koje postavke administratori smiju uređivati
@@ -547,17 +496,7 @@ function Settings({
               </p>
 
               {data.permissions.map((permission) => (
-                <div
-                  key={permission.key}
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px 0',
-                    borderBottom: '1px solid #e5e7eb',
-                  }}
-                >
+                <div key={permission.key} className="delegation-row">
                   <strong>
                     {permissionLabels[permission.key]}
                   </strong>

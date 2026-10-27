@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import './Sidebar.css'
 
 function Sidebar({
@@ -28,71 +28,69 @@ function Sidebar({
       <nav>
         <ul>
           <li>
-            <Link to="/">
-              Dashboard
-            </Link>
+            <NavLink to="/" end onClick={onCloseMobileMenu}>
+              Pregled poslovanja
+            </NavLink>
           </li>
 
           {canAccessFullCrm && (
             <li>
-              <Link
+              <NavLink
                 to="/clients"
                 onClick={onCloseMobileMenu}
               >
                 Klijenti
-              </Link>
+              </NavLink>
             </li>
           )}
 
 <li>
-  <Link 
+  <NavLink
   to="/services"
   onClick={onCloseMobileMenu}
   >
     Usluge
-  </Link>
+  </NavLink>
 </li>
 
 <li>
-  <Link
+  <NavLink
     to="/employees"
     onClick={onCloseMobileMenu}
   >
     Zaposlenici
-  </Link>
+  </NavLink>
 </li>
           <li>
-            <Link to="/appointments"
+            <NavLink to="/appointments"
             onClick={onCloseMobileMenu}>
               Termini
-            </Link>
+            </NavLink>
           </li>
 <li>
-  <Link to="/calendar"
+  <NavLink to="/calendar"
   onClick={onCloseMobileMenu}>
     Kalendar
-  </Link>
+  </NavLink>
 </li>
           <li>
-            <Link to="/time-off-requests" onClick={onCloseMobileMenu}>
+            <NavLink to="/time-off-requests" onClick={onCloseMobileMenu}>
               Zahtjevi za odsutnost
-            </Link>
+            </NavLink>
           </li>
           <li>
-            <Link to="/blocked-time-requests" onClick={onCloseMobileMenu}>
+            <NavLink to="/blocked-time-requests" onClick={onCloseMobileMenu}>
               Zahtjevi za blokirano vrijeme
-            </Link>
+            </NavLink>
           </li>
-          {canAccessFullCrm && (
-            <li>
-              <Link
+          <li>
+              <NavLink
                 to="/settings"
                 onClick={onCloseMobileMenu}
               >
                 Postavke
-              </Link>
+              </NavLink>
             </li>
-          )}
 
         </ul>
       </nav>

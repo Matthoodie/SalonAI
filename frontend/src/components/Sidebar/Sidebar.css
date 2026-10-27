@@ -77,3 +77,11 @@
     padding-right: 44px;
   }
 }
+
+.app-sidebar { text-align: left; padding: 24px 16px; }
+.app-sidebar h1 { font-size: 36px; padding-left: 12px; margin-bottom: 28px; letter-spacing: -1px; }
+.app-sidebar li { padding: 3px 0; }
+.app-sidebar a { padding: 11px 12px; border-radius: 10px; font-size: 15px; line-height: 1.45; overflow-wrap: anywhere; }
+.app-sidebar a:hover { background: #1e293b; }
+.app-sidebar a[aria-current="page"] { background: #4f46e5; color: white; font-weight: 600; }
+.app-sidebar a:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 2px; }

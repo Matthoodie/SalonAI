@@ -6,6 +6,8 @@ import './Layout.css'
 function Layout({
   children,
   currentUser,
+  role,
+  workspaceControl,
   canAccessFullCrm = false,
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] =
@@ -48,7 +50,7 @@ function Layout({
         </button>
       </div>
 
-      <Header currentUser={currentUser} />
+      <Header currentUser={currentUser} role={role} workspaceControl={workspaceControl} />
 
       <div className="app-page-content">
         {children}
