@@ -50,6 +50,8 @@ function Services({
   salonId,
   canManageServices = false,
 }) {
+  const [formFocusRequest, setFormFocusRequest] = useState(0)
+
   const [isFormOpen, setIsFormOpen] =
     useState(false)
 
@@ -154,6 +156,7 @@ function Services({
 
     setEditingService(service)
     setIsFormOpen(true)
+    setFormFocusRequest(value => value + 1)
   }
 
   async function updateService(updatedService) {
@@ -381,6 +384,7 @@ function Services({
             onClick={() => {
               setEditingService(null)
               setIsFormOpen(true)
+              setFormFocusRequest(value => value + 1)
             }}
           >
             + Nova usluga
@@ -394,6 +398,7 @@ function Services({
           onUpdateService={updateService}
           onCancel={cancelServiceForm}
           editingService={editingService}
+          focusRequest={formFocusRequest}
           isCreating={isCreatingService}
           isUpdating={isUpdatingService}
         />

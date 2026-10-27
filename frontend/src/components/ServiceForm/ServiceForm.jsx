@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './ServiceForm.css'
 
 function ServiceForm({
@@ -6,9 +6,29 @@ function ServiceForm({
   onUpdateService,
   onCancel,
   editingService,
+  focusRequest = 0,
   isCreating = false,
   isUpdating = false,
 }) {
+  const formRef = useRef(null)
+  const nameInputRef = useRef(null)
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const form = formRef.current
+      const input = nameInputRef.current
+      if (!form || !input) return
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      input.focus({ preventScroll: true })
+      form.scrollIntoView({
+        behavior: reducedMotion ? 'instant' : 'smooth',
+        block: 'start',
+        inline: 'nearest',
+      })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [focusRequest])
+
   const isSaving =
     isCreating || isUpdating
 
@@ -142,7 +162,10 @@ function ServiceForm({
   }
 
   return (
-    <div className="service-form">
+    <div
+      ref={formRef}
+      className={`service-form${editingService ? ' service-form-editing' : ''}`}
+    >
       <div className="service-form-header">
         <div>
           <span className="service-form-eyebrow">
@@ -175,6 +198,7 @@ function ServiceForm({
         </label>
 
         <input
+          ref={nameInputRef}
           id="service-name"
           type="text"
           value={name}
