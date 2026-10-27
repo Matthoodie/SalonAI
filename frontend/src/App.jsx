@@ -418,6 +418,8 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
           path="/"
           element={
             <Dashboard
+              salonTimezone={salonTimezone}
+              canManage={canManage}
               appointmentList={appointmentList}
               clientList={clientList}
             />
