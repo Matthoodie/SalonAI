@@ -246,3 +246,28 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+
+.appointment-form .appointment-service-picker { min-width: 0; padding: 16px; margin: 18px 0; border: 1px solid #ccd7ec; border-radius: 12px; }
+.appointment-form .appointment-service-picker legend { font-weight: 700; padding: 0 6px; }
+.appointment-form .appointment-service-picker > label { display: grid; gap: 6px; text-align: left; }
+.appointment-form .appointment-service-picker input[type="search"] { width: 100%; min-width: 0; padding: 10px; border: 1px solid #ccd7ec; border-radius: 8px; font: inherit; }
+.appointment-form .appointment-service-options { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; margin-top: 12px; }
+.appointment-form .appointment-service-options label { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #e0e6f1; border-radius: 8px; text-align: left; cursor: pointer; }
+.appointment-form .appointment-service-options .is-selected { background: #efefff; border-color: #b6b1ff; }
+.appointment-form .appointment-service-options input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; flex: 0 0 18px; accent-color: #5145e8; }
+.appointment-form .appointment-service-options span, .appointment-form .appointment-service-selected span { min-width: 0; overflow-wrap: anywhere; }
+.appointment-form .appointment-service-picker small { display: block; margin-top: 3px; color: #60758d; }
+.appointment-form .appointment-service-selected { padding-left: 22px; }
+.appointment-form .appointment-service-selected li { margin: 10px 0; }
+.appointment-form .appointment-service-selected button { margin-top: 5px; font: inherit; padding: 5px 10px; }
+.appointment-form .appointment-service-help { font-size: 13px; }
+.appointment-form .appointment-service-total { padding: 12px; background: #efefff; border-radius: 8px; }
+.appointment-form .appointment-saved-services { padding: 16px; border: 1px solid #ccd7ec; border-radius: 12px; margin: 16px 0; overflow-wrap: anywhere; }
+.appointment-form .appointment-services-editor { border: 1px solid #b6b1ff; border-radius: 12px; padding: 16px; margin: 20px 0; background: #f9f9ff; min-width: 0; }
+.appointment-form .appointment-services-editor > button { margin: 8px 8px 0 0; padding: 10px 14px; border: 1px solid #ccd7ec; border-radius: 8px; font: inherit; }
+.appointment-form .appointment-services-editor > button:first-of-type { background: #5145e8; color: white; }
+.appointment-form button:disabled { cursor: not-allowed; opacity: .55; }
+.appointment-form .appointment-service-picker :focus-visible { outline: 3px solid #9d96ff; outline-offset: 2px; }
+@media (max-width: 600px) {
+  .appointment-form .appointment-service-picker, .appointment-form .appointment-services-editor { padding: 10px; }
+}

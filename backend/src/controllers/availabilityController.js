@@ -16,6 +16,15 @@ export async function getAvailability(
             Number(req.query.serviceId)
 
         const { date } = req.query
+        const slotIntervalMinutes = req.query.slotIntervalMinutes === undefined
+          ? 30 : Number(req.query.slotIntervalMinutes)
+        if (req.query.slotIntervalMinutes !== undefined &&
+            (!['15', '30'].includes(req.query.slotIntervalMinutes))) {
+          return res.status(400).json({ error: {
+            code: 'INVALID_SLOT_INTERVAL',
+            message: 'slotIntervalMinutes must be 15 or 30.',
+          } })
+        }
         let serviceIds
         if (req.query.serviceIds !== undefined) {
           const raw = req.query.serviceIds
@@ -71,6 +80,7 @@ export async function getAvailability(
                 employeeId,
                 serviceId,
                 serviceIds,
+                slotIntervalMinutes,
                 date,
             })
 
@@ -91,6 +101,7 @@ export async function getAvailability(
                 employeeId,
                 serviceId: serviceIds?.[0] ?? serviceId,
                 serviceIds,
+                slotIntervalMinutes,
                 date,
                 timezone:
                     result.data.salon.timezone,

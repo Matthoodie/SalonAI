@@ -1,3 +1,8 @@
+import ServiceSelection from './ServiceSelection.jsx'
+import AppointmentServicesEditor from './AppointmentServicesEditor.jsx'
+import { appointmentServicesApi } from '../../api/appointmentServicesApi.js'
+import { draftItems, sumItems, employeeSupportsServices, formatServicePrice } from '../../api/appointmentItemsView.js'
+import { getSalonLocalDateParts } from '../../api/salonDateTime.js'
 import {
   canUseAppointmentPermission,
 } from '../../api/appointmentPermissions'
@@ -30,14 +35,12 @@ function addMinutesToTime(time, minutesToAdd) {
     Number(minutesToAdd)
 
   const endHours =
-    Math.floor(totalMinutes / 60)
+    Math.floor(totalMinutes / 60) % 24
 
   const endMinutes =
     totalMinutes % 60
 
-  return `${String(endHours).padStart(2, '0')}:${String(
-    endMinutes
-  ).padStart(2, '0')}`
+  return `${String(endHours).padStart(2, '0')}:${String(endMinutes).padStart(2, '0')}${totalMinutes >= 1440 ? ' (sljedeći dan)' : ''}`
 }
 
 const timeOptions = []
@@ -67,6 +70,8 @@ function getTodayDate() {
 
 function AppointmentForm({
   authContext,
+  salonTimezone,
+  onChangeServices,
   appointments = [],
   serviceList = [],
   clientList = [],
@@ -81,10 +86,6 @@ function AppointmentForm({
   initialDate = '',
 }) {
 
-  const activeServices = serviceList.filter(
-    (serviceItem) => serviceItem.active
-  )
-
   const editingClientName =
     editingAppointment?.clientName || ''
 
@@ -94,21 +95,6 @@ function AppointmentForm({
       !editingAppointment.clientId &&
       editingClientName
     )
-
-  const editingServiceName =
-    editingAppointment?.serviceName ||
-    editingAppointment?.service ||
-    ''
-  const isLegacyEditingService =
-    Boolean(
-      editingAppointment &&
-      editingServiceName &&
-      !serviceList.some(
-        (serviceItem) =>
-          serviceItem.name === editingServiceName
-      )
-    )
-
 
   const [date, setDate] = useState(getTodayDate())
   const [time, setTime] = useState('')
@@ -122,7 +108,8 @@ function AppointmentForm({
     isQuickAddClientOpen,
     setIsQuickAddClientOpen,
   ] = useState(false)
-  const [service, setService] = useState('')
+  const [selectedServiceIds, setSelectedServiceIds] = useState([])
+  const [servicesDirty, setServicesDirty] = useState(false)
 
   const [selectedLookupClient, setSelectedLookupClient] =
     useState(null)
@@ -200,34 +187,48 @@ function AppointmentForm({
   const [employeeId, setEmployeeId] =
     useState('')
 
-  const selectedServiceForEmployee =
-    serviceList.find(
-      (serviceItem) =>
-        serviceItem.name === service
-    ) || null
-
-  const selectedServiceDuration =
-    selectedServiceForEmployee
-      ?.defaultDurationMinutes || 0
-
-  const appointmentEndTime =
-    time && selectedServiceDuration
-      ? addMinutesToTime(
-        time,
-        selectedServiceDuration
-      )
-      : ''
-
-  const availableEmployees =
-    selectedServiceForEmployee
-      ? employeeList.filter(
-        (employee) =>
-          employee.active !== false &&
-          employee.serviceIds?.includes(
-            selectedServiceForEmployee.id
-          )
-      )
-      : []
+  let selectedItems = [], selectionError = ''
+  try {
+    if (selectedServiceIds.length) selectedItems = draftItems(selectedServiceIds, serviceList)
+  } catch (error) { selectionError = error.message }
+  let selectedTotals = { durationMinutes: 0, priceCents: 0 }
+  try { selectedTotals = sumItems(selectedItems) } catch (error) { selectionError = error.message }
+  const selectedServiceForEmployee = editingAppointment || selectedItems[0] || null
+  const selectedServiceDuration = editingAppointment
+    ? Number(editingAppointment.durationMinutes)
+    : selectedTotals.durationMinutes
+  const appointmentEndTime = time && selectedServiceDuration
+    ? addMinutesToTime(time, selectedServiceDuration) : ''
+  const availableEmployees = editingAppointment
+    ? employeeList.filter(employee => String(employee.id) === String(editingAppointment.employeeId))
+    : employeeList.filter(employee =>
+        employeeSupportsServices(employee, selectedServiceIds) &&
+        canUseAppointmentPermission(authContext, 'appointment.create', employee.id))
+  const [availability, setAvailability] = useState({ key: '', loading: false, slots: [], error: '' })
+  const [availabilityVersion, setAvailabilityVersion] = useState(0)
+  const selectionKey = selectedServiceIds.join(',')
+  const availabilityKey = [authContext?.current_salon?.id, employeeId, selectionKey, date, salonTimezone, availabilityVersion].join('|')
+  useEffect(() => {
+    if (editingAppointment || !employeeId || !selectionKey || !date || !salonTimezone || selectionError) return
+    const controller = new AbortController()
+    let current = true
+    setAvailability({ key: availabilityKey, loading: true, slots: [], error: '' })
+    appointmentServicesApi.availability({
+      employeeId, ids: selectionKey.split(','), date, timezone: salonTimezone, signal: controller.signal,
+    }).then(data => {
+      if (current) setAvailability({
+        key: availabilityKey, loading: false, slots: data.availableSlots,
+        error: data.durationMinutes !== selectedServiceDuration
+          ? 'Trajanje u cjeniku promijenjeno je. Osvježite stranicu prije rezervacije.' : '',
+      })
+    }).catch(error => {
+      if (current && !controller.signal.aborted) setAvailability({
+        key: availabilityKey, loading: false, slots: [], error: error.message || 'Dostupnost nije učitana.',
+      })
+    })
+    return () => { current = false; controller.abort() }
+  }, [availabilityKey, editingAppointment, employeeId, selectionKey, date, salonTimezone, selectionError, selectedServiceDuration])
+  const availabilityReady = availability.key === availabilityKey && !availability.loading && !availability.error
 
   const selectedEmployeeForAvailability =
     employeeList.find(
@@ -236,7 +237,7 @@ function AppointmentForm({
         String(employeeId)
     ) || null
 
-  const availableTimeOptions =
+  const localTimeOptions =
     date &&
       employeeId &&
       selectedServiceDuration > 0
@@ -266,6 +267,10 @@ function AppointmentForm({
       )
       : []
 
+
+  const availableTimeOptions = editingAppointment
+    ? localTimeOptions
+    : availabilityReady ? availability.slots : []
 
   const unavailableTimeReasons =
     date &&
@@ -391,6 +396,11 @@ function AppointmentForm({
   }
 
 
+  if (!editingAppointment && employeeId && selectedServiceIds.length) {
+    if (!availabilityReady) timeOptionsMessage = availability.error || 'Učitavanje slobodnih termina…'
+    else if (!availableTimeOptions.length) timeOptionsMessage = 'Nema slobodnog termina za ukupno trajanje usluga.'
+  }
+
   const dateInputRef = useRef(null)
   const timeInputRef = useRef(null)
   const clientNameInputRef = useRef(null)
@@ -441,25 +451,19 @@ function AppointmentForm({
             : ''
       )
 
-      setService(
-        editingAppointment.serviceName ||
-        editingAppointment.service ||
-        ''
-      )
-
       setEmployeeId(
         editingAppointment.employeeId
           ? String(editingAppointment.employeeId)
           : ''
       )
     } else {
-      setDate(initialDate || getTodayDate())
+      setDate(initialDate || (salonTimezone ? getSalonLocalDateParts(new Date().toISOString(), salonTimezone).date : getTodayDate()))
       setTime('')
       setClientName('')
       setClientId('')
       setClientSearch('')
       setIsClientSearchOpen(false)
-      setService('')
+      setSelectedServiceIds([])
       setEmployeeId('')
     }
 
@@ -473,6 +477,7 @@ function AppointmentForm({
   }, [editingAppointment, initialDate])
 
     useEffect(() => {
+    setServicesDirty(false)
     setPendingClient(null)
     setSelectedLookupClient(null)
     setIsQuickAddClientOpen(false)
@@ -560,14 +565,9 @@ function AppointmentForm({
   )
 
   async function handleSubmit() {
-    if (!canSubmitForm || isCreating || isUpdating) {
+    if (!canSubmitForm || isCreating || isUpdating || servicesDirty) {
       return
     }
-
-    const selectedService = serviceList.find(
-      (serviceItem) =>
-        serviceItem.name === service
-    )
 
     const selectedClient =
       (!editingAppointment && pendingClient) ||
@@ -596,14 +596,12 @@ function AppointmentForm({
           String(employee.id) === employeeId
       )
 
-    const candidateDuration =
-      Number(
-        selectedService?.defaultDurationMinutes ??
-        editingAppointment?.serviceDurationMinutes
-      ) || 0
+    const candidateDuration = selectedServiceDuration
 
     const availabilityResult =
-      selectedEmployee &&
+      editingAppointment &&
+        (date !== editingAppointment.date || time !== editingAppointment.time) &&
+        selectedEmployee &&
         candidateDuration > 0 &&
         date &&
         time
@@ -688,10 +686,6 @@ function AppointmentForm({
       !selectedClient &&
       clientName === editingClientName
 
-    const isUnchangedLegacyService =
-      isLegacyEditingService &&
-      service === editingServiceName
-
     const newErrors = {
       date: date
         ? ''
@@ -699,7 +693,9 @@ function AppointmentForm({
 
       time: !time
         ? 'Odaberite vrijeme termina.'
-        : availabilityErrorMessage,
+        : !editingAppointment && (!availabilityReady || !availableTimeOptions.includes(time))
+          ? 'Ponovno odaberite slobodno vrijeme za odabrane usluge.'
+          : availabilityErrorMessage,
 
       clientName:
         selectedClient ||
@@ -708,12 +704,9 @@ function AppointmentForm({
           : 'Odaberite klijenta.',
 
       service:
-        selectedService ||
-          isUnchangedLegacyService
-          ? ''
-          : 'Odaberite uslugu.',
+        editingAppointment ? '' : selectionError || (selectedItems.length ? '' : 'Odaberite barem jednu uslugu.'),
 
-      employee: selectedEmployee
+      employee: selectedEmployee && (editingAppointment || employeeSupportsServices(selectedEmployee, selectedServiceIds))
         ? ''
         : 'Odaberite zaposlenika.',
     }
@@ -778,22 +771,23 @@ function AppointmentForm({
           employeeId: selectedEmployee.id,
           employeeName: selectedEmployee.name,
 
-          service: selectedService.name,
-
-          serviceId: selectedService.id,
-          serviceName: selectedService.name,
-          servicePrice: selectedService.price,
-          serviceDurationMinutes:
-            selectedService.defaultDurationMinutes,
+          serviceIds: selectedServiceIds,
+          service: selectedItems.map(item => item.name).join(' + '),
+          serviceId: selectedItems[0].service_id,
+          serviceName: selectedItems.map(item => item.name).join(' + '),
+          servicePrice: selectedTotals.priceCents / 100,
+          serviceDurationMinutes: selectedServiceDuration,
         })
 
       if (!createSucceeded) {
+        setTime('')
+        setAvailabilityVersion(value => value + 1)
         return
       }
     }
 
     setSelectedLookupClient(null)
-    setDate(getTodayDate())
+    setDate(salonTimezone ? getSalonLocalDateParts(new Date().toISOString(), salonTimezone).date : getTodayDate())
     setTime('')
     setClientName('')
     setClientId('')
@@ -801,7 +795,7 @@ function AppointmentForm({
     setClientSearch('')
     setIsClientSearchOpen(false)
     setIsQuickAddClientOpen(false)
-    setService('')
+    setSelectedServiceIds([])
     setEmployeeId('')
 
     setErrors({
@@ -815,6 +809,7 @@ function AppointmentForm({
 
   function handleDateChange(event) {
     setDate(event.target.value)
+    if (!editingAppointment) setTime('')
 
     if (errors.date || errors.time) {
       setErrors((currentErrors) => ({
@@ -836,17 +831,11 @@ function AppointmentForm({
     }
   }
 
-  function handleServiceChange(event) {
-    setService(event.target.value)
+  function handleServicesChange(ids) {
+    setSelectedServiceIds(ids)
     setEmployeeId('')
     setTime('')
-
-    if (errors.service) {
-      setErrors((currentErrors) => ({
-        ...currentErrors,
-        service: '',
-      }))
-    }
+    setErrors(current => ({ ...current, service: '', employee: '', time: '' }))
   }
 
   if (!canSubmitForm) {
@@ -882,7 +871,7 @@ function AppointmentForm({
 
         <input
           id="appointment-date"
-          disabled={!canEditScheduleFields}
+          disabled={!canEditScheduleFields || isUpdating || isCreating}
           ref={dateInputRef}
           className={
             errors.date
@@ -913,7 +902,7 @@ function AppointmentForm({
 
         <input
           id="appointment-client"
-          disabled={!canEditClientFields}
+          disabled={!canEditClientFields || isUpdating || isCreating}
           ref={clientNameInputRef}
           type="search"
           className={
@@ -1050,54 +1039,18 @@ function AppointmentForm({
         </p>
       </div>
 
-      <div className="form-field">
-        <label htmlFor="appointment-service">
-          Usluga
-        </label>
-
-        <select
-          id="appointment-service"
-          disabled={Boolean(editingAppointment) || !canCreate}
-          ref={serviceInputRef}
-          className={
-            errors.service
-              ? 'input-error'
-              : ''
-          }
-          value={service}
-          onChange={handleServiceChange}
-        >
-          <option value="">
-            Odaberite uslugu
-          </option>
-
-          {isLegacyEditingService && (
-            <option value={editingServiceName}>
-              Stara usluga — {editingServiceName}
-            </option>
-          )}
-
-          {activeServices.map(
-            (serviceItem) => (
-              <option
-                key={serviceItem.id}
-                value={serviceItem.name}
-              >
-                {serviceItem.name}
-              </option>
-            )
-          )}
-        </select>
-
-        <p
-          className={
-            errors.service
-              ? 'form-error form-error-visible'
-              : 'form-error'
-          }
-        >
-          {errors.service || '\u00A0'}
-        </p>
+      <div ref={serviceInputRef} tabIndex={-1}>
+        {editingAppointment ? (
+          <div className="appointment-saved-services">
+            <h3>Usluge termina</h3>
+            <ol>{editingAppointment.items?.map(item => <li key={item.service_id}>
+              {item.name} — {item.duration_minutes} min · {formatServicePrice(item.price_cents)}
+            </li>)}</ol>
+            <strong>Ukupno: {selectedServiceDuration} min · {formatServicePrice(editingAppointment.priceCents)}</strong>
+          </div>
+        ) : <ServiceSelection ids={selectedServiceIds} onChange={handleServicesChange}
+            services={serviceList} disabled={!canCreate || isCreating} />}
+        {errors.service && <p className="form-error form-error-visible" role="alert">{errors.service}</p>}
       </div>
 
       <div className="form-field">
@@ -1179,6 +1132,7 @@ function AppointmentForm({
           value={time}
           onChange={handleTimeChange}
           disabled={
+            isUpdating || isCreating ||
             !canEditScheduleFields ||
             !selectedServiceForEmployee ||
             !employeeId
@@ -1188,6 +1142,9 @@ function AppointmentForm({
             {timeOptionsMessage}
           </option>
 
+          {editingAppointment && !availableTimeOptions.includes(time) && time && (
+            <option value={time}>{time} — spremljeno vrijeme</option>
+          )}
           {availableTimeOptions.map(
             (timeOption) => (
               <option
@@ -1210,6 +1167,13 @@ function AppointmentForm({
         </p>
       </div>
 
+      {!editingAppointment && availability.error && availability.key === availabilityKey && (
+        <div role="alert">
+          <p>{availability.error}</p>
+          <button type="button" onClick={() => { setTime(''); setAvailabilityVersion(value => value + 1) }}>Ponovi provjeru dostupnosti</button>
+        </div>
+      )}
+
       {appointmentEndTime && (
         <div className="appointment-duration-preview">
           <span>
@@ -1226,13 +1190,26 @@ function AppointmentForm({
         </div>
       )}
 
+      {editingAppointment && onChangeServices && (
+        <AppointmentServicesEditor
+          key={String(editingAppointment.id) + ':' + (editingAppointment.serviceIds ?? []).join(',')}
+          appointment={editingAppointment} services={serviceList}
+          employee={selectedEmployeeForAvailability} authContext={authContext}
+          disabled={isUpdating || isCreating}
+          otherChanges={date !== editingAppointment.date || time !== editingAppointment.time ||
+            String(clientId) !== String(editingAppointment.clientId)}
+          onSave={onChangeServices} onDirtyChange={setServicesDirty}
+        />
+      )}
+
+      {servicesDirty && <p role="status">Spremite ili poništite odabir usluga prije spremanja ostalih promjena.</p>}
       <div className="form-actions">
         <button
           type="button"
           className="primary-button"
           onClick={handleSubmit}
           disabled={
-            !canSubmitForm ||
+            !canSubmitForm || servicesDirty ||
             isUpdating ||
             isCreating
           }

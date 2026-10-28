@@ -1,4 +1,5 @@
-import { salonFetch } from './salonApiContext'
+import { serviceIds as validateServiceIds } from './appointmentItemsView.js'
+import { salonFetch } from './salonApiContext.js'
 export async function updateAppointmentStatus(
   appointmentId,
   status
@@ -118,6 +119,7 @@ export async function createAppointment({
   newClient,
   employeeId,
   serviceId,
+  serviceIds,
   startsAt,
   notes = null,
 }) {
@@ -133,7 +135,9 @@ export async function createAppointment({
           ? { new_client: newClient }
           : { client_id: clientId }),
         employee_id: employeeId,
-        service_id: serviceId,
+        ...(serviceIds !== undefined
+          ? { service_ids: validateServiceIds(serviceIds) }
+          : { service_id: serviceId }),
         starts_at: startsAt,
         notes,
       }),

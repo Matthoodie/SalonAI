@@ -416,7 +416,7 @@ if (hasBlockedTimeCollision) {
 
       const existingDuration =
         Number(
-          appointment.serviceDurationMinutes
+          appointment.durationMinutes ?? appointment.serviceDurationMinutes
         ) || 0
 
       if (existingDuration <= 0) {

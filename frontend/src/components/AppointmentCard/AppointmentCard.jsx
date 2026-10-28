@@ -1,3 +1,4 @@
+import { formatServicePrice } from '../../api/appointmentItemsView.js'
 import './AppointmentCard.css'
 
 function formatAppointmentDate(date) {
@@ -100,11 +101,12 @@ function AppointmentCard({
             Usluga
           </span>
 
-          <p>
-            {appointment.serviceName ||
-              appointment.service ||
-              'Nepoznata usluga'}
-          </p>
+          {appointment.items?.length ? (
+            <ul className="appointment-item-list">{appointment.items.map(item => (
+              <li key={item.service_id}><span>{item.name}</span><small>{item.duration_minutes} min · {formatServicePrice(item.price_cents)}</small></li>
+            ))}</ul>
+          ) : <p>{appointment.serviceName || appointment.service || 'Nepoznata usluga'}</p>}
+          <p><strong>Ukupno: {appointment.durationMinutes} min · {formatServicePrice(appointment.priceCents)}</strong></p>
         </div>
         <div className="appointment-detail">
           <span className="appointment-detail-label">

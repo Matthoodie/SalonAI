@@ -1,3 +1,5 @@
+import { serviceSummary } from './appointmentItemsView.js'
+
 const STATUS_LABELS = {
   pending: 'Na čekanju',
   confirmed: 'Zakazano',
@@ -120,6 +122,8 @@ export function mapCalendarAppointmentToFrontend(
 
     notes:
       appointment.notes,
+
+    ...serviceSummary(appointment),
   }
 }
 

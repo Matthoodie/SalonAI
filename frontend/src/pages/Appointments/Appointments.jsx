@@ -1,3 +1,5 @@
+import { appointmentServicesApi } from '../../api/appointmentServicesApi.js'
+import { serviceSummary, canChangeAppointmentServices } from '../../api/appointmentItemsView.js'
 import {
   canUseAppointmentPermission,
   canEditAppointment,
@@ -332,7 +334,7 @@ async function quickAddClient(newClient) {
           ? mapClientToPayload(newClient)
           : undefined,
         employeeId: newAppointment.employeeId,
-        serviceId: newAppointment.serviceId,
+        serviceIds: newAppointment.serviceIds,
         startsAt,
         notes: newAppointment.notes ?? null,
       })
@@ -372,6 +374,7 @@ async function quickAddClient(newClient) {
         statusCode: backendAppointment.status,
         source: backendAppointment.source,
         notes: backendAppointment.notes,
+        ...serviceSummary(backendAppointment),
       }
 
       setAppointmentList((currentAppointments) => [
@@ -588,6 +591,28 @@ async function updateAppointment(
     setUpdatingAppointmentId(null)
   }
 }
+
+  async function changeServices(appointment, ids) {
+    if (updatingAppointmentId !== null || !canChangeAppointmentServices(authContext, appointment)) {
+      throw new Error('Promjena usluga nije dostupna.')
+    }
+    setUpdatingAppointmentId(appointment.id)
+    try {
+      const saved = await appointmentServicesApi.change(appointment.id, ids)
+      if (String(saved.employee_id) !== String(appointment.employeeId) ||
+          String(saved.client_id) !== String(appointment.clientId) ||
+          new Date(saved.starts_at).getTime() !== new Date(appointment.startsAt).getTime()) {
+        throw new Error('Odgovor ne odgovara izvornom terminu. Osvježite podatke.')
+      }
+      const updated = {
+        ...appointment, ...serviceSummary(saved),
+        startsAt: saved.starts_at, endsAt: saved.ends_at,
+      }
+      setAppointmentList(rows => rows.map(row => String(row.id) === String(saved.id) ? updated : row))
+      setEditingAppointment(null)
+      return true
+    } finally { setUpdatingAppointmentId(null) }
+  }
 
   function cancelEditingAppointment() {
     setEditingAppointment(null)
@@ -860,6 +885,8 @@ async function updateAppointment(
       <div ref={appointmentFormRef}>
         <AppointmentForm
           authContext={authContext}
+          salonTimezone={salonTimezone}
+          onChangeServices={changeServices}
           appointments={appointmentList}
           serviceList={serviceList}
           clientList={clientList}

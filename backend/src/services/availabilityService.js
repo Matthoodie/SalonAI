@@ -260,8 +260,12 @@ export async function getAvailabilityDayContext({
     employeeId,
     serviceId,
     serviceIds,
+    slotIntervalMinutes = 30,
     date,
 }) {
+    if (![15, 30].includes(slotIntervalMinutes)) {
+      return { error: { status: 400, code: 'INVALID_SLOT_INTERVAL', message: 'Invalid slot interval.' } }
+    }
     const employee =
         await findEmployeeById(employeeId)
 
@@ -436,6 +440,7 @@ export async function getAvailabilityDayContext({
     const candidateSlots =
         effectiveWorkingWindow.available
             ? generateCandidateSlots({
+                slotIntervalMinutes,
                 startTime:
                     effectiveWorkingWindow.startTime,
                 endTime:

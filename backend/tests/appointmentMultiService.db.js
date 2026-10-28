@@ -304,3 +304,28 @@ test('multi API: selected salon context overrides injected salon ID', () => fixt
   assert.equal(edit.status,400)
   assert.equal((await findAppointmentById(response.body.data.id,f.salonId)).items.length,2)
 }))))
+
+test('multi API: explicit 15 minute slots preserve the appointment form grid', () => fixture(async (f) => withApi(f,'owner',async request=>{
+  const base = '/api/availability?employeeId=' + f.employeeId + '&serviceIds=' + f.services.slice(0,2).join(',') + '&date=2030-01-09'
+  const original = await request(base)
+  assert.equal(original.status, 200)
+  assert.equal(original.body.data.slotIntervalMinutes, 30)
+  assert.equal(original.body.data.availableSlots.includes('08:15'), false)
+  const quarter = await request(base + '&slotIntervalMinutes=15')
+  assert.equal(quarter.status, 200)
+  assert.equal(quarter.body.data.slotIntervalMinutes, 15)
+  assert.equal(quarter.body.data.availableSlots.includes('08:15'), true)
+  assert.equal(quarter.body.data.durationMinutes, 50)
+  await created(f.input)
+  const busy = await request(base + '&slotIntervalMinutes=15')
+  assert.equal(busy.body.data.availableSlots.includes('09:15'), false)
+  assert.equal(busy.body.data.availableSlots.includes('09:00'), true)
+})))
+test('multi API: unsupported or repeated slot interval is rejected', () => fixture(async (f) => withApi(f,'owner',async request=>{
+  const base = '/api/availability?employeeId=' + f.employeeId + '&serviceIds=' + f.services.slice(0,2).join(',') + '&date=2030-01-09'
+  for (const value of ['0','1','-15','15.5','abc','15&slotIntervalMinutes=30']) {
+    const result = await request(base + '&slotIntervalMinutes=' + value)
+    assert.equal(result.status, 400)
+    assert.equal(result.body.error.code, 'INVALID_SLOT_INTERVAL')
+  }
+})))
