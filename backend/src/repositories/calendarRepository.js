@@ -1,3 +1,4 @@
+import { appointmentItemsSql } from './appointmentItemRepository.js'
 import pool from '../database/pool.js'
 
 export async function findCalendarAppointments({
@@ -23,6 +24,7 @@ export async function findCalendarAppointments({
                 a.source,
                 a.notes,
 
+                ${appointmentItemsSql} AS items,
                 c.name AS client_name,
 
                 e.name AS employee_name,

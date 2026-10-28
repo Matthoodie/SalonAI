@@ -51,6 +51,7 @@ function addDaysToDateKey(
 function mapCalendarAppointment(row) {
     return {
         id: Number(row.id),
+        items: row.items ?? [],
 
         salon_id:
             Number(row.salon_id),

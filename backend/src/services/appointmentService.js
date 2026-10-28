@@ -1,3 +1,5 @@
+import { resolveAppointmentItems } from './appointmentItemsService.js'
+import { findAppointmentItems, replaceAppointmentItems } from '../repositories/appointmentItemRepository.js'
 import { withAppointmentTransaction } from './appointmentTransaction.js'
 import { findEmployeeForUpdate } from '../repositories/employeeRepository.js'
 
@@ -502,6 +504,7 @@ async function createInTransaction({
     client_id,
     employee_id,
     service_id,
+    service_ids,
     starts_at,
     notes,
 }, db) {
@@ -526,41 +529,6 @@ async function createInTransaction({
                 status: 400,
                 code: 'SALON_INACTIVE',
                 message: 'Salon is not active.',
-            },
-        }
-    }
-
-    const service = await findServiceById(service_id,
-    db
-)
-
-    if (!service) {
-        return {
-            error: {
-                status: 404,
-                code: 'SERVICE_NOT_FOUND',
-                message: 'Service was not found.',
-            },
-        }
-    }
-
-    if (Number(service.salon_id) !== Number(salon_id)) {
-        return {
-            error: {
-                status: 400,
-                code: 'SERVICE_SALON_MISMATCH',
-                message:
-                    'Service does not belong to the selected salon.',
-            },
-        }
-    }
-
-    if (!service.active) {
-        return {
-            error: {
-                status: 400,
-                code: 'SERVICE_INACTIVE',
-                message: 'Service is not active.',
             },
         }
     }
@@ -617,11 +585,17 @@ if (!client) {
     }
 }
 
+const selection = await resolveAppointmentItems({
+    salon_id, employee_id, service_id, service_ids,
+}, db)
+if (selection.error) return selection
+const selected = selection.data
+
 const startsAt = new Date(starts_at)
 
     const endsAt = new Date(
         startsAt.getTime() +
-        service.default_duration_minutes * 60 * 1000
+        selected.duration_minutes * 60 * 1000
     )
 
     const availabilityResult =
@@ -640,12 +614,12 @@ const startsAt = new Date(starts_at)
         salon_id: Number(salon_id),
         client_id: Number(client_id),
         employee_id: Number(employee_id),
-        service_id: Number(service_id),
+        service_id: selected.items[0].service_id,
         starts_at: startsAt,
         ends_at: endsAt,
-        price_cents: service.price_cents,
+        price_cents: selected.price_cents,
         duration_minutes:
-            service.default_duration_minutes,
+            selected.duration_minutes,
         status: 'confirmed',
         source: 'manual',
         notes: notes ?? null,
@@ -658,8 +632,9 @@ const startsAt = new Date(starts_at)
                 db
             )
 
+        await replaceAppointmentItems(db, appointment, selected.items)
         return {
-            data: appointment,
+            data: { ...appointment, items: await findAppointmentItems(appointment.id, salon_id, db) },
         }
     } catch (error) {
         const mappedError =
@@ -721,4 +696,57 @@ export async function rescheduleAppointment(
       appointmentId, salonId, startsAtInput, employeeId, db
     )
   })
+}
+
+// Updating service composition changes booking length and commercial totals.
+// HTTP access is restricted to owner/admin; scope is still enforced by salonId.
+export async function changeAppointmentServices(appointmentId, salonId, serviceIds, employeeScope = null) {
+  try {
+    return await withAppointmentTransaction(async (db) => {
+      const original = await findAppointmentById(appointmentId, salonId, employeeScope, db)
+      const fail = (status, code, message) => ({ error: { status, code, message } })
+      if (!original) return fail(404, 'APPOINTMENT_NOT_FOUND', 'Appointment was not found.')
+      await findEmployeeForUpdate(db, { employeeId: original.employee_id, salonId })
+      const locked = await db.query(
+        'SELECT * FROM appointments WHERE id = $1 AND salon_id = $2 FOR UPDATE',
+        [appointmentId, salonId]
+      )
+      const appointment = locked.rows[0]
+      if (!appointment) return fail(404, 'APPOINTMENT_NOT_FOUND', 'Appointment was not found.')
+      if (!['pending', 'confirmed'].includes(appointment.status)) {
+        return fail(409, 'APPOINTMENT_SERVICES_CHANGE_NOT_ALLOWED', 'Services can only be changed on an active appointment.')
+      }
+      const employee = await findEmployeeById(appointment.employee_id, db)
+      if (!employee?.active) return fail(400, 'EMPLOYEE_INACTIVE', 'Employee is not active.')
+      const salon = await findSalonById(salonId, db)
+      if (!salon?.active) return fail(400, 'SALON_INACTIVE', 'Salon is not active.')
+      const previous = await findAppointmentItems(appointmentId, salonId, db)
+      const selection = await resolveAppointmentItems({
+        salon_id: salonId, employee_id: appointment.employee_id, service_ids: serviceIds,
+      }, db, previous)
+      if (selection.error) return selection
+      const selected = selection.data
+      const startsAt = new Date(appointment.starts_at)
+      const endsAt = new Date(startsAt.getTime() + selected.duration_minutes * 60000)
+      const availability = await validateAppointmentAvailability({
+        employeeId: appointment.employee_id, startsAt, endsAt, salonTimezone: salon.timezone, db,
+      })
+      if (availability.error) return availability
+      // Delete first so the single-service compatibility trigger cannot rewrite snapshots.
+      await db.query('DELETE FROM appointment_items WHERE appointment_id = $1 AND salon_id = $2',
+        [appointmentId, salonId])
+      await db.query(`
+        UPDATE appointments SET service_id = $3, price_cents = $4,
+          duration_minutes = $5, ends_at = $6, updated_at = NOW()
+        WHERE id = $1 AND salon_id = $2
+      `, [appointmentId, salonId, selected.items[0].service_id,
+        selected.price_cents, selected.duration_minutes, endsAt])
+      await replaceAppointmentItems(db, appointment, selected.items)
+      return { data: await findAppointmentById(appointmentId, salonId, null, db) }
+    })
+  } catch (error) {
+    const mapped = mapDatabaseError(error)
+    if (mapped) return { error: mapped }
+    throw error
+  }
 }

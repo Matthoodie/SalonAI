@@ -1,4 +1,6 @@
+import { parseAppointmentServiceIds } from '../utils/appointmentServices.js'
 import {
+  changeAppointmentServices,
   changeAppointmentClient,
   changeAppointmentStatus,
   getAllAppointments,
@@ -163,6 +165,7 @@ export async function createAppointment(req, res, next) {
       new_client,
       employee_id,
       service_id,
+      service_ids,
       starts_at,
       notes,
     } = req.body ?? {}
@@ -200,7 +203,9 @@ export async function createAppointment(req, res, next) {
 
     const salonId = Number(req.currentSalon?.id)
     const requestedEmployeeId = Number(employee_id)
-    const serviceId = Number(service_id)
+    const selection = parseAppointmentServiceIds({ service_id, service_ids })
+    if (selection.error) return validationError(selection.error.message)
+    const serviceId = selection.data[0]
     const clientId = hasExistingClient
       ? Number(client_id)
       : undefined
@@ -269,7 +274,7 @@ export async function createAppointment(req, res, next) {
       client_id: clientId,
       newClient: new_client,
       employee_id: requestedEmployeeId,
-      service_id: serviceId,
+      service_ids: selection.data,
       starts_at,
       notes,
     })
@@ -561,4 +566,26 @@ export async function updateAppointmentClient(
     } catch (error) {
         next(error)
     }
+}
+
+export async function updateAppointmentServices(req, res, next) {
+  try {
+    const id = Number(req.params.id)
+    const salonId = Number(req.currentSalon?.id)
+    if (!Number.isSafeInteger(id) || id <= 0 || !Number.isSafeInteger(salonId) || salonId <= 0) {
+      return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid appointment or salon ID.' } })
+    }
+    const selection = parseAppointmentServiceIds({
+      service_id: req.body?.service_id, service_ids: req.body?.service_ids,
+    })
+    if (selection.error) return res.status(400).json({ error: selection.error })
+    const scope = await resolveAppointmentPermissionScope({
+      salonId,
+      membership: req.currentMembership,
+      permissionKey: SALON_PERMISSION_KEYS.APPOINTMENT_RESCHEDULE,
+    })
+    const result = await changeAppointmentServices(id, salonId, selection.data, scope.employeeId)
+    if (result.error) return res.status(result.error.status).json({ error: result.error })
+    return res.status(200).json({ data: result.data })
+  } catch (error) { next(error) }
 }

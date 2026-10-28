@@ -15,6 +15,7 @@ export async function createBooking({
     client_id,
     employee_id,
     service_id,
+    service_ids,
     date,
     start_time,
     notes,
@@ -58,6 +59,7 @@ export async function createBooking({
             client_id,
             employee_id,
             service_id,
+            service_ids,
             starts_at:
                 startsAt.toISOString(),
             notes,

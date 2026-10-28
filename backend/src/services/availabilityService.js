@@ -1,3 +1,4 @@
+import { resolveAppointmentItems } from './appointmentItemsService.js'
 import {
     zonedDateTimeToUtc,
 } from '../utils/timezone.js'
@@ -258,6 +259,7 @@ function hasAppointmentCollision({
 export async function getAvailabilityDayContext({
     employeeId,
     serviceId,
+    serviceIds,
     date,
 }) {
     const employee =
@@ -285,61 +287,77 @@ export async function getAvailabilityDayContext({
         }
     }
 
-    const service =
-        await findServiceById(serviceId)
+    let service
+    let selectedItems
+    if (serviceIds !== undefined) {
+      const selection = await resolveAppointmentItems({
+        service_ids: serviceIds, salon_id: employee.salon_id, employee_id: employeeId,
+      })
+      if (selection.error) return selection
+      selectedItems = selection.data.items
+      service = {
+        id: selectedItems[0].service_id,
+        default_duration_minutes: selection.data.duration_minutes,
+        price_cents: selection.data.price_cents,
+      }
+    } else {
+        service =
+            await findServiceById(serviceId)
 
-    if (!service) {
-        return {
-            error: {
-                status: 404,
-                code: 'SERVICE_NOT_FOUND',
-                message:
-                    'Service was not found.',
-            },
+        if (!service) {
+            return {
+                error: {
+                    status: 404,
+                    code: 'SERVICE_NOT_FOUND',
+                    message:
+                        'Service was not found.',
+                },
+            }
         }
-    }
 
-    if (!service.active) {
-        return {
-            error: {
-                status: 400,
-                code: 'SERVICE_INACTIVE',
-                message:
-                    'Service is not active.',
-            },
+        if (!service.active) {
+            return {
+                error: {
+                    status: 400,
+                    code: 'SERVICE_INACTIVE',
+                    message:
+                        'Service is not active.',
+                },
+            }
         }
-    }
 
-    if (
-        Number(service.salon_id) !==
-        Number(employee.salon_id)
-    ) {
-        return {
-            error: {
-                status: 400,
-                code: 'SERVICE_EMPLOYEE_SALON_MISMATCH',
-                message:
-                    'Service and employee do not belong to the same salon.',
-            },
+        if (
+            Number(service.salon_id) !==
+            Number(employee.salon_id)
+        ) {
+            return {
+                error: {
+                    status: 400,
+                    code: 'SERVICE_EMPLOYEE_SALON_MISMATCH',
+                    message:
+                        'Service and employee do not belong to the same salon.',
+                },
+            }
         }
-    }
 
-    const qualification =
-        await findEmployeeServiceQualification(
-            employeeId,
-            serviceId,
-            employee.salon_id
-        )
+        const qualification =
+            await findEmployeeServiceQualification(
+                employeeId,
+                serviceId,
+                employee.salon_id
+            )
 
-    if (!qualification) {
-        return {
-            error: {
-                status: 400,
-                code: 'EMPLOYEE_NOT_QUALIFIED',
-                message:
-                    'Employee is not qualified for the selected service.',
-            },
+        if (!qualification) {
+            return {
+                error: {
+                    status: 400,
+                    code: 'EMPLOYEE_NOT_QUALIFIED',
+                    message:
+                        'Employee is not qualified for the selected service.',
+                },
+            }
         }
+
     }
 
     const salon =
@@ -457,6 +475,7 @@ export async function getAvailabilityDayContext({
     return {
         data: {
             employee,
+            items: selectedItems,
             service,
             salon,
             date,

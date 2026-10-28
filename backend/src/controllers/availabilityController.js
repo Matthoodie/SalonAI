@@ -1,3 +1,4 @@
+import { parseAppointmentServiceIds } from '../utils/appointmentServices.js'
 import {
     getAvailabilityDayContext,
 } from '../services/availabilityService.js'
@@ -15,6 +16,16 @@ export async function getAvailability(
             Number(req.query.serviceId)
 
         const { date } = req.query
+        let serviceIds
+        if (req.query.serviceIds !== undefined) {
+          const raw = req.query.serviceIds
+          const selection = parseAppointmentServiceIds({
+            service_id: req.query.serviceId,
+            service_ids: typeof raw === 'string' ? raw.split(',') : raw,
+          })
+          if (selection.error) return res.status(400).json({ error: selection.error })
+          serviceIds = selection.data
+        }
 
         if (
             !Number.isSafeInteger(employeeId) ||
@@ -30,8 +41,8 @@ export async function getAvailability(
         }
 
         if (
-            !Number.isSafeInteger(serviceId) ||
-            serviceId <= 0
+            serviceIds === undefined && (!Number.isSafeInteger(serviceId) ||
+            serviceId <= 0)
         ) {
             return res.status(400).json({
                 error: {
@@ -59,6 +70,7 @@ export async function getAvailability(
             await getAvailabilityDayContext({
                 employeeId,
                 serviceId,
+                serviceIds,
                 date,
             })
 
@@ -77,7 +89,8 @@ export async function getAvailability(
         res.status(200).json({
             data: {
                 employeeId,
-                serviceId,
+                serviceId: serviceIds?.[0] ?? serviceId,
+                serviceIds,
                 date,
                 timezone:
                     result.data.salon.timezone,

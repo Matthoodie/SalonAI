@@ -1,3 +1,4 @@
+import { appointmentItemsSql } from './appointmentItemRepository.js'
 import pool from '../database/pool.js'
 
 export async function findAllAppointments(
@@ -21,6 +22,7 @@ export async function findAllAppointments(
         a.notes,
         a.created_at,
         a.updated_at,
+        ${appointmentItemsSql} AS items,
         c.name AS client_name
       FROM appointments a
       JOIN clients c
@@ -61,6 +63,7 @@ export async function findAppointmentById(id,
         a.notes,
         a.created_at,
         a.updated_at,
+        ${appointmentItemsSql} AS items,
         c.name AS client_name
       FROM appointments a
       JOIN clients c
@@ -334,7 +337,7 @@ export async function updateAppointmentStatus(
 ) {
     const result = await pool.query(
         `
-      UPDATE appointments
+      UPDATE appointments AS a
       SET
         status = $3,
         updated_at = CURRENT_TIMESTAMP
@@ -358,7 +361,8 @@ export async function updateAppointmentStatus(
         source,
         notes,
         created_at,
-        updated_at
+        updated_at,
+        ${appointmentItemsSql} AS items
     `,
         [
     appointmentId,
@@ -380,7 +384,7 @@ export async function updateAppointmentSchedule(appointmentId,
 ) {
     const result = await db.query(
         `
-      UPDATE appointments
+      UPDATE appointments AS a
       SET
         starts_at = $3,
         ends_at = $4,
@@ -405,7 +409,8 @@ export async function updateAppointmentSchedule(appointmentId,
         source,
         notes,
         created_at,
-        updated_at
+        updated_at,
+        ${appointmentItemsSql} AS items
     `,
         [
     appointmentId,
@@ -427,7 +432,7 @@ export async function updateAppointmentClient(
 ) {
     const result = await pool.query(
         `
-      UPDATE appointments
+      UPDATE appointments AS a
       SET
         client_id = $3,
         updated_at = CURRENT_TIMESTAMP
@@ -451,7 +456,8 @@ export async function updateAppointmentClient(
         source,
         notes,
         created_at,
-        updated_at
+        updated_at,
+        ${appointmentItemsSql} AS items
     `,
         [
     appointmentId,

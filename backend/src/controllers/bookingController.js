@@ -1,3 +1,4 @@
+import { parseAppointmentServiceIds } from '../utils/appointmentServices.js'
 import {
     createBooking as createBookingService,
 } from '../services/bookingService.js'
@@ -31,6 +32,7 @@ export function validateBookingRequestBody(body) {
         client_id,
         employee_id,
         service_id,
+        service_ids,
         date,
         start_time,
         notes,
@@ -40,7 +42,6 @@ export function validateBookingRequestBody(body) {
         salon_id,
         client_id,
         employee_id,
-        service_id,
     }
 
     for (
@@ -67,6 +68,9 @@ export function validateBookingRequestBody(body) {
             }
         }
     }
+
+    const selection = parseAppointmentServiceIds({ service_id, service_ids })
+    if (selection.error) return selection
 
     if (!isValidDateKey(date)) {
         return {
@@ -116,8 +120,9 @@ export function validateBookingRequestBody(body) {
                 Number(client_id),
             employee_id:
                 Number(employee_id),
-            service_id:
-                Number(service_id),
+            ...(service_ids === undefined
+              ? { service_id: selection.data[0] }
+              : { service_ids: selection.data }),
             date,
             start_time,
             notes:

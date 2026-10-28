@@ -1,3 +1,4 @@
+import { requireSalonRole } from '../middleware/roleMiddleware.js'
 import { Router } from 'express'
 
 import {
@@ -7,6 +8,7 @@ import {
   rescheduleAppointment,
   updateAppointmentClient,
   updateAppointmentStatus,
+  updateAppointmentServices,
 } from '../controllers/appointmentController.js'
 
 const router = Router()
@@ -17,6 +19,7 @@ router.post('/', createAppointment)
 router.patch('/:id/status', updateAppointmentStatus)
 router.patch('/:id/schedule', rescheduleAppointment)
 router.patch('/:id/client', updateAppointmentClient)
+router.patch('/:id/services', requireSalonRole('owner', 'admin'), updateAppointmentServices)
 
 
 export default router

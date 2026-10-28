@@ -32,6 +32,7 @@ export function mapDatabaseError(error) {
           'Service does not belong to the selected salon.',
       }
 
+    case 'appointment_items_qualified_fkey':
     case 'appointments_employee_service_qualified_fkey':
       return {
         status: 400,
@@ -40,6 +41,7 @@ export function mapDatabaseError(error) {
           'Employee is not qualified for the selected service.',
       }
 
+    case 'appointment_items_totals_match':
     case 'appointments_duration_matches_time_range':
       return {
         status: 500,
