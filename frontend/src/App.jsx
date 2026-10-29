@@ -449,6 +449,7 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
           path="/services"
           element={
             <Services
+              userId={authContext.user.id}
               canManageServices={canManage}
               serviceList={serviceList}
               setServiceList={setServiceList}

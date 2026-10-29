@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import ServiceImport from '../../components/ServiceImport/ServiceImport.jsx'
 
 import ServiceForm from '../../components/ServiceForm/ServiceForm'
 
 import {
+  fetchServices,
   createService,
   updateService as updateServiceApi,
   updateServiceActive,
@@ -10,6 +12,7 @@ import {
 
 import {
   mapServiceToFrontend,
+  mapServicesToFrontend,
 } from '../../api/serviceMapper'
 
 import './Services.css'
@@ -48,8 +51,16 @@ function Services({
   serviceList = [],
   setServiceList,
   salonId,
+  userId,
   canManageServices = false,
 }) {
+  const [isImportOpen, setIsImportOpen] = useState(false)
+
+  async function refreshImportedServices() {
+    const services = await fetchServices()
+    setServiceList(mapServicesToFrontend(services))
+  }
+
   const [formFocusRequest, setFormFocusRequest] = useState(0)
 
   const [isFormOpen, setIsFormOpen] =
@@ -391,6 +402,19 @@ function Services({
           </button>
         )}
       </div>
+
+      {canManageServices && (
+        <div className="services-import-entry">
+          <button type="button" className="service-action-button"
+            onClick={() => setIsImportOpen(true)} disabled={isImportOpen}>
+            Pripremi uvoz cjenika
+          </button>
+        </div>
+      )}
+      {canManageServices && isImportOpen && (
+        <ServiceImport key={`${userId}:${salonId}`} userId={userId} salonId={salonId}
+          onImported={refreshImportedServices} onClose={() => setIsImportOpen(false)} />
+      )}
 
       {canManageServices && isFormOpen && (
         <ServiceForm
