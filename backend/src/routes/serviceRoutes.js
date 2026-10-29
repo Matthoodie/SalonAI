@@ -1,3 +1,4 @@
+import { previewServiceImportController, confirmServiceImportController } from '../controllers/serviceImportController.js'
 import { Router } from 'express'
 
 import {
@@ -14,6 +15,8 @@ import {
 const router = Router()
 
 router.get('/', getServices)
+router.post('/import/preview', requireSalonRole('owner', 'admin'), previewServiceImportController)
+router.post('/import/confirm', requireSalonRole('owner', 'admin'), confirmServiceImportController)
 router.post(
   '/',
   requireSalonRole('owner', 'admin'),

@@ -1,3 +1,4 @@
+import { withServiceCatalogTransaction } from './serviceCatalogTransaction.js'
 import {
   findServicesBySalonId,
   insertService,
@@ -18,13 +19,13 @@ export async function createService({
   priceCents,
   defaultDurationMinutes,
 }) {
-  return insertService({
+  return withServiceCatalogTransaction(salonId, db => insertService({
     salonId,
     name,
     category,
     priceCents,
     defaultDurationMinutes,
-  })
+  }, db))
 }
 
 export async function updateService({
@@ -36,14 +37,14 @@ export async function updateService({
   defaultDurationMinutes,
 }) {
   const updatedService =
-    await updateServiceById({
+    await withServiceCatalogTransaction(salonId, db => updateServiceById({
       serviceId,
       salonId,
       name,
       category,
       priceCents,
       defaultDurationMinutes,
-    })
+    }, db))
 
   if (!updatedService) {
     return {
@@ -66,11 +67,11 @@ export async function updateServiceActive({
   active,
 }) {
   const updatedService =
-    await updateServiceActiveById({
+    await withServiceCatalogTransaction(salonId, db => updateServiceActiveById({
       serviceId,
       salonId,
       active,
-    })
+    }, db))
 
   if (!updatedService) {
     return {

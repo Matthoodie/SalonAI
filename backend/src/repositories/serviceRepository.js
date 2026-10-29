@@ -1,9 +1,10 @@
 import pool from '../database/pool.js'
 
 export async function findServicesBySalonId(
-  salonId
+  salonId,
+  db = pool
 ) {
-  const result = await pool.query(
+  const result = await db.query(
     `
       SELECT
         id,
@@ -31,8 +32,8 @@ export async function insertService({
   category,
   priceCents,
   defaultDurationMinutes,
-}) {
-  const result = await pool.query(
+}, db = pool) {
+  const result = await db.query(
     `
       INSERT INTO services (
         salon_id,
@@ -78,8 +79,8 @@ export async function updateServiceById({
   category,
   priceCents,
   defaultDurationMinutes,
-}) {
-  const result = await pool.query(
+}, db = pool) {
+  const result = await db.query(
     `
       UPDATE services
       SET
@@ -118,8 +119,8 @@ export async function updateServiceActiveById({
   serviceId,
   salonId,
   active,
-}) {
-  const result = await pool.query(
+}, db = pool) {
+  const result = await db.query(
     `
       UPDATE services
       SET
