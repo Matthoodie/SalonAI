@@ -14,11 +14,6 @@ const roleLabels = {
   employee: 'Zaposlenik',
 }
 
-const cellStyle = {
-  padding: '12px',
-  borderBottom: '1px solid #e5e7eb',
-  verticalAlign: 'top',
-}
 
 function wasCancelled(error) {
   return (
@@ -205,8 +200,8 @@ function SalonMemberList({
   }
 
   return (
-    <section style={{ marginBottom: '24px' }}>
-      <h2>Članovi salona</h2>
+    <section className="team-panel team-members">
+      <div className="team-section-heading"><h2>Članovi salona</h2>
 
       <button
         type="button"
@@ -217,7 +212,7 @@ function SalonMemberList({
         }}
       >
         Osvježi članove
-      </button>
+      </button></div>
 
       {error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}
@@ -227,16 +222,11 @@ function SalonMemberList({
       ) : members.length === 0 ? (
         !error && <p>Nema članova za prikaz.</p>
       ) : (
-        <div style={{ overflowX: 'auto', marginTop: '12px' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              textAlign: 'left',
-            }}
+        <div>
+          <table className="team-table" role="table"
           >
-            <thead>
-              <tr>
+            <thead role="rowgroup">
+              <tr role="row">
                 {[
                   'Korisnički račun',
                   'Uloga',
@@ -246,21 +236,21 @@ function SalonMemberList({
                   'Član od',
                   'Radnje',
                 ].map((label) => (
-                  <th key={label} scope="col" style={cellStyle}>
+                  <th role="columnheader" key={label} scope="col">
                     {label}
                   </th>
                 ))}
               </tr>
             </thead>
 
-            <tbody>
+            <tbody role="rowgroup">
               {members.map((member) => {
                 const actions = getActions(member)
                 const isBusy = busyId === String(member.id)
 
                 return (
-                  <tr key={member.id}>
-                    <td style={cellStyle}>
+                  <tr role="row" key={member.id}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Korisnički račun</span>
                       {member.display_name && (
                         <div>
                           <strong>{member.display_name}</strong>
@@ -270,11 +260,11 @@ function SalonMemberList({
                       <div>{member.email}</div>
                     </td>
 
-                    <td style={cellStyle}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Uloga</span>
                       {roleLabels[member.role] || member.role}
                     </td>
 
-                    <td style={cellStyle}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Profil zaposlenika</span>
                       {member.employee_id == null ? (
                         'Bez profila zaposlenika'
                       ) : (
@@ -289,26 +279,26 @@ function SalonMemberList({
                       )}
                     </td>
 
-                    <td style={cellStyle}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Članstvo</span>
                       {member.membership_active
                         ? 'Aktivno'
                         : 'Neaktivno'}
                     </td>
 
-                    <td style={cellStyle}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Status računa</span>
                       {member.user_active
                         ? 'Aktivan'
                         : 'Neaktivan'}
                     </td>
 
-                    <td style={cellStyle}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Član od</span>
                       {new Date(
                         member.created_at
                       ).toLocaleDateString('hr-HR')}
                     </td>
 
-                    <td style={cellStyle}>
-                      <div style={{ display: 'grid', gap: '8px' }}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Radnje</span>
+                      <div>
                         {actions.canChangeRole && (
                           <button
                             type="button"

@@ -48,6 +48,8 @@ function Employees({
   const employeeFormSectionRef =
     useRef(null)
 
+  const [formFocusRequest, setFormFocusRequest] = useState(0)
+
   const activeEmployees =
     employeeList.filter(
       (employee) =>
@@ -61,9 +63,10 @@ function Employees({
 
     const scrollTimeout =
       window.setTimeout(() => {
+        employeeFormSectionRef.current?.querySelector('h2')?.focus({ preventScroll: true })
         employeeFormSectionRef.current
           ?.scrollIntoView({
-            behavior: 'smooth',
+            behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
             block: 'start',
           })
       }, 50)
@@ -71,7 +74,7 @@ function Employees({
     return () => {
       window.clearTimeout(scrollTimeout)
     }
-  }, [isFormOpen, editingEmployee])
+  }, [isFormOpen, editingEmployee, formFocusRequest])
 
   function openAddEmployeeForm() {
     if (!canManageEmployees) {
@@ -80,6 +83,7 @@ function Employees({
 
     setEditingEmployee(null)
     setIsFormOpen(true)
+    setFormFocusRequest((value) => value + 1)
   }
 
   function startEditingEmployee(employee) {
@@ -89,6 +93,7 @@ function Employees({
 
     setEditingEmployee(employee)
     setIsFormOpen(true)
+    setFormFocusRequest((value) => value + 1)
   }
 
   async function addEmployee(

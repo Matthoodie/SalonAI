@@ -493,3 +493,27 @@
   .clients-toolbar { padding: 16px; }
   .client-detail-metrics { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Shared visual scale with Settings, Services and Employees. */
+.clients-page { padding:28px; font-size:15px; line-height:1.65; }
+.clients-page .clients-header h1 { font-size:30px; line-height:1.25; letter-spacing:-.5px; }
+.clients-page .clients-header p { font-size:15px; }
+.clients-page .clients-eyebrow { font-size:11px; margin-bottom:5px; }
+.clients-page .client-form, .clients-page .clients-toolbar { padding:22px; border-radius:15px; box-shadow:0 4px 16px rgb(15 23 42 / 3.5%); }
+.clients-page .client-form h2, .clients-page .client-detail-panel h2 { font-size:20px; }
+.clients-page .client-form-eyebrow { font-size:11px; }
+.clients-page .client-form-description { font-size:13px; }
+.clients-page label, .clients-page .client-mobile-label { font-size:12px; }
+.clients-page input, .clients-page select { font-size:14px; min-height:42px; border-radius:9px; }
+.clients-page button { font-size:13px; min-height:40px; padding:9px 14px; border-radius:9px; font-weight:650; }
+.clients-page .client-card-name h3 { font-size:15px; }
+.clients-page .client-card-name span, .clients-page .client-form-error { font-size:12px; }
+.clients-page .client-card-phone, .clients-page .client-card-visits { font-size:14px; }
+.clients-page .client-detail-panel { font-size:15px; }
+.clients-page .client-detail-metric span, .clients-page .client-detail-eyebrow { font-size:11px; }
+.clients-page .client-detail-metric strong { font-size:15px; }
+.clients-page .client-history-header h3 { font-size:18px; }
+.clients-page .client-history-empty { font-size:13px; }
+.clients-page .client-history-date strong, .clients-page .client-history-service strong, .clients-page .client-history-price { font-size:14px; }
+@media(max-width:760px) { .clients-page { padding:18px; } .clients-page .client-form, .clients-page .clients-toolbar { padding:18px; } }
+@media(max-width:420px) { .clients-page { padding:16px; } .clients-page .client-form, .clients-page .clients-toolbar { padding:16px; } }

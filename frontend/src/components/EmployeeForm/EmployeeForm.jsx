@@ -520,6 +520,9 @@ function EmployeeForm({
   onCancelEdit,
   editingEmployee,
 }) {
+  const [serviceQuery, setServiceQuery] = useState('')
+  useEffect(() => { setServiceQuery('') }, [editingEmployee])
+  const matchesService = (service) => `${service.name} ${service.category ?? ''}`.toLocaleLowerCase('hr-HR').includes(serviceQuery.trim().toLocaleLowerCase('hr-HR'))
   const [name, setName] = useState('')
   const [selectedServiceIds, setSelectedServiceIds] =
     useState([])
@@ -528,7 +531,7 @@ function EmployeeForm({
   useState(
     createDefaultWorkingHours
   )
- 
+
   const [dateOverrides, setDateOverrides] =
   useState([])
 
@@ -1092,7 +1095,7 @@ else {
 
   return (
     <form
-      className="employee-form"
+      className={`employee-form${editingEmployee ? " employee-form-editing" : ""}`}
       onSubmit={handleSubmit}
     >
       <div className="employee-form-header">
@@ -1103,7 +1106,7 @@ else {
     : 'Novi član tima'}
  </span>
 
- <h2>
+ <h2 tabIndex={-1}>
   {editingEmployee
     ? 'Uredi zaposlenika'
     : 'Dodaj zaposlenika'}
@@ -1111,7 +1114,7 @@ else {
 
 <p>
   {editingEmployee
-    ? 'Promijenite podatke zaposlenika i njegove usluge.'
+    ? `Uređujete: ${editingEmployee.name}. Promjene potvrdite gumbom „Spremi promjene”.`
     : 'Dodajte zaposlenika i odaberite usluge koje može obavljati.'}
 </p>
         </div>
@@ -1135,6 +1138,13 @@ else {
 
       <fieldset className="employee-services-fieldset">
         <legend>Usluge zaposlenika</legend>
+        <label className="employee-service-search" htmlFor="employee-service-search">
+          Pretraži usluge
+          <input id="employee-service-search" type="search" value={serviceQuery}
+            placeholder="Naziv ili kategorija" onChange={(event) => setServiceQuery(event.target.value)} />
+        </label>
+        <p className="employee-selection-count" role="status">Odabrano usluga: {selectedServiceIds.length}. Pretraga ne mijenja odabir.</p>
+        {serviceList.length > 0 && !serviceList.some(matchesService) && <p>Nema usluga koje odgovaraju pretrazi.</p>}
 
         {serviceList.length === 0 ? (
           <p className="employee-services-empty">
@@ -1146,6 +1156,7 @@ else {
               <label
                 key={service.id}
                 className="employee-service-option"
+                hidden={!matchesService(service)}
               >
                 <input
                   type="checkbox"

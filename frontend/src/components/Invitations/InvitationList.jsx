@@ -223,19 +223,10 @@ function InvitationList({
   }
 
   return (
-    <section
+    <section className="team-panel team-invitations"
       aria-labelledby="invitation-list-title"
-      style={{ marginBottom: '28px' }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-        }}
-      >
+      <div className="team-section-heading">
         <h2 id="invitation-list-title">Pozivnice</h2>
 
         <button
@@ -260,16 +251,11 @@ function InvitationList({
       )}
 
       {invitations.length > 0 && (
-        <div style={{ overflowX: 'auto' }}>
-          <table
-            style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              textAlign: 'left',
-            }}
+        <div>
+          <table className="team-table" role="table"
           >
-            <thead>
-              <tr>
+            <thead role="rowgroup">
+              <tr role="row">
                 {[
                   'Primatelj',
                   'Uloga / profil',
@@ -278,13 +264,9 @@ function InvitationList({
                   'Vrijedi do',
                   'Radnja',
                 ].map((label) => (
-                  <th
+                  <th role="columnheader"
                     key={label}
                     scope="col"
-                    style={{
-                      padding: '12px',
-                      borderBottom: '1px solid #d1d5db',
-                    }}
                   >
                     {label}
                   </th>
@@ -292,7 +274,7 @@ function InvitationList({
               </tr>
             </thead>
 
-            <tbody>
+            <tbody role="rowgroup">
               {invitations.map((invitation) => {
                 const canRevoke =
                   (
@@ -305,12 +287,12 @@ function InvitationList({
                   )
 
                 return (
-                  <tr key={invitation.id}>
-                    <td style={{ padding: '12px' }}>
+                  <tr role="row" key={invitation.id}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Primatelj</span>
                       {invitation.email_normalized}
                     </td>
 
-                    <td style={{ padding: '12px' }}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Uloga / profil</span>
                       <div>
                         {invitation.role === 'admin'
                           ? 'Administrator'
@@ -323,8 +305,8 @@ function InvitationList({
                       </small>
                     </td>
 
-                    <td style={{ padding: '12px' }}>
-                      <div>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Status</span>
+                      <div className={`team-badge team-badge-${invitation.status}`}>
                         {statusLabels[invitation.status] ||
                           invitation.status}
                       </div>
@@ -342,15 +324,15 @@ function InvitationList({
                       )}
                     </td>
 
-                    <td style={{ padding: '12px' }}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Kreirana</span>
                       {formatDate(invitation.created_at)}
                     </td>
 
-                    <td style={{ padding: '12px' }}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Vrijedi do</span>
                       {formatDate(invitation.expires_at)}
                     </td>
 
-                    <td style={{ padding: '12px' }}>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Radnja</span>
                       {canRevoke ? (
                         <button
                           type="button"
@@ -382,7 +364,6 @@ function InvitationList({
           type="button"
           onClick={loadMore}
           disabled={isLoading || revokingId !== null}
-          style={{ marginTop: '16px' }}
         >
           Učitaj starije pozivnice
         </button>

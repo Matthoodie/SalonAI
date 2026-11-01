@@ -247,27 +247,19 @@ function InvitationManager({
   }
 
   return (
-    <details style={{ marginBottom: '24px' }}>
-      <summary style={{ cursor: 'pointer' }}>
+    <details className="team-panel team-invite">
+      <summary>
         Pozovi korisnika u salon
       </summary>
 
-      <div
-        style={{
-          padding: '16px',
-          border: '1px solid #d1d5db',
-          borderRadius: '12px',
-          marginTop: '12px',
-          maxWidth: '640px',
-        }}
-      >
+      <div className="team-invite-content">
         <h2>Pozivnica za pristup salonu</h2>
 
         {error && <p role="alert">{error}</p>}
         {notice && <p role="status">{notice}</p>}
 
         {created ? (
-          <div style={{ display: 'grid', gap: '12px' }}>
+          <div>
             <p>
               Pozivnica je kreirana za{' '}
               <strong>{created.invitation.email_normalized}</strong>.
@@ -300,7 +292,6 @@ function InvitationManager({
               rows={3}
               spellCheck={false}
               onFocus={(event) => event.target.select()}
-              style={{ width: '100%', boxSizing: 'border-box' }}
             />
 
             <p>
@@ -340,9 +331,8 @@ function InvitationManager({
             </button>
           </div>
         ) : (
-          <form
+          <form className="team-invite-form"
             onSubmit={handleCreate}
-            style={{ display: 'grid', gap: '12px' }}
           >
             <label htmlFor="invitation-email">
               E-mail primatelja

@@ -10,11 +10,6 @@ const roleLabels = {
   employee: 'Zaposlenik',
 }
 
-const cellStyle = {
-  padding: '12px',
-  borderBottom: '1px solid #e5e7eb',
-  verticalAlign: 'top',
-}
 
 function wasCancelled(error) {
   return (
@@ -188,19 +183,18 @@ function SalonMemberHistory({ refreshToken = 0 }) {
   }
 
   return (
-    <details
+    <details className="team-history"
       open={isOpen}
       onToggle={(event) => {
         setIsOpen(event.currentTarget.open)
       }}
-      style={{ marginTop: '20px', marginBottom: '24px' }}
     >
-      <summary style={{ cursor: 'pointer' }}>
+      <summary>
         Povijest promjena članstava
       </summary>
 
       {isOpen && (
-        <div style={{ marginTop: '12px' }}>
+        <div>
           <p>
             Evidencija promjena uloga i aktivnosti članstava.
             Najnovije promjene prikazane su prve.
@@ -225,20 +219,11 @@ function SalonMemberHistory({ refreshToken = 0 }) {
           ) : (
             <>
               <div
-                style={{
-                  overflowX: 'auto',
-                  marginTop: '12px',
-                }}
               >
-                <table
-                  style={{
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    textAlign: 'left',
-                  }}
+                <table className="team-table" role="table"
                 >
-                  <thead>
-                    <tr>
+                  <thead role="rowgroup">
+                    <tr role="row">
                       {[
                         'Vrijeme',
                         'Izvršitelj',
@@ -246,10 +231,10 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                         'Radnja',
                         'Promjena',
                       ].map((label) => (
-                        <th
+                        <th role="columnheader"
                           key={label}
                           scope="col"
-                          style={cellStyle}
+
                         >
                           {label}
                         </th>
@@ -257,10 +242,10 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                     </tr>
                   </thead>
 
-                  <tbody>
+                  <tbody role="rowgroup">
                     {changes.map((change) => (
-                      <tr key={change.id}>
-                        <td style={cellStyle}>
+                      <tr role="row" key={change.id}>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Vrijeme</span>
                           {new Date(
                             change.created_at
                           ).toLocaleString('hr-HR', {
@@ -268,7 +253,7 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                           })}
                         </td>
 
-                        <td style={cellStyle}>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Izvršitelj</span>
                           <div>
                             {personLabel(
                               change.actor_display_name,
@@ -284,7 +269,7 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                           </small>
                         </td>
 
-                        <td style={cellStyle}>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Član</span>
                           {personLabel(
                             change.target_display_name,
                             change.target_email,
@@ -292,13 +277,13 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                           )}
                         </td>
 
-                        <td style={cellStyle}>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Radnja</span>
                           {change.action === 'role'
                             ? 'Promjena uloge'
                             : 'Promjena aktivnosti članstva'}
                         </td>
 
-                        <td style={cellStyle}>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Promjena</span>
                           {describeChange(change)}
                         </td>
                       </tr>
@@ -312,7 +297,6 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                   type="button"
                   disabled={isLoadingMore}
                   onClick={loadMore}
-                  style={{ marginTop: '12px' }}
                 >
                   {isLoadingMore
                     ? 'Učitavanje…'
