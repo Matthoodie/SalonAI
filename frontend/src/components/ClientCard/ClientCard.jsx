@@ -13,6 +13,7 @@ function getInitials(name) {
 
 function ClientCard({
   client,
+  isEditing = false,
   onEdit,
   onSelect,
   onToggleActive,
@@ -22,9 +23,7 @@ function ClientCard({
   return (
     <div
       className={
-        isArchived
-          ? 'client-card client-card-archived'
-          : 'client-card'
+        `client-card${isArchived ? ' client-card-archived' : ''}${isEditing ? ' client-card-editing' : ''}`
       }
     >
       <div className="client-card-person">
@@ -34,6 +33,7 @@ function ClientCard({
 
         <div className="client-card-name">
           <h3>{client.name}</h3>
+          {isEditing && <span className="client-editing-label">Uređivanje u tijeku</span>}
 
           <span>
             {isArchived

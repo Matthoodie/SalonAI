@@ -197,8 +197,9 @@ useEffect(() => {
   setEditingClient(client)
 
   requestAnimationFrame(() => {
+    clientFormRef.current?.querySelector('h2')?.focus({ preventScroll: true })
     clientFormRef.current?.scrollIntoView({
-      behavior: 'smooth',
+      behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
       block: 'start',
     })
   })
@@ -602,7 +603,7 @@ const selectedClientUpcomingAppointments =
             'Nema podataka'}
         </strong>
       </div>
-  
+
       <div className="client-detail-metric">
         <span>Zadnji posjet</span>
 
@@ -857,6 +858,7 @@ const selectedClientUpcomingAppointments =
               <ClientCard
                 key={client.id}
                 client={client}
+                isEditing={String(editingClient?.id) === String(client.id)}
                 onEdit={startEditingClient}
                 onSelect={setSelectedClientId}
                 onToggleActive={changeClientActive}

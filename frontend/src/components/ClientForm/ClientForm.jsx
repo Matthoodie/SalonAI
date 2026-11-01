@@ -147,10 +147,18 @@ function ClientForm({
   }
 
   return (
-    <div className="client-form">
-      <h2>
+    <div className={`client-form${editingClient ? ' client-form-editing' : ''}`}>
+      <div className="client-form-heading">
+      <span className="client-form-eyebrow">{editingClient ? 'Uređivanje podataka' : 'Novi kontakt'}</span>
+      <h2 tabIndex={-1}>
         {editingClient ? 'Uredi klijenta' : 'Novi klijent'}
       </h2>
+      <p className="client-form-description">
+        {editingClient
+          ? <>Uređujete klijenta: <strong>{editingClient.name}</strong>. Promjene potvrdite gumbom „Spremi promjene”.</>
+          : 'Unesite osnovne podatke za novi profil klijenta.'}
+      </p>
+      </div>
 
       <div className="client-form-field">
         <label htmlFor="client-name">

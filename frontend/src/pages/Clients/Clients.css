@@ -420,7 +420,7 @@
 
   .client-detail-close-button {
     width: 100%;
-    
+
   }
 
   .client-detail-metrics {
@@ -441,4 +441,55 @@
   .client-history-price {
     text-align: left;
   }
+}
+
+/* Keep this page independent of the starter's centred global typography. */
+.clients-page { text-align: left; color: #334155; color-scheme: light; min-width: 0; }
+.clients-header > div:first-child { min-width: 0; }
+.clients-header h1 { font-size: 2rem; font-weight: 750; line-height: 1.2; }
+.clients-header p { font-size: .95rem; }
+.clients-eyebrow { margin-bottom: 10px; font-size: .7rem; }
+.clients-count { text-align: center; flex-shrink: 0; }
+.clients-page > div:has(> .client-form) { scroll-margin-top: 24px; }
+.clients-toolbar { padding: 20px; border: 1px solid #dfe5f0; border-radius: 14px; background: #fff; }
+.clients-search { max-width: none; flex: 1; min-width: 0; }
+.clients-sort { flex: 0 0 220px; }
+.clients-toolbar input, .clients-toolbar select { min-height: 46px; border-radius: 10px; font-size: .9rem; }
+.clients-list-header,
+.clients-page .client-card { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.15fr) 65px 116px; gap: 16px; }
+.clients-list-header span:last-child { text-align: right; }
+.client-detail-panel { text-align: left; color-scheme: light; overscroll-behavior: contain; }
+.client-detail-panel h2 { font-weight: 700; line-height: 1.35; }
+.client-detail-header > div { min-width: 0; overflow-wrap: anywhere; }
+.client-detail-close-button { flex-shrink: 0; min-height: 44px; }
+.client-detail-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.client-detail-metric { min-width: 0; overflow-wrap: anywhere; }
+.client-detail-metric span { font-size: .68rem; letter-spacing: .02em; }
+.client-history-item { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr) minmax(0, .7fr); gap: 12px; }
+.client-history-item > div { min-width: 0; overflow-wrap: anywhere; }
+.clients-page button:focus-visible { outline: 2px solid #6366f1; outline-offset: 3px; }
+@media (max-width: 1100px) {
+  .clients-page .clients-list-header { display: none; }
+  .clients-page .clients-list { display: grid; gap: 12px; }
+  .clients-page .client-card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border: 1px solid #dfe5f0; border-radius: 14px; }
+  .clients-page .client-card-person { grid-column: 1 / -1; }
+  .clients-page .client-card-actions { grid-column: 1 / -1; justify-content: flex-start; }
+  .clients-page .client-mobile-label { display: block; margin-bottom: 5px; font-size: .7rem; color: #64748b; }
+}
+@media (max-width: 760px) {
+  .clients-page { padding: 20px; }
+  .clients-header { gap: 16px; }
+  .clients-header h1 { font-size: 1.8rem; }
+  .clients-count { width: auto; min-width: 0; display: flex; align-items: center; gap: 16px; padding: 12px 16px; }
+  .clients-count span { margin: 0; }
+  .clients-count strong { font-size: 1.3rem; }
+  .clients-sort { flex: auto; width: 100%; }
+  .client-detail-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .client-history-item { grid-template-columns: minmax(0, 1fr); }
+  .client-detail-header { top: -20px; padding-top: 16px; gap: 12px; }
+}
+@media (max-width: 420px) {
+  .clients-page { padding: 16px; }
+  .clients-toolbar { padding: 16px; }
+  .client-detail-metrics { grid-template-columns: minmax(0, 1fr); }
 }

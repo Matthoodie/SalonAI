@@ -192,3 +192,14 @@
     justify-content: flex-start;
   }
 }
+
+.client-card { text-align: left; min-width: 0; }
+.client-card-name h3 { white-space: normal; overflow-wrap: anywhere; line-height: 1.45; }
+.client-card-name span { display: block; color: #64748b; line-height: 1.5; }
+.client-card-phone { overflow-wrap: anywhere; }
+.client-card-phone strong { font-weight: 500; }
+.client-card-actions button { min-height: 40px; }
+.client-card-archived { opacity: 1; background: #f8fafc; }
+.client-card-archived .client-card-name h3 { color: #475569; }
+.client-card-editing { background: #f5f3ff; box-shadow: inset 3px 0 #6355e8; }
+.client-card-name .client-editing-label { color: #4338ca; font-size: .7rem; font-weight: 700; margin-bottom: 3px; }
