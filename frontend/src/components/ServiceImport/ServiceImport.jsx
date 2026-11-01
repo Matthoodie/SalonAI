@@ -1,3 +1,5 @@
+import PricelistRecognition from './PricelistRecognition.jsx'
+import { appendRecognizedRows } from './recognitionDraft.js'
 import { useEffect, useRef, useState } from 'react'
 import { serviceImportApi } from '../../api/serviceImportApi.js'
 import { newDraftRow, selectedPayload, editDraftRow, applyDuration, fingerprint, reviewIsCurrent, createPendingStore, pendingRows, MAX_ROWS } from './pricelistDraft.js'
@@ -10,6 +12,7 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
       return {store,pending:store.read(),error:''}
     } catch { return {store:null,pending:null,error:'Preglednik ne može pročitati zapis potvrde. Uvoz je zaustavljen dok se zapis ne provjeri.'} }
   })
+  const [recognizing,setRecognizing]=useState(false)
   const [rows,setRows]=useState(()=>initial.pending ? pendingRows(initial.pending) : [newDraftRow()])
   const [pending,setPending]=useState(initial.pending)
   const [review,setReview]=useState(null)
@@ -21,7 +24,7 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
   const [success,setSuccess]=useState(null)
   const [refreshFailed,setRefreshFailed]=useState(false)
   const busy=useRef(false), alive=useRef(true), previewAbort=useRef(null), heading=useRef(null)
-  const locked=phase==='checking' || phase==='saving' || Boolean(pending) || !initial.store || Boolean(success)
+  const locked=recognizing || phase==='checking' || phase==='saving' || Boolean(pending) || !initial.store || Boolean(success)
   useEffect(()=>{
     alive.current=true
     heading.current?.focus({preventScroll:true})
@@ -30,19 +33,19 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
   },[])
   useEffect(()=>{
     const guard=event=>{
-      if(pending || (!success && rows.some(row=>row.name || row.category || row.price_eur || row.default_duration_minutes))) {
+      if(recognizing || pending || (!success && rows.some(row=>row.name || row.category || row.price_eur || row.default_duration_minutes))) {
         event.preventDefault();event.returnValue=''
       }
     }
     window.addEventListener('beforeunload',guard)
     return ()=>window.removeEventListener('beforeunload',guard)
-  },[rows,pending,success])
+  },[rows,pending,success,recognizing])
   function change(next) {
     if(locked || busy.current) return
     setRows(next);setReview(null);setMessage('');setPhase('draft')
   }
   function close() {
-    if(busy.current) return
+    if(busy.current || recognizing) return
     if(!pending && !success && rows.some(row=>row.name || row.category || row.price_eur || row.default_duration_minutes) &&
       !window.confirm('Zatvoriti i odbaciti nespremljeni nacrt?')) return
     onClose()
@@ -109,13 +112,13 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
   try {payload=selectedPayload(rows)} catch { /* Empty selection is shown below. */ }
   const selected=rows.filter(row=>row.selected).length
   const canSave=!locked && payload && reviewIsCurrent(review,payload)
-  return <section className="service-import" aria-labelledby="service-import-title" aria-busy={phase==='checking'||phase==='saving'}>
+  return <section className="service-import" aria-labelledby="service-import-title" aria-busy={recognizing||phase==='checking'||phase==='saving'}>
     <div className="service-import-heading">
       <div><span className="services-eyebrow">Priprema kataloga</span><h2 id="service-import-title" tabIndex={-1} ref={heading}>Pripremi uvoz cjenika</h2></div>
-      <button type="button" onClick={close} disabled={phase==='saving'||phase==='checking'}>Zatvori</button>
+      <button type="button" onClick={close} disabled={recognizing||phase==='saving'||phase==='checking'}>Zatvori</button>
     </div>
     <p>Unesite stavke, dopunite podatke i odaberite što želite dodati. Postojeće usluge ostaju sačuvane.</p>
-    <p className="service-import-note">Nacrt unosite ručno. Učitavanje fotografije ili PDF-a dolazi u sljedećem koraku. Nespremljeni nacrt vrijedi dok je ovaj obrazac otvoren.</p>
+    <p className="service-import-note">Stavke možete unijeti ručno ili prepoznati iz dokumenta. Prepoznavanje ne sprema usluge automatski. Nespremljeni nacrt vrijedi dok je ovaj obrazac otvoren.</p>
     {message && <p className="service-import-alert" role="alert">{message}</p>}
     {pending && <div className="service-import-warning" role="status">
       <strong>{phase==='saving'?'Spremanje je u tijeku…':'Postoji nepotvrđen ishod spremanja.'}</strong>
@@ -128,6 +131,7 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
       {refreshFailed && <><p>Uvoz je spremljen, ali osvježavanje kataloga nije uspjelo. Nemojte ponovno unositi iste stavke.</p><button type="button" onClick={refresh}>Osvježi katalog</button></>}
       <button type="button" onClick={onClose}>Završi</button>
     </div> : <>
+      <PricelistRecognition salonId={salonId} disabled={locked && !recognizing} onBusyChange={value=>{busy.current=value;setRecognizing(value)}} onAppend={items=>change(appendRecognizedRows(rows,items))} />
       <fieldset className="service-import-bulk" disabled={locked}>
         <legend>Zajedničko trajanje</legend>
         <label>Trajanje (min)<input type="text" inputMode="numeric" value={bulkDuration} onChange={e=>setBulkDuration(e.target.value)} placeholder="npr. 30" /></label>
@@ -146,6 +150,7 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
           <div className="service-import-fields">{[
             ['name','Naziv usluge','npr. Osnovna njega'],['category','Kategorija','Ostalo'],['price_eur','Cijena (€)','npr. 25,00'],['default_duration_minutes','Trajanje (min)','Obavezno dopuniti'],
           ].map(([field,label,placeholder])=><label key={field}>{label}<input type="text" inputMode={field==='price_eur'?'decimal':field==='default_duration_minutes'?'numeric':undefined} value={row[field]} maxLength={field==='name'?150:field==='category'?100:20} onChange={e=>edit(field,e.target.value)} placeholder={placeholder} aria-invalid={Boolean(result?.issues.some(issue=>issue.field===field))} /></label>)}</div>
+          {row.recognition_note && <p className="recognition-row-note">{row.recognition_note}</p>}
           {row.selected && result && <div className={result.ready?'service-import-ready':'service-import-row-issues'}>
             <strong>{result.ready?'Spremno za uvoz':'Potrebna provjera'}</strong>
             {result.issues.length>0 && <ul>{result.issues.map((issue,i)=><li key={i}>{issue.message}</li>)}</ul>}

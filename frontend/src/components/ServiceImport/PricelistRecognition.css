@@ -1,0 +1,10 @@
+.service-import .pricelist-recognition { padding: 22px; margin: 20px 0; border: 1px solid #c7caff; border-radius: 16px; background: #f7f7ff; text-align: left; min-width: 0; }
+.service-import .pricelist-recognition h3 { margin: 0 0 12px; font-size: 1.15rem; }
+.service-import .pricelist-recognition p { line-height: 1.6; overflow-wrap: anywhere; }
+.service-import .pricelist-recognition label { display: grid; gap: 8px; margin: 16px 0; }
+.service-import .pricelist-recognition input { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.service-import .pricelist-recognition-result { margin-top: 16px; padding-top: 12px; border-top: 1px solid #dfe3f0; }
+.service-import .pricelist-recognition-result li { overflow-wrap: anywhere; margin-bottom: 8px; }
+.service-import .pricelist-recognition button { white-space: normal; }
+.service-import .recognition-row-note { background: #fff8e8; border-left: 3px solid #d49a25; padding: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+@media(max-width: 600px) { .service-import .pricelist-recognition { padding: 14px; } }

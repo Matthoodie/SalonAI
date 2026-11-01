@@ -1,3 +1,4 @@
+import pricelistRecognitionRoutes from './pricelistRecognitionRoutes.js'
 import { previewServiceImportController, confirmServiceImportController } from '../controllers/serviceImportController.js'
 import { Router } from 'express'
 
@@ -14,6 +15,7 @@ import {
 
 const router = Router()
 
+router.use('/import/recognize', pricelistRecognitionRoutes)
 router.get('/', getServices)
 router.post('/import/preview', requireSalonRole('owner', 'admin'), previewServiceImportController)
 router.post('/import/confirm', requireSalonRole('owner', 'admin'), confirmServiceImportController)
