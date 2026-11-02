@@ -1,3 +1,4 @@
+import salonOnboardingRoutes from './routes/salonOnboardingRoutes.js'
 import salonSetupRoutes from './routes/salonSetupRoutes.js'
 import express from 'express'
 
@@ -24,6 +25,7 @@ export function createApp({
   authRouteMiddleware = [],
   privateRouteMiddleware = [],
   invitationRouter = invitationRoutes,
+  onboardingRouter = salonOnboardingRoutes,
 } = {}) {
   const app = express()
 
@@ -45,6 +47,8 @@ export function createApp({
     ...authRouteMiddleware,
     invitationRouter
   )
+
+  app.use('/api/salon-onboarding', ...authRouteMiddleware, onboardingRouter)
 
   app.use(
     '/api/appointments',

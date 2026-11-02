@@ -1,7 +1,7 @@
 # SalonAI — završni roadmap prve javne verzije
 
 Ažurirano: 2. studenoga 2026.
-Potvrđena polazna verzija: 4cfbb9c.
+Potvrđena polazna verzija: 4d26d21.
 
 ## Cilj prve verzije
 
@@ -32,10 +32,13 @@ Ovaj popis nije tvrdnja da je produkcijska spremnost već potvrđena.
 - Vizualne dorade Postavki, pregleda poslovanja, Usluga, Klijenata, Zaposlenika, Termina,
   Kalendara i zahtjeva: paketi primijenjeni; korisnik potvrdio provjere.
 - Magic Wizard, paket 1 — backend nacrt i nastavak: potvrđeno 755/755 testova i TEST/DEV migracija.
-- Aktualno: paket 2 — sučelje u Postavkama, spremanje/nastavak i poveznice na postojeće stranice.
-  Lokalno provjereno; čeka korisnikov build i ručnu provjeru.
-  Detalji: [SALON_SETUP_PHASE2.md](SALON_SETUP_PHASE2.md). Automatska provjera spremnosti,
-  uređivanje naziva/zone i kreiranje prvog salona slijede prije dovršetka Wizarda.
+- Magic Wizard, paket 2 — sučelje u Postavkama: potvrđeno 143 frontend testa i ručni rad;
+  commit 4d26d21 poslan na development.
+- Aktualno: paket 3 — zatvoreno, kontrolirano kreiranje prvog salona i trajni status onboardinga.
+  Lokalni unit/API testovi prošli; TEST/DEV migracija i PostgreSQL provjere čekaju korisnika.
+  Detalji: [SALON_SETUP_PHASE3.md](SALON_SETUP_PHASE3.md).
+- Slijedi početni postupak prije dashboarda, bez poslovnog sidebara; stvarna provjera
+  obveznih podataka i potvrda dovršenosti. Postojeći saloni ostaju dostupni.
 - Zatim grooming s pasminom i fotografijom ljubimca → WhatsApp i dogovorene AI funkcionalnosti
   → mobilna/PWA i produkcijska priprema → besplatni pilot → naplata.
 - Naplata nije uvjet za početak besplatnog pilota. Beauty centri ostaju V2.
@@ -73,12 +76,19 @@ Izlazni kriterij: dokument -> pregled -> dopuna -> potvrda -> nove upotrebljive 
 
 ## 2. Magic Wizard — vođeno početno postavljanje
 
-1. Djelatnost: frizerski/barber, grooming, kombinacija podržanih djelatnosti ili ostalo.
-2. Naziv salona, lokacija i vremenska zona.
-3. Samostalni rad ili tim; zaposlenici i pozivnice.
-4. Uvoz ili ručni unos usluga.
-5. Radno vrijeme i povezivanje zaposlenika s uslugama.
-6. Završna provjera nedostajućih podataka i prvi probni termin.
+Završni početni ekran za novog vlasnika ima pet koraka, prije dashboarda:
+
+1. Vaš salon: djelatnost, naziv, lokacija i vremenska zona.
+2. Vaš tim: samostalni rad ili tim, stvarni profili zaposlenika i rad vlasnika.
+3. Usluge: ručni unos ili fotografija/PDF, pregled i dopuna trajanja.
+4. Raspored: radno vrijeme i povezanost zaposlenika s uslugama.
+5. Pregled i početak rada: backend provjera obveznih uvjeta pa otvaranje dashboarda.
+
+Koraci se spremaju i mogu nastaviti nakon odjave; povratak na prethodni korak je dopušten.
+Postojeći saloni ne zaključavaju se retroaktivno. Pozvani članovi ne kreiraju salon ponovno.
+Kreiranje salona ostaje zatvoreno, uz dopušteni razvojni račun do pripreme javnog pilota.
+
+Završna ručna provjera uključuje i prvi probni termin.
 
 Wizard treba moći nastaviti već započeto postavljanje bez stvaranja duplikata.
 Predlošci su izbor korisnika, ne automatski poslovni podaci. Postojeći saloni ne prolaze
