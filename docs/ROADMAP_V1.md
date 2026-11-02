@@ -1,7 +1,7 @@
 # SalonAI — završni roadmap prve javne verzije
 
-Ažurirano: 29. listopada 2026.
-Potvrđena backend polazna verzija: e04d350.
+Ažurirano: 2. studenoga 2026.
+Potvrđena polazna verzija: 8ac53d0.
 
 ## Cilj prve verzije
 
@@ -26,13 +26,24 @@ Podrška za sobe, uređaje, više istodobnih resursa i paralelne tretmane takođ
 
 Ovaj popis nije tvrdnja da je produkcijska spremnost već potvrđena.
 
+## Aktualni slijed prema dogovoru
+
+- Uvoz fotografija/PDF-a i pregled prije spremanja: implementirani; prošireni rubni scenariji ostaju u završnoj regresiji.
+- Vizualne dorade Postavki, pregleda poslovanja, Usluga, Klijenata, Zaposlenika, Termina,
+  Kalendara i zahtjeva: paketi primijenjeni; korisnik potvrdio provjere.
+- Aktualno: Magic Wizard, paket 1 — backend nacrt i nastavak po salonu. Čeka TEST/DEV provjere.
+  Detalji i preostali paketi: [SALON_SETUP_PHASE1.md](SALON_SETUP_PHASE1.md).
+- Zatim grooming s pasminom i fotografijom ljubimca → WhatsApp i dogovorene AI funkcionalnosti
+  → mobilna/PWA i produkcijska priprema → besplatni pilot → naplata.
+- Naplata nije uvjet za početak besplatnog pilota. Beauty centri ostaju V2.
+
 ## 1. Dovršetak uvoza cjenika
 
 ### Paket 1 — backend: završeno
 Pregled bez zapisivanja; potvrda svih odabranih stavki u jednoj transakciji;
 ponovljena potvrda vraća prethodni rezultat; nema prepisivanja postojećih usluga.
 
-### Paket 2 — nacrt i potvrda na frontendu: aktualni paket
+### Paket 2 — nacrt i potvrda na frontendu: završeno
 - Uređivanje naziva, kategorije, cijene i trajanja.
 - Odabir stavki i izričita primjena zajedničkog trajanja.
 - Nepoznato trajanje ostaje prazno; najmanje jedna cijela minuta prije spremanja.
@@ -43,7 +54,7 @@ ponovljena potvrda vraća prethodni rezultat; nema prepisivanja postojećih uslu
   običan nespremljeni nacrt traje dok je obrazac otvoren.
 - Testovi, build, ručna provjera vlasnika/zaposlenika, commit.
 
-### Paket 3 — fotografija/PDF i prepoznavanje
+### Paket 3 — fotografija/PDF i prepoznavanje: implementirano i ručno provjereno
 - Fotografija s mobitela, screenshot ili PDF postaju uređiv nacrt.
 - Prepoznati tekst nikada se automatski ne sprema u katalog.
 - Nepouzdane cijene, valuta, paketi i doplate označavaju se za pregled.
@@ -107,8 +118,9 @@ Integracije moraju koristiti istu provjerenu dostupnost, ovlasti i pravila rezer
 uključujući ljubimca kod groominga. Ne smiju pisati izravno mimo booking servisa.
 Prvo ograničen, testiran tok rezervacije/potvrde; zatim dodatne automatizacije.
 
-## 6. Priprema za javnu objavu
+## 6. Mobilna/PWA i priprema za javnu objavu
 
+- PWA instalacija i provjera na Androidu/iOS-u; jasna poruka bez mreže, bez nesigurnog offline rezerviranja.
 - Odvojena produkcijska konfiguracija, baza i autentikacija.
 - Hosting, domena, HTTPS, produkcijski API i mediji.
 - Provjera migracija, sigurnosnih kopija i stvarnog postupka povrata podataka.
@@ -120,12 +132,18 @@ Prvo ograničen, testiran tok rezervacije/potvrde; zatim dodatne automatizacije.
   pretplata; zasebno razlikovati besplatni pilot i komercijalnu objavu.
 - Završni regresijski testovi, frontend build i ručni scenariji obje djelatnosti.
 
-## 7. Objava V1
+## 7. Objava V1 i besplatni pilot
 
 Označena verzija, kontrolirani deploy, provjera nakon objave i prve povratne informacije.
 Javna objava slijedi tek nakon dovršenog groominga s pasminom i avatarom ljubimca,
 Wizarda, uvoza i dogovorenih funkcija prve verzije. Točan datum ovisi o provjerama,
 ne o proizvoljnom postotku dovršenosti.
+
+## 8. Naplata nakon besplatnog pilota
+
+Na temelju interesa pilot-korisnika potvrditi planove, cijene, ograničenja i pružatelja
+naplate. Zatim implementirati pretplate, provjeru webhookova, prava pristupa, otkazivanje
+i oporavak od neuspjele naplate; testirati prije uključivanja stvarnih plaćanja.
 
 ## Verzija 2 — nakon live objave
 

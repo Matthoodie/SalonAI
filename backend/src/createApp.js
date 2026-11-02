@@ -1,3 +1,4 @@
+import salonSetupRoutes from './routes/salonSetupRoutes.js'
 import express from 'express'
 
 import appointmentRoutes from './routes/appointmentRoutes.js'
@@ -98,6 +99,8 @@ export function createApp({
   )
 
   app.use('/api/blocked-time-requests', ...privateRouteMiddleware, employeeBlockedTimeRequestRoutes)
+
+  app.use('/api/salon-setup', ...privateRouteMiddleware, salonSetupRoutes)
 
   app.use(notFoundHandler)
   app.use(errorHandler)
