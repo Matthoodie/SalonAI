@@ -1,7 +1,7 @@
 # SalonAI — završni roadmap prve javne verzije
 
 Ažurirano: 2. studenoga 2026.
-Potvrđena polazna verzija: 8ac53d0.
+Potvrđena polazna verzija: 4cfbb9c.
 
 ## Cilj prve verzije
 
@@ -31,8 +31,11 @@ Ovaj popis nije tvrdnja da je produkcijska spremnost već potvrđena.
 - Uvoz fotografija/PDF-a i pregled prije spremanja: implementirani; prošireni rubni scenariji ostaju u završnoj regresiji.
 - Vizualne dorade Postavki, pregleda poslovanja, Usluga, Klijenata, Zaposlenika, Termina,
   Kalendara i zahtjeva: paketi primijenjeni; korisnik potvrdio provjere.
-- Aktualno: Magic Wizard, paket 1 — backend nacrt i nastavak po salonu. Čeka TEST/DEV provjere.
-  Detalji i preostali paketi: [SALON_SETUP_PHASE1.md](SALON_SETUP_PHASE1.md).
+- Magic Wizard, paket 1 — backend nacrt i nastavak: potvrđeno 755/755 testova i TEST/DEV migracija.
+- Aktualno: paket 2 — sučelje u Postavkama, spremanje/nastavak i poveznice na postojeće stranice.
+  Lokalno provjereno; čeka korisnikov build i ručnu provjeru.
+  Detalji: [SALON_SETUP_PHASE2.md](SALON_SETUP_PHASE2.md). Automatska provjera spremnosti,
+  uređivanje naziva/zone i kreiranje prvog salona slijede prije dovršetka Wizarda.
 - Zatim grooming s pasminom i fotografijom ljubimca → WhatsApp i dogovorene AI funkcionalnosti
   → mobilna/PWA i produkcijska priprema → besplatni pilot → naplata.
 - Naplata nije uvjet za početak besplatnog pilota. Beauty centri ostaju V2.

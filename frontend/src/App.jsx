@@ -31,6 +31,7 @@ import { mapServicesToFrontend } from './api/serviceMapper'
 
 import Layout from './components/Layout/Layout'
 import AccountSettings from './components/Settings/AccountSettings'
+import SalonSetupWizard from './components/SalonSetup/SalonSetupWizard'
 import './pages/Settings/Settings.css'
 import InvitationAcceptance from './components/Invitations/InvitationAcceptance'
 
@@ -408,6 +409,9 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
                 onAccepted={onInvitationAccepted}
                 onExport={canManage ? exportSalonData : undefined}
               />
+              {authContext.membership.role === 'owner' && (
+                <SalonSetupWizard key={`${authContext.user.id}:${salonId}`} salonId={salonId} />
+              )}
               {canManage && (
                 <Settings salonId={salonId} salonTimezone={salonTimezone} />
               )}
