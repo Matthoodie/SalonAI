@@ -738,7 +738,11 @@ async function updateAppointment(
   if (appointmentsLoading) {
     return (
       <div className="appointments-page">
+        <header className="appointments-header">
+        <span className="appointments-eyebrow">Raspored i rezervacije</span>
         <h1>Termini</h1>
+        <p>Upravljajte terminima, uslugama i rasporedom zaposlenika.</p>
+      </header>
 
         <p>
           Učitavanje termina...
@@ -750,7 +754,11 @@ async function updateAppointment(
   if (appointmentsLoadError) {
     return (
       <div className="appointments-page">
+        <header className="appointments-header">
+        <span className="appointments-eyebrow">Raspored i rezervacije</span>
         <h1>Termini</h1>
+        <p>Upravljajte terminima, uslugama i rasporedom zaposlenika.</p>
+      </header>
 
         <p>
           Termine trenutno nije moguće učitati.
@@ -761,7 +769,11 @@ async function updateAppointment(
 
   return (
     <div className="appointments-page">
-      <h1>Termini</h1>
+      <header className="appointments-header">
+        <span className="appointments-eyebrow">Raspored i rezervacije</span>
+        <h1>Termini</h1>
+        <p>Upravljajte terminima, uslugama i rasporedom zaposlenika.</p>
+      </header>
 
       <div className="appointments-summary">
         <div className="appointments-summary-item">
