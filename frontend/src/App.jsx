@@ -30,6 +30,7 @@ import { mapEmployeesToFrontend } from './api/employeeMapper'
 import { mapServicesToFrontend } from './api/serviceMapper'
 
 import Layout from './components/Layout/Layout'
+import WelcomeScreen from './components/Welcome/WelcomeScreen'
 import AccountSettings from './components/Settings/AccountSettings'
 import SalonSetupWizard from './components/SalonSetup/SalonSetupWizard'
 import './pages/Settings/Settings.css'
@@ -717,6 +718,25 @@ function App() {
     }
   }
 
+  // Business navigation is rendered only after active salon context is confirmed.
+  if (isBusy || workspaceError || !authContext) {
+    return (
+      <WelcomeScreen
+        key={user?.id || 'loading'}
+        user={user}
+        workspaces={workspaces}
+        busy={isBusy}
+        error={workspaceError}
+        onRetry={() => setReloadToken((value) => value + 1)}
+        onSelect={changeWorkspace}
+        onAccepted={(salonId) => {
+          saveSelectedSalon(user.id, salonId)
+          window.location.assign('/')
+        }}
+      />
+    )
+  }
+
   const canAccessFullCrm =
     authContext?.membership?.role === 'owner' ||
     authContext?.membership?.role === 'admin'
@@ -761,44 +781,6 @@ function App() {
       )}
     >
 
-
-      {isBusy && (
-        <p role="status">
-          Učitavanje salonskog konteksta…
-        </p>
-      )}
-
-      {!isBusy && workspaceError && (
-        <div>
-          <p role="alert">{workspaceError}</p>
-
-          <button
-            type="button"
-            onClick={() => setReloadToken((value) => value + 1)}
-          >
-            Ponovno učitaj salone
-          </button>
-        </div>
-      )}
-
-      {!isBusy && !workspaceError && !authContext && (
-        <p role="status">
-          {workspaces.length === 0
-            ? 'Vaš račun trenutačno nema dostupnih salona. Obratite se administratoru salona radi dodjele pristupa.'
-            : 'Odaberite salon za nastavak rada.'}
-        </p>
-      )}
-
-      {!isBusy && user && !authContext && (
-        <InvitationAcceptance
-          key={user.id}
-          currentUser={user}
-          onAccepted={(salonId) => {
-            saveSelectedSalon(user.id, salonId)
-            window.location.assign('/')
-          }}
-        />
-      )}
 
       {!isBusy && authContext && (
         <SalonWorkspace

@@ -163,3 +163,13 @@ i oporavak od neuspjele naplate; testirati prije uključivanja stvarnih plaćanj
 Kozmetički saloni i složeniji beauty centri, resursi poput soba/ležajeva/uređaja,
 paralelni tretmani, složeniji obračuni trajanja/cijena i naprednije automatizacije.
 Prioriteti se potvrđuju prema iskustvu prvih korisnika.
+
+## Ažuriranje — početni ekran (faza 4A)
+
+- Početni ekran bez poslovnog izbornika za račune bez odabranog aktivnog salona.
+- Prihvat pozivnice i izbor između više dostupnih salona koriste postojeći backend.
+- Učitavanje i greške također ne prikazuju poslovni sidebar.
+- Ovo nije završetak obveznog onboardinga. Kreiranje ostaje isključeno u konfiguraciji.
+- Sljedeći paket: povezani koraci Salon → Tim → Usluge → Raspored → Pregled,
+  backend provjera spremnosti i potvrda dovršetka prije dashboarda za nove salone.
+- Postojeći saloni nastavljaju raditi bez obveznog ponovnog postavljanja.

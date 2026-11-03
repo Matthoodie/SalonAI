@@ -8,6 +8,7 @@ import {
 function InvitationAcceptance({
   currentUser,
   onAccepted,
+  initiallyOpen = false,
 }) {
   const [token, setToken] = useState('')
   const [isSaving, setIsSaving] = useState(false)
@@ -73,7 +74,7 @@ function InvitationAcceptance({
   }
 
   return (
-    <details className="invitation-acceptance">
+    <details className="invitation-acceptance" open={initiallyOpen || undefined}>
       <summary>
         Pridruži se salonu kodom pozivnice
       </summary>

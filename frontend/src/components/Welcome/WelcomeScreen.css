@@ -1,0 +1,35 @@
+.salon-welcome { min-height: 100vh; background: #f5f6fb; color: #334155; font: inherit; text-align: left; }
+.salon-welcome *, .salon-welcome *::before, .salon-welcome *::after { box-sizing: border-box; }
+.salon-welcome-header { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 22px max(24px, calc((100% - 1040px) / 2)); background: #fff; border-bottom: 1px solid #e2e8f0; }
+.salon-welcome-brand { color: #0f172a; font-size: 28px; line-height: 1.25; font-weight: 750; letter-spacing: -.04em; }
+.salon-welcome-main { width: min(100%, 760px); margin: 0 auto; padding: 48px 24px 56px; font-size: 15px; line-height: 1.65; }
+.salon-welcome .salon-welcome-eyebrow { margin: 0 0 10px; color: #6366f1; font-size: 11px; font-weight: 750; letter-spacing: .09em; }
+.salon-welcome h1 { margin: 0 0 16px; color: #0f172a; font-size: 30px; font-weight: 750; line-height: 1.25; letter-spacing: -.025em; }
+.salon-welcome h2 { margin: 0 0 12px; font-size: 20px; color: #0f172a; line-height: 1.35; font-weight: 700; }
+.salon-welcome p { margin: 0 0 16px; }
+.salon-welcome .salon-welcome-account { color: #64748b; margin-bottom: 28px; overflow-wrap: anywhere; font-size: 13px; }
+.salon-welcome-panel, .salon-welcome .invitation-acceptance { margin: 0 0 18px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 15px; background: #fff; box-shadow: 0 8px 24px rgb(15 23 42 / 3%); }
+.salon-welcome-panel > :last-child { margin-bottom: 0; }
+.salon-welcome .salon-welcome-note { color: #64748b; font-size: 13px; }
+.salon-welcome button { font-family: inherit; font-size: 13px; font-weight: 650; min-height: 42px; padding: 9px 14px; border-radius: 9px; cursor: pointer; line-height: 1.45; }
+.salon-welcome .salon-welcome-primary, .salon-welcome .invitation-acceptance button { color: #fff; background: #4f46e5; border: 1px solid #4f46e5; }
+.salon-welcome .salon-welcome-primary:hover, .salon-welcome .invitation-acceptance button:hover { background: #4338ca; }
+.salon-welcome .salon-welcome-secondary, .salon-welcome .salon-welcome-refresh { background: #fff; border: 1px solid #cbd5e1; color: #334155; }
+.salon-welcome .salon-welcome-secondary:hover, .salon-welcome .salon-welcome-refresh:hover { background: #eef2ff; border-color: #a5b4fc; }
+.salon-welcome button:disabled { opacity: .6; cursor: wait; }
+.salon-welcome :is(button, input, summary):focus-visible { outline: 3px solid #a5b4fc; outline-offset: 3px; }
+.salon-welcome .invitation-acceptance summary { font-size: 15px; font-weight: 700; color: #4338ca; cursor: pointer; }
+.salon-welcome .invitation-acceptance-body { padding: 20px 0 0; }
+.salon-welcome .invitation-acceptance-body p { font-size: 14px; line-height: 1.65; overflow-wrap: anywhere; }
+.salon-welcome .invitation-acceptance-body label { font-size: 12px; font-weight: 650; color: #475569; }
+.salon-welcome .invitation-acceptance input { min-width: 0; min-height: 44px; border: 1px solid #cbd5e1; border-radius: 9px; padding: 11px 12px; font: inherit; font-size: 14px; color: #0f172a; background: #fff; }
+.salon-welcome .invitation-acceptance form > p { margin: 0; }
+.salon-welcome .invitation-acceptance button { justify-self: start; }
+.salon-welcome .salon-welcome-error, .salon-welcome .invitation-acceptance [role=alert] { color: #b91c1c; overflow-wrap: anywhere; }
+.salon-welcome-workspaces { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.salon-welcome-workspaces button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 16px; background: #fff; border: 1px solid #cbd5e1; color: #0f172a; text-align: left; padding: 16px; }
+.salon-welcome-workspaces button:hover { background: #eef2ff; border-color: #818cf8; }
+.salon-welcome-workspaces button span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.salon-welcome-workspaces strong { font-size: 15px; }
+.salon-welcome-workspaces small { display: block; color: #64748b; font-size: 12px; margin-top: 4px; }
+@media (max-width: 600px) { .salon-welcome-header { padding: 18px 16px; } .salon-welcome-main { padding: 32px 16px; } .salon-welcome h1 { font-size: 26px; } .salon-welcome-panel, .salon-welcome .invitation-acceptance { padding: 18px; } }
