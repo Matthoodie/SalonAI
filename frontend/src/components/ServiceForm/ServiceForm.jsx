@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import './ServiceForm.css'
+import {focusProblem,serviceExamples} from '../Onboarding/onboardingPresentation.js'
 
 function ServiceForm({
   onAddService,
@@ -7,9 +8,11 @@ function ServiceForm({
   onCancel,
   editingService,
   focusRequest = 0,
+  businessType,
   isCreating = false,
   isUpdating = false,
 }) {
+  const examples = serviceExamples(businessType)
   const formRef = useRef(null)
   const nameInputRef = useRef(null)
 
@@ -119,6 +122,7 @@ function ServiceForm({
       )
 
     if (hasErrors) {
+      focusProblem("service-"+Object.keys(newErrors).find(key=>newErrors[key]))
       return
     }
 
@@ -200,6 +204,9 @@ function ServiceForm({
         <input
           ref={nameInputRef}
           id="service-name"
+          aria-required="true"
+          aria-invalid={Boolean(errors.name)}
+          aria-describedby="service-name-error"
           type="text"
           value={name}
           onChange={(event) => {
@@ -214,7 +221,7 @@ function ServiceForm({
               )
             }
           }}
-          placeholder="npr. Muško šišanje"
+          placeholder={examples.name}
           className={
             errors.name
               ? 'service-input-error'
@@ -222,7 +229,7 @@ function ServiceForm({
           }
         />
 
-        <p className="service-form-error">
+        <p id="service-name-error" className="service-form-error">
           {errors.name || '\u00A0'}
         </p>
       </div>
@@ -241,7 +248,7 @@ function ServiceForm({
               event.target.value
             )
           }
-          placeholder="npr. Šišanje"
+          placeholder={examples.category}
         />
 
         <p className="service-form-help">
@@ -258,6 +265,9 @@ function ServiceForm({
 
         <input
           id="service-price"
+          aria-required="true"
+          aria-invalid={Boolean(errors.price)}
+          aria-describedby="service-price-error"
           type="number"
           min="0"
           step="0.01"
@@ -282,7 +292,7 @@ function ServiceForm({
           }
         />
 
-        <p className="service-form-error">
+        <p id="service-price-error" className="service-form-error">
           {errors.price || '\u00A0'}
         </p>
       </div>
@@ -294,6 +304,9 @@ function ServiceForm({
 
         <input
           id="service-duration"
+          aria-required="true"
+          aria-invalid={Boolean(errors.duration)}
+          aria-describedby="service-duration-error"
           type="number"
           min="1"
           step="1"
@@ -322,7 +335,7 @@ function ServiceForm({
           }
         />
 
-        <p className="service-form-error">
+        <p id="service-duration-error" className="service-form-error">
           {errors.duration || '\u00A0'}
         </p>
       </div>

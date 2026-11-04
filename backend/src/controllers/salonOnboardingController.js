@@ -1,11 +1,18 @@
+import { onboardingReadinessService } from '../services/onboardingReadinessService.js'
 import { salonCreationService } from '../services/salonCreationService.js'
 import { creationError, creationUserId } from '../utils/salonCreationValidation.js'
-export function createSalonOnboardingController(service = salonCreationService) {
+export function createSalonOnboardingController(service = salonCreationService, readiness = onboardingReadinessService) {
   function authenticatedId(req) {
     if (req.currentUser?.active !== true) throw creationError('Potreban je aktivan prijavljeni račun.', 'SALON_CREATION_UNAUTHENTICATED', 401)
     return creationUserId(req.currentUser.id)
   }
   return {
+    async readiness(req,res,next) {
+      try {res.json({data:await readiness.read(authenticatedId(req),creationUserId(req.currentSalon?.id))})} catch(error){next(error)}
+    },
+    async complete(req,res,next) {
+      try {res.json({data:await readiness.complete(authenticatedId(req),creationUserId(req.currentSalon?.id),req.body)})} catch(error){next(error)}
+    },
     async eligibility(req, res, next) {
       try { res.json({ data: await service.eligibility(authenticatedId(req)) }) } catch (error) { next(error) }
     },

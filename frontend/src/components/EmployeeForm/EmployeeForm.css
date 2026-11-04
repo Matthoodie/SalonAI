@@ -1098,3 +1098,5 @@
 }
 
 }
+.employee-form input[aria-invalid="true"] {border:2px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 3px #fee2e2}
+.employee-name-error {color:#991b1b;font-size:13px;line-height:1.5;text-align:left}

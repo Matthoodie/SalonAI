@@ -213,3 +213,5 @@
   outline: 3px solid #c7d2fe;
   outline-offset: 2px;
 }
+
+.service-form input[aria-invalid="true"] {border:2px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 3px #fee2e2}

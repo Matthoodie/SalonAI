@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useClerk } from '@clerk/react-router'
 import InvitationAcceptance from '../Invitations/InvitationAcceptance'
 import './WelcomeScreen.css'
+import CreateSalon from '../Onboarding/CreateSalon'
+import '../Onboarding/OnboardingWizard.css'
 
 export default function WelcomeScreen({ user, workspaces, busy, error, onRetry, onSelect, onAccepted }) {
   const clerk = useClerk()
@@ -57,6 +59,7 @@ export default function WelcomeScreen({ user, workspaces, busy, error, onRetry, 
                 <p className="salon-welcome-note">Otvaranje novih salona trenutačno je dostupno samo u kontroliranom testiranju.</p>
               </div>
             )}
+            {workspaces.length === 0 && <CreateSalon key={user.id} user={user} onCreated={onAccepted} />}
             <InvitationAcceptance key={user.id} currentUser={user} onAccepted={onAccepted} initiallyOpen={workspaces.length === 0} />
             <button type="button" className="salon-welcome-refresh" onClick={onRetry}>Osvježi dostupne salone</button>
           </>

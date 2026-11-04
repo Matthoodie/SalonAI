@@ -32,6 +32,7 @@ function Employees({
   salonTimezone,
   canManageEmployees = false,
   canManageAdminInvitations = false,
+  onboardingMode = false,
   memberManagementContext = null,
   isLoading = false,
   loadError = null,
@@ -63,6 +64,7 @@ function Employees({
 
     const scrollTimeout =
       window.setTimeout(() => {
+        if (employeeFormSectionRef.current?.contains(document.activeElement)) return
         employeeFormSectionRef.current?.querySelector('h2')?.focus({ preventScroll: true })
         employeeFormSectionRef.current
           ?.scrollIntoView({
@@ -353,7 +355,7 @@ function Employees({
         </div>
       ) : (
         <>
-          {canManageEmployees && (
+          {canManageEmployees && !onboardingMode && (
             <>
               <InvitationManager
                 canManageAdminInvitations={canManageAdminInvitations}

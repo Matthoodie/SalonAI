@@ -33,3 +33,13 @@
 .salon-welcome-workspaces strong { font-size: 15px; }
 .salon-welcome-workspaces small { display: block; color: #64748b; font-size: 12px; margin-top: 4px; }
 @media (max-width: 600px) { .salon-welcome-header { padding: 18px 16px; } .salon-welcome-main { padding: 32px 16px; } .salon-welcome h1 { font-size: 26px; } .salon-welcome-panel, .salon-welcome .invitation-acceptance { padding: 18px; } }
+
+.salon-welcome{background:radial-gradient(ellipse at 12% 0%,#30265c 0%,transparent 48%),#0b1020;min-height:100svh}
+.salon-welcome .salon-welcome-header{background:rgba(11,16,32,.8);border-bottom:1px solid #334155}
+.salon-welcome .salon-welcome-brand{color:#fff}
+.salon-welcome .salon-welcome-main>h1{color:#f8fafc}
+.salon-welcome .salon-welcome-main>.salon-welcome-eyebrow{color:#c4b5fd}
+.salon-welcome .salon-welcome-main>.salon-welcome-account{color:#cbd5e1}
+.salon-welcome .salon-welcome-panel{box-shadow:0 16px 40px #0002}
+
+.salon-welcome .salon-welcome-main>.salon-welcome-error{background:#fff1f2;color:#991b1b;border:1px solid #fecdd3;border-radius:12px;padding:16px}

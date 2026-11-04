@@ -1,0 +1,63 @@
+.salon-onboarding { min-height:100vh; background:#f5f6fb; color:#334155; text-align:left; font-size:15px; line-height:1.65; color-scheme:light; }
+.onboarding-header { display:flex; gap:20px; align-items:center; padding:20px 28px; background:white; border-bottom:1px solid #e2e8f0; }
+.onboarding-header strong {font-size:28px;color:#0f172a;letter-spacing:-.04em}
+.onboarding-header span {flex:1;overflow-wrap:anywhere;min-width:0}
+.onboarding-main {max-width:1120px;margin:auto;padding:32px 24px}
+.onboarding-main h1 {font-size:30px;font-weight:750;line-height:1.25;margin:0 0 24px;color:#0f172a}
+.onboarding-main h2 {font-size:20px;line-height:1.35;color:#0f172a}
+.onboarding-eyebrow {color:#6366f1;font-size:11px;letter-spacing:.09em;font-weight:750}
+.onboarding-panel {padding:24px;background:white;border:1px solid #e2e8f0;border-radius:15px;margin:20px 0}
+.onboarding-steps,.onboarding-actions {display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.salon-onboarding button {font:inherit;font-size:13px;font-weight:650;min-height:42px;padding:9px 14px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:#334155;cursor:pointer}
+.salon-onboarding button[aria-current],.salon-onboarding .onboarding-primary {background:#4f46e5;border-color:#4f46e5;color:white}
+.salon-onboarding button:disabled {opacity:.55;cursor:default}
+.salon-onboarding :is(button,input,select):focus-visible {outline:3px solid #a5b4fc;outline-offset:3px}
+.onboarding-fields {display:grid;gap:16px}
+.onboarding-fields fieldset {display:grid;gap:16px;border:0;padding:0;margin:0;min-width:0}
+.onboarding-fields label {display:grid;gap:6px;font-size:13px;font-weight:650;color:#475569}
+.onboarding-fields :is(input,select) {font:inherit;font-size:14px;padding:10px 12px;min-height:44px;border:1px solid #cbd5e1;border-radius:9px;width:100%;min-width:0;background:white;color:#0f172a}
+.onboarding-error {color:#b91c1c;background:#fff1f2;padding:14px;border-radius:9px;overflow-wrap:anywhere}
+.onboarding-main > .employees-page,.onboarding-main > .services-page {padding:0}
+@media(max-width:600px){.onboarding-header{padding:16px;gap:12px;flex-wrap:wrap}.onboarding-header span{flex-basis:50%}.onboarding-main{padding:24px 16px}.onboarding-main h1{font-size:26px}.onboarding-panel{padding:18px}.onboarding-steps button{flex:1 1 90px}}
+
+.onboarding-fields [aria-invalid="true"], .salon-onboarding :is(input,select)[aria-invalid="true"] {border:2px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 3px #fee2e2}
+.onboarding-field-error {display:block;color:#991b1b;font-size:13px;font-weight:600;line-height:1.5;margin-top:6px}
+.onboarding-team-choices {display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.onboarding-team-choices small {font-weight:400;line-height:1.6;color:#64748b}
+.onboarding-guidance {padding:20px;border:1px solid #c7d2fe;border-radius:12px;background:#eef2ff;scroll-margin:24px}
+.onboarding-guidance h3 {margin:0;font-size:17px;color:#312e81}
+.onboarding-guidance-error {border:2px solid #b91c1c;background:#fff1f2}
+.onboarding-main :is(.employee-form,.service-form) {scroll-margin-top:24px}
+@media(max-width:600px){.onboarding-team-choices{grid-template-columns:1fr}.onboarding-guidance{padding:16px}}
+
+.onboarding-team-choices label {align-content:start}
+
+/* The entrance has its own canvas; business pages keep their existing theme. */
+body:has(.salon-onboarding),body:has(.salon-welcome){background:#0b1020}
+#root:has(.salon-onboarding),#root:has(.salon-welcome){width:100%;border:0}
+.salon-onboarding{background:radial-gradient(ellipse at 12% 0%,#30265c 0%,transparent 48%),radial-gradient(ellipse at 100% 40%,#172747 0%,transparent 50%),#0b1020;min-height:100svh}
+.salon-onboarding .onboarding-header{background:rgba(11,16,32,.8);border-bottom:1px solid #334155;color:#cbd5e1;padding:20px max(24px,calc((100vw - 1120px)/2))}
+.salon-onboarding .onboarding-header strong{color:#fff;letter-spacing:-1px}
+.salon-onboarding .onboarding-main{padding-top:44px;padding-bottom:56px}
+.salon-onboarding .onboarding-main>.onboarding-eyebrow{color:#c4b5fd;letter-spacing:.12em}
+.salon-onboarding .onboarding-main>h1{color:#f8fafc;letter-spacing:-.025em;margin-bottom:28px}
+.salon-onboarding .onboarding-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 24px}
+.salon-onboarding .onboarding-steps button{display:flex;align-items:center;gap:10px;text-align:left;background:#182238;border-color:#46536d;color:#e2e8f0;padding:12px;font-size:14px;min-height:64px}
+.salon-onboarding .onboarding-steps button[aria-current=step]{background:#4f46e5;border-color:#a5b4fc;color:#fff;box-shadow:0 0 0 3px #818cf826}
+.salon-onboarding .onboarding-steps button:hover:not(:disabled){border-color:#c4b5fd;background:#293654}
+.salon-onboarding .onboarding-steps button[aria-current=step]:hover:not(:disabled){background:#4338ca}
+.onboarding-step-number{display:grid;place-items:center;flex:0 0 28px;height:28px;border:1px solid #64748b;border-radius:50%;font-size:12px}
+[aria-current=step] .onboarding-step-number{background:#fff;color:#4338ca;border-color:#fff}
+.salon-onboarding .onboarding-panel,.onboarding-workspace:not(:empty){background:#fff;color:#334155;box-shadow:0 16px 40px #0002;border:1px solid #e2e8f0;border-radius:18px}
+.onboarding-workspace:not(:empty){padding:24px;margin:20px 0;min-width:0}
+.onboarding-workspace>.employees-page,.onboarding-workspace>.services-page{padding:0;background:#fff}
+.salon-onboarding .onboarding-primary{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.salon-onboarding .onboarding-primary:hover:not(:disabled){background:#4338ca}
+.salon-onboarding .onboarding-actions{padding-top:8px}
+.salon-onboarding .onboarding-success{text-align:center;padding:48px 28px;max-width:720px;margin:24px auto}
+.onboarding-success p{max-width:540px;margin:16px auto 28px}
+.onboarding-success-icon{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 24px;border-radius:50%;background:#dcfce7;color:#166534;font-size:32px;font-weight:700}
+@media(max-width:700px){.salon-onboarding .onboarding-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.salon-onboarding .onboarding-main{padding:28px 16px}.onboarding-workspace:not(:empty){padding:16px}.salon-onboarding .onboarding-header{padding:16px;flex-wrap:wrap}.salon-onboarding .onboarding-main>h1{font-size:26px}}
+@media(max-width:400px){.salon-onboarding .onboarding-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.salon-onboarding .onboarding-steps button{min-height:52px}.salon-onboarding .onboarding-success{padding:28px 16px}}
+
+.salon-onboarding .onboarding-main>.onboarding-error{margin-bottom:20px}

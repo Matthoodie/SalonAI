@@ -53,6 +53,7 @@ function Services({
   salonId,
   userId,
   canManageServices = false,
+  businessType,
 }) {
   const [isImportOpen, setIsImportOpen] = useState(false)
 
@@ -418,6 +419,7 @@ function Services({
 
       {canManageServices && isFormOpen && (
         <ServiceForm
+          businessType={businessType}
           onAddService={addService}
           onUpdateService={updateService}
           onCancel={cancelServiceForm}

@@ -4,6 +4,7 @@ import {
 } from 'react'
 
 import './EmployeeForm.css'
+import {focusProblem} from '../Onboarding/onboardingPresentation.js'
 
 const weekDays = [
   {
@@ -524,6 +525,8 @@ function EmployeeForm({
   useEffect(() => { setServiceQuery('') }, [editingEmployee])
   const matchesService = (service) => `${service.name} ${service.category ?? ''}`.toLocaleLowerCase('hr-HR').includes(serviceQuery.trim().toLocaleLowerCase('hr-HR'))
   const [name, setName] = useState('')
+  const [nameError,setNameError]=useState('')
+  useEffect(()=>setNameError(''),[editingEmployee])
   const [selectedServiceIds, setSelectedServiceIds] =
     useState([])
 
@@ -977,9 +980,8 @@ async function handleSubmit(event) {
   const trimmedName = name.trim()
 
   if (!trimmedName) {
-    window.alert(
-      'Unesite ime zaposlenika.'
-    )
+    setNameError('Upišite ime i prezime osobe koja pruža usluge.')
+    focusProblem('employee-name')
 
     return
   }
@@ -1127,15 +1129,20 @@ else {
 
         <input
           id="employee-name"
+          aria-required="true"
+          aria-invalid={Boolean(nameError)}
+          aria-describedby={nameError?"employee-name-error":undefined}
           type="text"
           value={name}
           placeholder="npr. Ivana Horvat"
-          onChange={(event) =>
+          onChange={(event) => {
             setName(event.target.value)
-          }
+            setNameError('')
+          }}
         />
       </div>
 
+      {nameError&&<p id="employee-name-error" role="alert" className="employee-name-error">{nameError}</p>}
       <fieldset className="employee-services-fieldset">
         <legend>Usluge zaposlenika</legend>
         <label className="employee-service-search" htmlFor="employee-service-search">

@@ -173,3 +173,18 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Sljedeći paket: povezani koraci Salon → Tim → Usluge → Raspored → Pregled,
   backend provjera spremnosti i potvrda dovršetka prije dashboarda za nove salone.
 - Postojeći saloni nastavljaju raditi bez obveznog ponovnog postavljanja.
+
+## Ažuriranje — povezani onboarding (faza 4B)
+
+- Uveden obrazac kreiranja za allowlist račune, trajno spremljen identičan zahtjev
+  za izričito ponavljanje nakon neizvjesnog rezultata.
+- App pri odabiru salona provjerava status. Novi salon ostaje u pet koraka do
+  backend potvrde; postojeći salon bez onboarding retka radi kao prije.
+- Tim, usluge i raspored koriste postojeće stranice i iste API-je unutar wizarda.
+- Završna provjera: izbor djelatnosti/načina rada, aktivni profil, aktivna usluga,
+  svaka usluga pokrivena aktivnim kvalificiranim zaposlenikom s tjednim rasporedom.
+- Samostalni način: jedan aktivan profil, vlasnik pruža usluge.
+- Stvarni PostgreSQL testovi i Vite build moraju proći lokalni verifier prije aktivacije.
+- Nema javnog moda kreiranja. Nova dozvola vrijedi samo za izabrani razvojni račun.
+- Slijedi lokalni cjeloviti test novog salona, zatim grooming s pasminom i fotografijom.
+- Grooming izbor djelatnosti još ne implementira profile ljubimaca. Beauty ostaje V2.

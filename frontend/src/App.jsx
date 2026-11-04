@@ -31,6 +31,8 @@ import { mapServicesToFrontend } from './api/serviceMapper'
 
 import Layout from './components/Layout/Layout'
 import WelcomeScreen from './components/Welcome/WelcomeScreen'
+import OnboardingWizard from './components/Onboarding/OnboardingWizard'
+import {onboardingApi} from './api/onboardingApi.js'
 import AccountSettings from './components/Settings/AccountSettings'
 import SalonSetupWizard from './components/SalonSetup/SalonSetupWizard'
 import './pages/Settings/Settings.css'
@@ -532,6 +534,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [workspaces, setWorkspaces] = useState([])
   const [authContext, setAuthContext] = useState(null)
+  const [onboarding, setOnboarding] = useState(null)
 
   const [isBusy, setIsBusy] = useState(true)
   const [workspaceError, setWorkspaceError] = useState(null)
@@ -565,6 +568,9 @@ function App() {
       )
     }
 
+    const onboardingState = await onboardingApi.status(salonId)
+    if (generationRef.current !== generation) return
+    setOnboarding(onboardingState)
     saveSelectedSalon(expectedUserId, salonId)
     setAuthContext(context)
   }
@@ -735,6 +741,11 @@ function App() {
         }}
       />
     )
+  }
+
+  if (onboarding?.requires_setup) {
+    return <OnboardingWizard key={`${authContext.user.id}:${authContext.current_salon.id}`}
+      authContext={authContext} workspaces={workspaces} onSelect={changeWorkspace} onRefresh={() => window.location.assign('/')} />
   }
 
   const canAccessFullCrm =

@@ -1,0 +1,14 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {creationPayload,pendingCreation,validateOnboarding,createOnboardingApi} from '../src/api/onboardingApi.js'
+const body={request_id:'08feceaa-fc21-45cb-b612-04c8e7fe006b',name:'Salon',timezone:'Europe/Zagreb',business_type:'hair',location:''}
+const review={salon_id:'1',status:'in_progress',revision:2,ready:true,issues:[],counts:{employees:1,services:1,uncovered_services:0}}
+test('onboarding UI: creation payload never submits identities',()=>{assert.deepEqual(creationPayload({...body,user_id:8,role:'owner'}),body)})
+test('onboarding UI: creation draft validates required name timezone uuid',()=>{for(const patch of [{name:''},{timezone:'No/Zone'},{request_id:'bad'},{business_type:null},{location:'\0'}])assert.throws(()=>creationPayload({...body,...patch}))})
+test('onboarding UI: pending request survives remount and isolates account',()=>{const m=new Map(),storage={setItem:(k,v)=>m.set(k,v),getItem:k=>m.get(k)??null};pendingCreation(storage,1,body);assert.deepEqual(pendingCreation(storage,1),body);assert.equal(pendingCreation(storage,2),null)})
+test('onboarding UI: corrupt or unavailable storage blocks preparation',()=>{assert.throws(()=>pendingCreation({setItem(){throw Error('full')}},1,body));assert.throws(()=>pendingCreation({getItem:()=>'{bad'},1))})
+test('onboarding UI: status must match salon and completion state',()=>{assert.throws(()=>validateOnboarding({salon_id:'2',status:'completed',requires_setup:false},1));assert.throws(()=>validateOnboarding({salon_id:'1',status:'in_progress',requires_setup:false},1));assert.equal(validateOnboarding({salon_id:'1',status:'not_required',requires_setup:false},1).status,'not_required')})
+test('onboarding UI: review rejects fabricated readiness and invalid counters',()=>{assert.throws(()=>validateOnboarding({...review,issues:[{step:'team',message:'Missing'}]},1,true));assert.throws(()=>validateOnboarding({...review,counts:{}},1,true))})
+test('onboarding API: uncertain creation and completion never retry',async()=>{let n=0;const api=createOnboardingApi(async()=>{n++;throw Error('network')});await assert.rejects(api.create(body));assert.equal(n,1);await assert.rejects(api.complete(1,2));assert.equal(n,2)})
+test('onboarding API: completion sends revision only and requires completed response',async()=>{let options;const api=createOnboardingApi(async(p,o)=>{options=o;return {ok:true,json:async()=>({data:review})}});await assert.rejects(api.complete(1,2));assert.deepEqual(JSON.parse(options.body),{expected_revision:2})})
+test('onboarding API: completed and legacy responses are accepted',async()=>{for(const status of ['completed','not_required']){const api=createOnboardingApi(async()=>({ok:true,json:async()=>({data:{...review,status}})}));assert.equal((await api.complete(1,2)).status,status)}})
