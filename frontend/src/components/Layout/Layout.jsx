@@ -1,19 +1,22 @@
+import {ThemeProvider,useTheme} from '../Theme/ThemeProvider'
+import '../Theme/theme.css'
 import { useState } from 'react'
 import Header from '../Header/Header'
 import Sidebar from '../Sidebar/Sidebar'
 import './Layout.css'
 
-function Layout({
+function LayoutContent({
   children,
   currentUser,
   role,
   workspaceControl,
   canAccessFullCrm = false,
 }) {
+  const {resolved}=useTheme()
   const [isMobileMenuOpen, setIsMobileMenuOpen] =
     useState(false)
   return (
-  <div className="app-layout">
+  <div className="app-layout" data-theme={resolved}>
     <Sidebar
       canAccessFullCrm={canAccessFullCrm}
       isMobileMenuOpen={isMobileMenuOpen}
@@ -60,4 +63,6 @@ function Layout({
  )
 }
 
-export default Layout
+export default function Layout(props) {
+  return <ThemeProvider key={String(props.currentUser?.id || "guest")} userId={props.currentUser?.id}><LayoutContent {...props}/></ThemeProvider>
+}

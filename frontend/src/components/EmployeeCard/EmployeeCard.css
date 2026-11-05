@@ -7,8 +7,8 @@
   align-items: center;
   gap: 20px;
   padding: 16px 18px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--ui-surface, #ffffff);
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
@@ -28,8 +28,8 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #eef2ff;
-  color: #4f46e5;
+  background: var(--ui-accent-soft, #eef2ff);
+  color: var(--ui-accent, #4f46e5);
   font-size: 0.82rem;
   font-weight: 800;
 }
@@ -40,13 +40,13 @@
 
 .employee-identity h3 {
   margin: 0 0 5px;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.98rem;
 }
 
 .employee-schedule-summary {
   margin: 7px 0 0;
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1.4;
@@ -61,13 +61,13 @@
 }
 
 .employee-status-active {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--ui-success-soft, #dcfce7);
+  color: var(--ui-success, #15803d);
 }
 
 .employee-status-inactive {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--ui-soft, #f1f5f9);
+  color: var(--ui-muted, #64748b);
 }
 
 .employee-card-services {
@@ -79,7 +79,7 @@
 }
 
 .employee-card-label {
-  color: #94a3b8;
+  color: var(--ui-muted, #94a3b8);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -87,7 +87,7 @@
 }
 
 .employee-card-services strong {
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 1rem;
 }
 
@@ -108,31 +108,31 @@
 }
 
 .employee-status-button-deactivate {
-  border: 1px solid #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
+  border: 1px solid var(--ui-danger-line, #fecaca);
+  background: var(--ui-danger-soft, #fef2f2);
+  color: var(--ui-danger, #b91c1c);
 }
 
 .employee-status-button-deactivate:hover {
-  background: #fee2e2;
+  background: var(--ui-danger-soft, #fee2e2);
 }
 
 .employee-status-button-activate {
-  border: 1px solid #bbf7d0;
-  background: #f0fdf4;
-  color: #15803d;
+  border: 1px solid var(--ui-success-line, #bbf7d0);
+  background: var(--ui-success-soft, #f0fdf4);
+  color: var(--ui-success, #15803d);
 }
 
 .employee-status-button-activate:hover {
-  background: #dcfce7;
+  background: var(--ui-success-soft, #dcfce7);
 }
 .employee-edit-button {
   min-height: 34px;
   padding: 7px 12px;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--ui-accent-line, #c7d2fe);
   border-radius: 8px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--ui-accent-soft, #eef2ff);
+  color: var(--ui-accent, #4338ca);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
@@ -140,7 +140,7 @@
 }
 
 .employee-edit-button:hover {
-  background: #e0e7ff;
+  background: var(--ui-accent-soft, #e0e7ff);
 }
 
 @media (max-width: 650px) {

@@ -1,8 +1,8 @@
 .employee-form {
   margin-bottom: 24px;
   padding: 24px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--ui-surface, #ffffff);
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
@@ -10,12 +10,12 @@
 .employee-form-header {
   margin-bottom: 24px;
   padding-bottom: 18px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--ui-line, #e2e8f0);
 }
 
 .employee-form-header h2 {
   margin: 4px 0 6px;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 1.15rem;
   font-weight: 800;
 }
@@ -23,13 +23,13 @@
 .employee-form-header p {
   margin: 0;
   max-width: 620px;
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.86rem;
   line-height: 1.55;
 }
 
 .employee-form-eyebrow {
-  color: #6366f1;
+  color: var(--ui-accent, #6366f1);
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.07em;
@@ -47,7 +47,7 @@
 .employee-form-field label {
   display: block;
   margin-bottom: 7px;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -56,10 +56,10 @@
   width: 100%;
   min-height: 42px;
   padding: 10px 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-line, #cbd5e1);
   border-radius: 9px;
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-ink, #0f172a);
   font: inherit;
   outline: none;
   transition:
@@ -68,8 +68,8 @@
 }
 
 .employee-form-field input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px #eef2ff;
+  border-color: var(--ui-accent, #6366f1);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft, #eef2ff);
 }
 
 /* =========================
@@ -84,7 +84,7 @@
 
 .employee-services-fieldset legend {
   margin-bottom: 10px;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -100,10 +100,10 @@
   align-items: center;
   gap: 7px;
   padding: 8px 11px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--ui-soft, #f8fafc);
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 9px;
-  color: #334155;
+  color: var(--ui-text, #334155);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -113,17 +113,17 @@
 }
 
 .employee-service-option:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
+  background: var(--ui-soft, #f1f5f9);
+  border-color: var(--ui-line, #cbd5e1);
 }
 
 .employee-service-option input {
   margin: 0;
-  accent-color: #6366f1;
+  accent-color: var(--ui-accent, #6366f1);
 }
 
 .employee-services-empty {
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.82rem;
 }
 
@@ -134,8 +134,8 @@
 .employee-working-hours-fieldset {
   margin: 0 0 24px;
   padding: 18px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--ui-soft, #f8fafc);
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 12px;
 }
 
@@ -153,14 +153,14 @@
 .employee-working-hours-fieldset legend {
   margin: 0 0 4px;
   padding: 0;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .employee-working-hours-description {
   margin: 0;
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
 }
 
@@ -168,10 +168,10 @@
   flex-shrink: 0;
   min-height: 36px;
   padding: 7px 12px;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--ui-accent-line, #c7d2fe);
   border-radius: 8px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--ui-accent-soft, #eef2ff);
+  color: var(--ui-accent, #4338ca);
   font: inherit;
   font-size: 0.76rem;
   font-weight: 800;
@@ -182,15 +182,15 @@
 }
 
 .employee-working-hours-toggle-button:hover {
-  background: #e0e7ff;
-  border-color: #a5b4fc;
+  background: var(--ui-accent-soft, #e0e7ff);
+  border-color: var(--ui-accent-line, #a5b4fc);
 }
 
 .employee-working-hours-summary {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-  color: #475569;
+  border-top: 1px solid var(--ui-line, #e2e8f0);
+  color: var(--ui-text, #475569);
   font-size: 0.8rem;
   font-weight: 700;
   line-height: 1.5;
@@ -205,7 +205,7 @@
   gap: 8px;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--ui-line, #e2e8f0);
 }
 
 .employee-working-hours-row {
@@ -218,8 +218,8 @@
   gap: 16px;
   min-height: 54px;
   padding: 9px 12px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: var(--ui-surface, #ffffff);
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 10px;
 }
 
@@ -228,7 +228,7 @@
 }
 
 .employee-working-hours-day strong {
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.82rem;
   font-weight: 750;
 }
@@ -237,7 +237,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #475569;
+  color: var(--ui-text, #475569);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
@@ -247,7 +247,7 @@
   width: 16px;
   height: 16px;
   margin: 0;
-  accent-color: #6366f1;
+  accent-color: var(--ui-accent, #6366f1);
   cursor: pointer;
 }
 
@@ -265,10 +265,10 @@
   width: 100%;
   min-height: 38px;
   padding: 7px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-line, #cbd5e1);
   border-radius: 8px;
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-ink, #0f172a);
   font: inherit;
   font-size: 0.8rem;
   font-weight: 600;
@@ -280,19 +280,19 @@
 }
 
 .employee-working-hours-times select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px #eef2ff;
+  border-color: var(--ui-accent, #6366f1);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft, #eef2ff);
 }
 
 .employee-working-hours-separator {
-  color: #94a3b8;
+  color: var(--ui-muted, #94a3b8);
   font-size: 0.85rem;
   font-weight: 700;
   text-align: center;
 }
 
 .employee-working-hours-off {
-  color: #94a3b8;
+  color: var(--ui-muted, #94a3b8);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -305,9 +305,9 @@
 .employee-date-overrides-fieldset {
   margin: 0 0 22px;
   padding: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--ui-soft, #f8fafc);
 }
 
 .employee-date-overrides-header {
@@ -325,7 +325,7 @@
 
 .employee-date-overrides-title-row legend {
   padding: 0;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.82rem;
   font-weight: 800;
 }
@@ -338,15 +338,15 @@
   justify-content: center;
   padding: 0 7px;
   border-radius: 999px;
-  background: #eef2ff;
-  color: #4f46e5;
+  background: var(--ui-accent-soft, #eef2ff);
+  color: var(--ui-accent, #4f46e5);
   font-size: 0.7rem;
   font-weight: 800;
 }
 
 .employee-date-overrides-description {
   margin: 5px 0 0;
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
 }
 
@@ -354,10 +354,10 @@
   flex-shrink: 0;
   min-height: 36px;
   padding: 7px 11px;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--ui-accent-line, #c7d2fe);
   border-radius: 8px;
-  background: #ffffff;
-  color: #4338ca;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-accent, #4338ca);
   font: inherit;
   font-size: 0.76rem;
   font-weight: 700;
@@ -365,14 +365,14 @@
 }
 
 .employee-date-overrides-toggle-button:hover {
-  background: #eef2ff;
+  background: var(--ui-accent-soft, #eef2ff);
 }
 
 .employee-date-overrides-summary {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-  color: #64748b;
+  border-top: 1px solid var(--ui-line, #e2e8f0);
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -380,7 +380,7 @@
 .employee-date-overrides-content {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--ui-line, #e2e8f0);
 }
 
 .employee-date-overrides-list {
@@ -395,9 +395,9 @@
   justify-content: space-between;
   gap: 16px;
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 9px;
-  background: #ffffff;
+  background: var(--ui-surface, #ffffff);
 }
 
 .employee-date-override-info {
@@ -407,22 +407,22 @@
 }
 
 .employee-date-override-info strong {
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.8rem;
 }
 
 .employee-date-override-info span {
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
   font-weight: 600;
 }
 
 .employee-date-override-remove {
   padding: 6px 9px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--ui-danger-line, #fecaca);
   border-radius: 7px;
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--ui-danger-soft, #fef2f2);
+  color: var(--ui-danger, #b91c1c);
   font: inherit;
   font-size: 0.72rem;
   font-weight: 700;
@@ -430,7 +430,7 @@
 }
 
 .employee-date-override-remove:hover {
-  background: #fee2e2;
+  background: var(--ui-danger-soft, #fee2e2);
 }
 
 .employee-date-override-form {
@@ -444,10 +444,10 @@
 .employee-date-override-times select {
   min-height: 38px;
   padding: 7px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-line, #cbd5e1);
   border-radius: 8px;
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-ink, #0f172a);
   font: inherit;
   font-size: 0.8rem;
   font-weight: 600;
@@ -456,15 +456,15 @@
 
 .employee-date-override-form > input[type='date']:focus,
 .employee-date-override-times select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px #eef2ff;
+  border-color: var(--ui-accent, #6366f1);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft, #eef2ff);
 }
 
 .employee-date-override-toggle {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #334155;
+  color: var(--ui-text, #334155);
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
@@ -472,7 +472,7 @@
 
 .employee-date-override-toggle input {
   margin: 0;
-  accent-color: #6366f1;
+  accent-color: var(--ui-accent, #6366f1);
 }
 
 .employee-date-override-times {
@@ -482,17 +482,17 @@
 }
 
 .employee-date-override-times > span {
-  color: #94a3b8;
+  color: var(--ui-muted, #94a3b8);
   font-weight: 700;
 }
 
 .employee-date-override-add {
   min-height: 38px;
   padding: 7px 12px;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--ui-accent-line, #c7d2fe);
   border-radius: 8px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--ui-accent-soft, #eef2ff);
+  color: var(--ui-accent, #4338ca);
   font: inherit;
   font-size: 0.76rem;
   font-weight: 800;
@@ -500,7 +500,7 @@
 }
 
 .employee-date-override-add:hover {
-  background: #e0e7ff;
+  background: var(--ui-accent-soft, #e0e7ff);
 }
 
 /* =========================
@@ -510,9 +510,9 @@
 .employee-time-off-fieldset {
   margin: 0 0 20px;
   padding: 18px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--ui-soft, #f8fafc);
 }
 
 .employee-time-off-header {
@@ -525,14 +525,14 @@
 .employee-time-off-fieldset legend {
   margin: 0 0 5px;
   padding: 0;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.82rem;
   font-weight: 800;
 }
 
 .employee-time-off-description {
   margin: 0;
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -541,10 +541,10 @@
   flex-shrink: 0;
   min-height: 36px;
   padding: 7px 12px;
-  border: 1px solid #c7d2fe;
+  border: 1px solid var(--ui-accent-line, #c7d2fe);
   border-radius: 8px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--ui-accent-soft, #eef2ff);
+  color: var(--ui-accent, #4338ca);
   font: inherit;
   font-size: 0.76rem;
   font-weight: 800;
@@ -555,17 +555,17 @@
 }
 
 .employee-time-off-toggle-button:hover {
-  background: #e0e7ff;
-  border-color: #a5b4fc;
+  background: var(--ui-accent-soft, #e0e7ff);
+  border-color: var(--ui-accent-line, #a5b4fc);
 }
 
 .employee-time-off-summary {
   margin-top: 14px;
   padding: 10px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 8px;
-  background: #ffffff;
-  color: #64748b;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -579,7 +579,7 @@
   gap: 14px;
   margin-top: 18px;
   padding-top: 18px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--ui-line, #e2e8f0);
 }
 
 .employee-time-off-field {
@@ -590,7 +590,7 @@
 }
 
 .employee-time-off-field label {
-  color: #334155;
+  color: var(--ui-text, #334155);
   font-size: 0.76rem;
   font-weight: 700;
 }
@@ -601,10 +601,10 @@
   min-width: 0;
   min-height: 40px;
   padding: 8px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-line, #cbd5e1);
   border-radius: 8px;
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-ink, #0f172a);
   font: inherit;
   font-size: 0.8rem;
   outline: none;
@@ -612,8 +612,8 @@
 
 .employee-time-off-field input:focus,
 .employee-time-off-field select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px #eef2ff;
+  border-color: var(--ui-accent, #6366f1);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft, #eef2ff);
 }
 
 .employee-time-off-note-field {
@@ -624,9 +624,9 @@
   justify-self: start;
   min-height: 38px;
   padding: 8px 13px;
-  border: 1px solid #4f46e5;
+  border: 1px solid var(--ui-accent, #4f46e5);
   border-radius: 8px;
-  background: #4f46e5;
+  background: var(--ui-accent-fill, #4f46e5);
   color: #ffffff;
   font: inherit;
   font-size: 0.78rem;
@@ -635,8 +635,8 @@
 }
 
 .employee-time-off-add:hover {
-  background: #4338ca;
-  border-color: #4338ca;
+  background: var(--ui-accent-fill, #4338ca);
+  border-color: var(--ui-accent, #4338ca);
 }
 
 .employee-time-off-list {
@@ -651,9 +651,9 @@
   justify-content: space-between;
   gap: 16px;
   padding: 12px 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 9px;
-  background: #ffffff;
+  background: var(--ui-surface, #ffffff);
 }
 
 .employee-time-off-info {
@@ -664,18 +664,18 @@
 }
 
 .employee-time-off-info strong {
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.82rem;
 }
 
 .employee-time-off-info span {
-  color: #4f46e5;
+  color: var(--ui-accent, #4f46e5);
   font-size: 0.75rem;
   font-weight: 700;
 }
 
 .employee-time-off-info small {
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.72rem;
 }
 
@@ -683,10 +683,10 @@
   flex-shrink: 0;
   min-height: 34px;
   padding: 7px 11px;
-  border: 1px solid #fecaca;
+  border: 1px solid var(--ui-danger-line, #fecaca);
   border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
+  background: var(--ui-danger-soft, #fef2f2);
+  color: var(--ui-danger, #b91c1c);
   font: inherit;
   font-size: 0.74rem;
   font-weight: 700;
@@ -694,7 +694,7 @@
 }
 
 .employee-time-off-remove:hover {
-  background: #fee2e2;
+  background: var(--ui-danger-soft, #fee2e2);
 }
 
 
@@ -705,7 +705,7 @@
 .employee-blocked-times-fieldset {
   margin: 0;
   padding: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 10px;
 }
 
@@ -720,12 +720,12 @@
   padding: 0;
   font-size: 0.9rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
 }
 
 .employee-blocked-times-description {
   margin: 6px 0 0;
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
   line-height: 1.5;
 }
@@ -734,10 +734,10 @@
   flex-shrink: 0;
   min-height: 36px;
   padding: 7px 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-line, #cbd5e1);
   border-radius: 8px;
-  background: #ffffff;
-  color: #334155;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-text, #334155);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 700;
@@ -745,15 +745,15 @@
 }
 
 .employee-blocked-times-toggle-button:hover {
-  background: #f8fafc;
+  background: var(--ui-soft, #f8fafc);
 }
 
 .employee-blocked-times-summary {
   margin-top: 14px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--ui-soft, #f8fafc);
+  color: var(--ui-muted, #64748b);
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -776,7 +776,7 @@
 }
 
 .employee-blocked-time-field label {
-  color: #475569;
+  color: var(--ui-text, #475569);
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -786,10 +786,10 @@
   width: 100%;
   min-height: 38px;
   padding: 7px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-line, #cbd5e1);
   border-radius: 8px;
-  background: #ffffff;
-  color: #0f172a;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-ink, #0f172a);
   font: inherit;
   font-size: 0.8rem;
   font-weight: 600;
@@ -798,8 +798,8 @@
 
 .employee-blocked-time-field input:focus,
 .employee-blocked-time-field select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px #eef2ff;
+  border-color: var(--ui-accent, #6366f1);
+  box-shadow: 0 0 0 3px var(--ui-accent-soft, #eef2ff);
 }
 
 .employee-blocked-time-note-field {
@@ -811,10 +811,10 @@
   justify-self: flex-start;
   min-height: 38px;
   padding: 8px 13px;
-  border: 1px solid #4f46e5;
+  border: 1px solid var(--ui-accent, #4f46e5);
   border-radius: 8px;
-  background: #ffffff;
-  color: #4f46e5;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-accent, #4f46e5);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 800;
@@ -822,7 +822,7 @@
 }
 
 .employee-blocked-time-add:hover {
-  background: #eef2ff;
+  background: var(--ui-accent-soft, #eef2ff);
 }
 
 .employee-blocked-times-list {
@@ -838,9 +838,9 @@
   justify-content: space-between;
   gap: 16px;
   padding: 11px 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--ui-line, #e2e8f0);
   border-radius: 8px;
-  background: #f8fafc;
+  background: var(--ui-soft, #f8fafc);
 }
 
 .employee-blocked-time-info {
@@ -850,28 +850,28 @@
 }
 
 .employee-blocked-time-info strong {
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.8rem;
 }
 
 .employee-blocked-time-info span {
-  color: #475569;
+  color: var(--ui-text, #475569);
   font-size: 0.78rem;
   font-weight: 700;
 }
 
 .employee-blocked-time-info small {
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
   font-size: 0.73rem;
 }
 
 .employee-blocked-time-remove {
   flex-shrink: 0;
   padding: 6px 9px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--ui-line, #cbd5e1);
   border-radius: 7px;
-  background: #ffffff;
-  color: #475569;
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-text, #475569);
   font: inherit;
   font-size: 0.73rem;
   font-weight: 700;
@@ -879,7 +879,7 @@
 }
 
 .employee-blocked-time-remove:hover {
-  background: #f1f5f9;
+  background: var(--ui-soft, #f1f5f9);
 }
 
 /* =========================
@@ -890,7 +890,7 @@
   display: flex;
   gap: 10px;
   padding-top: 20px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--ui-line, #e2e8f0);
 }
 
 .employee-form-submit,
@@ -909,24 +909,24 @@
 }
 
 .employee-form-submit {
-  border: 1px solid #4f46e5;
-  background: #4f46e5;
+  border: 1px solid var(--ui-accent, #4f46e5);
+  background: var(--ui-accent-fill, #4f46e5);
   color: #ffffff;
 }
 
 .employee-form-submit:hover {
-  background: #4338ca;
-  border-color: #4338ca;
+  background: var(--ui-accent-fill, #4338ca);
+  border-color: var(--ui-accent, #4338ca);
 }
 
 .employee-form-cancel {
-  border: 1px solid #cbd5e1;
-  background: #ffffff;
-  color: #334155;
+  border: 1px solid var(--ui-line, #cbd5e1);
+  background: var(--ui-surface, #ffffff);
+  color: var(--ui-text, #334155);
 }
 
 .employee-form-cancel:hover {
-  background: #f8fafc;
+  background: var(--ui-soft, #f8fafc);
 }
 
 .employee-form-submit:active,
@@ -1098,5 +1098,5 @@
 }
 
 }
-.employee-form input[aria-invalid="true"] {border:2px solid #b91c1c;background:#fff1f2;box-shadow:0 0 0 3px #fee2e2}
-.employee-name-error {color:#991b1b;font-size:13px;line-height:1.5;text-align:left}
+.employee-form input[aria-invalid="true"] {border:2px solid var(--ui-danger, #b91c1c);background:var(--ui-danger-soft, #fff1f2);box-shadow:0 0 0 3px var(--ui-danger-soft, #fee2e2)}
+.employee-name-error {color:var(--ui-danger, #991b1b);font-size:13px;line-height:1.5;text-align:left}

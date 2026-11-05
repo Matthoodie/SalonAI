@@ -1,0 +1,43 @@
+html[data-salon-theme] {
+ --ui-canvas:#f2f4fa;--ui-surface:#fff;--ui-soft:#f5f7fc;--ui-ink:#17233b;--ui-text:#394a64;--ui-muted:#5e708b;--ui-line:#dce3ef;
+ --ui-accent:#5144c6;--ui-accent-soft:#eeedfc;--ui-accent-line:#b9b4ef;--ui-primary:#4f46e5;--ui-accent-fill:#4f46e5;
+ --ui-danger:#b42337;--ui-danger-soft:#fff0f2;--ui-danger-line:#efbdc5;--ui-danger-fill:#b42337;
+ --ui-success:#166b43;--ui-success-soft:#edf9f1;--ui-success-line:#b5dec6;--ui-success-fill:#167446;
+ --ui-warning:#8b500f;--ui-warning-soft:#fff7e6;--ui-warning-line:#e8ce99;--ui-warning-fill:#8b500f;
+ --ui-glow:rgba(121,109,218,.09);--ui-shadow:0 8px 28px rgb(31 41 80 / 5%);
+ --text:var(--ui-text);--text-h:var(--ui-ink);--bg:var(--ui-canvas);--border:var(--ui-line);--accent:var(--ui-accent);
+ --ui-color-scheme:light;color-scheme:light;background:var(--ui-canvas);color:var(--ui-text);
+}
+html[data-salon-theme=dark] {
+ --ui-canvas:#0d1425;--ui-surface:#182338;--ui-soft:#1e2c43;--ui-ink:#f0f3fb;--ui-text:#d2dced;--ui-muted:#a8b8d0;--ui-line:#3a4b65;
+ --ui-accent:#c2baff;--ui-accent-soft:#302d50;--ui-accent-line:#71649f;--ui-primary:#4f46e5;--ui-accent-fill:#4f46e5;
+ --ui-danger:#ffb3bf;--ui-danger-soft:#422735;--ui-danger-line:#885064;--ui-danger-fill:#b42337;
+ --ui-success:#92e2b4;--ui-success-soft:#173b34;--ui-success-line:#39735a;--ui-success-fill:#167446;
+ --ui-warning:#f3d190;--ui-warning-soft:#403624;--ui-warning-line:#846b3c;--ui-warning-fill:#8b500f;
+ --ui-glow:rgba(114,91,205,.11);--ui-shadow:0 8px 28px rgb(0 0 0 / 14%);
+ --ui-color-scheme:dark;color-scheme:dark;
+}
+html[data-salon-theme] body{background:var(--ui-canvas)}
+.app-layout[data-theme]{background:radial-gradient(ellipse 90% 600px at 65% 0%,var(--ui-glow),transparent),var(--ui-canvas);color:var(--ui-text)}
+.app-layout[data-theme] :is(input,select,textarea){color-scheme:inherit}
+.app-layout[data-theme] :is(input,textarea)::placeholder{color:var(--ui-muted);opacity:1}
+.app-layout[data-theme] :is(button,input,select,textarea,a,summary):focus-visible{outline:3px solid var(--ui-accent-line);outline-offset:3px}
+.app-layout[data-theme] .app-sidebar{background:linear-gradient(170deg,#17213a,#101827 65%);color:#f1f5ff}
+.app-layout[data-theme] .app-sidebar h1{color:#fff}
+.app-layout[data-theme] .app-sidebar a[aria-current=page]{background:#4f46e5;color:#fff;box-shadow:0 4px 16px #0002}
+.app-layout[data-theme] .settings-panel{box-shadow:var(--ui-shadow)}
+.appearance-options{border:0;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.appearance-legend{font-size:13px;font-weight:650;margin-bottom:12px;color:var(--ui-text)}
+.appearance-settings .appearance-option{position:relative;display:grid;gap:10px;align-content:start;padding:16px;border:1px solid var(--ui-line);border-radius:14px;background:var(--ui-soft);cursor:pointer;min-width:0}
+.appearance-settings .appearance-option[data-selected=true]{border-color:var(--ui-accent);box-shadow:0 0 0 1px var(--ui-accent);background:var(--ui-accent-soft)}
+.appearance-settings .appearance-option input{position:absolute;top:16px;right:16px;width:18px;height:18px;padding:0;margin:0;max-width:18px;accent-color:#4f46e5;min-height:0}
+.appearance-settings .appearance-option strong{display:block;font-size:14px;color:var(--ui-ink)}
+.appearance-settings .appearance-option small{display:block;font-size:12px;line-height:1.6;color:var(--ui-muted)}
+.appearance-preview{width:96px;height:60px;background:#eff1f8;border:1px solid #cbd5e1;border-radius:8px;display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 1fr;gap:5px;padding:7px;overflow:hidden}
+.appearance-preview i{grid-row:span 2;background:#17213a;border-radius:3px}
+.appearance-preview b{background:#fff;border-radius:3px}
+.appearance-preview-dark{background:#0d1425;border-color:#52617b}.appearance-preview-dark b{background:#30405b}
+.appearance-preview-system{background:linear-gradient(90deg,#eff1f8 50%,#0d1425 50%)}.appearance-preview-system b{background:linear-gradient(90deg,#fff 50%,#30405b 50%)}
+.appearance-notice{font-size:13px;color:var(--ui-muted);margin:16px 0 0;min-height:1.6em}
+@media(max-width:620px){.appearance-options{grid-template-columns:1fr}.appearance-settings .appearance-option{padding-right:48px}}
+@media(prefers-reduced-motion:reduce){.app-layout[data-theme] *{scroll-behavior:auto}}

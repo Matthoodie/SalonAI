@@ -323,39 +323,6 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
     setEmployeeList(mapEmployeesToFrontend(rows, salonTimezone))
   }
 
-  function exportSalonData() {
-    if (!canManage || isLoading || loadError) {
-      return
-    }
-
-    const salonData = {
-      clients: clientList,
-      services: serviceList,
-      employees: employeeList,
-      appointments: appointmentList,
-      exportedAt: new Date().toISOString(),
-      version: 1,
-    }
-
-    const blob = new Blob(
-      [JSON.stringify(salonData, null, 2)],
-      { type: 'application/json' }
-    )
-
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-
-    link.href = url
-    link.download =
-      `salonai-${salonId}-${formatDateKey(new Date())}.json`
-
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-
-    URL.revokeObjectURL(url)
-  }
-
   if (isLoading) {
     return (
       <p role="status">
@@ -410,7 +377,6 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
               <AccountSettings
                 authContext={authContext}
                 onAccepted={onInvitationAccepted}
-                onExport={canManage ? exportSalonData : undefined}
               />
               {authContext.membership.role === 'owner' && (
                 <SalonSetupWizard key={`${authContext.user.id}:${salonId}`} salonId={salonId} />

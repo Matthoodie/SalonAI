@@ -1,43 +1,43 @@
-.dashboard { padding: 28px; color: #334155; text-align: left; font-size: 15px; line-height: 1.65; min-width: 0; }
+.dashboard { padding: 28px; color: var(--ui-text, #334155); text-align: left; font-size: 15px; line-height: 1.65; min-width: 0; }
 .dashboard * { box-sizing: border-box; }
 .dashboard-heading { margin-bottom: 24px; }
-.dashboard .dashboard-eyebrow { margin: 0 0 5px; color: #6366f1; font-size: 11px; font-weight: 750; letter-spacing: .09em; }
-.dashboard h1 { margin: 0; color: #0f172a; font-size: 30px; font-weight: 750; line-height: 1.25; letter-spacing: -.5px; }
-.dashboard h2 { margin: 0 0 12px; color: #0f172a; font-size: 20px; font-weight: 700; line-height: 1.35; }
+.dashboard .dashboard-eyebrow { margin: 0 0 5px; color: var(--ui-accent, #6366f1); font-size: 11px; font-weight: 750; letter-spacing: .09em; }
+.dashboard h1 { margin: 0; color: var(--ui-ink, #0f172a); font-size: 30px; font-weight: 750; line-height: 1.25; letter-spacing: -.5px; }
+.dashboard h2 { margin: 0 0 12px; color: var(--ui-ink, #0f172a); font-size: 20px; font-weight: 700; line-height: 1.35; }
 .dashboard p { margin: 8px 0 16px; overflow-wrap: anywhere; }
-.dashboard-panel, .dashboard-metric { min-width: 0; padding: 22px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 15px; background: #fff; box-shadow: 0 4px 16px rgba(15,23,42,.035); }
+.dashboard-panel, .dashboard-metric { min-width: 0; padding: 22px; margin-bottom: 20px; border: 1px solid var(--ui-line, #e2e8f0); border-radius: 15px; background: var(--ui-surface, #fff); box-shadow: 0 4px 16px rgba(15,23,42,.035); }
 .dashboard-period-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-.dashboard button { min-height: 42px; padding: 9px 14px; border: 1px solid #cbd5e1; border-radius: 9px; background: #f8fafc; color: #334155; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
-.dashboard button:hover { background: #eef2ff; border-color: #a5b4fc; }
-.dashboard button.is-active, .dashboard button.dashboard-primary { color: #fff; background: #4f46e5; border-color: #4f46e5; }
-.dashboard button.is-active:hover, .dashboard button.dashboard-primary:hover { background: #4338ca; }
-.dashboard button:focus-visible, .dashboard input:focus-visible { outline: 3px solid #a5b4fc; outline-offset: 3px; }
+.dashboard button { min-height: 42px; padding: 9px 14px; border: 1px solid var(--ui-line, #cbd5e1); border-radius: 9px; background: var(--ui-soft, #f8fafc); color: var(--ui-text, #334155); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.dashboard button:hover { background: var(--ui-accent-soft, #eef2ff); border-color: var(--ui-accent-line, #a5b4fc); }
+.dashboard button.is-active, .dashboard button.dashboard-primary { color: #fff; background: var(--ui-accent-fill, #4f46e5); border-color: var(--ui-accent, #4f46e5); }
+.dashboard button.is-active:hover, .dashboard button.dashboard-primary:hover { background: var(--ui-accent-fill, #4338ca); }
+.dashboard button:focus-visible, .dashboard input:focus-visible { outline: 3px solid var(--ui-accent-line, #a5b4fc); outline-offset: 3px; }
 .dashboard-range-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-top: 20px; }
-.dashboard-range-form label { display: grid; gap: 5px; flex: 1 1 180px; max-width: 260px; min-width: 0; color: #64748b; font-size: 12px; font-weight: 650; }
-.dashboard-range-form input { min-width: 0; width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 9px; background: #fff; color: #0f172a; font: inherit; font-size: 14px; }
-.dashboard .dashboard-period-note, .dashboard .dashboard-section-note, .dashboard-client-summary { color: #64748b; font-size: 13px; }
+.dashboard-range-form label { display: grid; gap: 5px; flex: 1 1 180px; max-width: 260px; min-width: 0; color: var(--ui-muted, #64748b); font-size: 12px; font-weight: 650; }
+.dashboard-range-form input { min-width: 0; width: 100%; min-height: 42px; padding: 9px 12px; border: 1px solid var(--ui-line, #cbd5e1); border-radius: 9px; background: var(--ui-surface, #fff); color: var(--ui-ink, #0f172a); font: inherit; font-size: 14px; }
+.dashboard .dashboard-period-note, .dashboard .dashboard-section-note, .dashboard-client-summary { color: var(--ui-muted, #64748b); font-size: 13px; }
 .dashboard .dashboard-period-note { margin-bottom: 0; margin-top: 16px; }
 .dashboard-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin-bottom: 20px; }
 .dashboard-metric { margin: 0; }
-.dashboard-metric h2 { font-size: 14px; color: #64748b; margin: 0 0 12px; }
-.dashboard-metric > strong { display: block; color: #0f172a; font-size: 28px; font-weight: 750; line-height: 1.3; overflow-wrap: anywhere; }
-.dashboard-metric p { color: #64748b; font-size: 12px; margin: 10px 0 0; }
+.dashboard-metric h2 { font-size: 14px; color: var(--ui-muted, #64748b); margin: 0 0 12px; }
+.dashboard-metric > strong { display: block; color: var(--ui-ink, #0f172a); font-size: 28px; font-weight: 750; line-height: 1.3; overflow-wrap: anywhere; }
+.dashboard-metric p { color: var(--ui-muted, #64748b); font-size: 12px; margin: 10px 0 0; }
 .dashboard-section-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
 .dashboard-section-heading h2 { margin-bottom: 0; }
-.dashboard-section-heading > span { font-size: 13px; color: #64748b; }
+.dashboard-section-heading > span { font-size: 13px; color: var(--ui-muted, #64748b); }
 .dashboard-appointments { display: grid; gap: 10px; list-style: none; padding: 0; margin: 16px 0 0; }
-.dashboard-appointment { display: flex; align-items: center; gap: 18px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 11px; background: #fafbff; min-width: 0; }
-.dashboard-appointment-time { flex: 0 0 105px; display: grid; gap: 3px; color: #0f172a; }
-.dashboard-appointment-time > span { color: #64748b; font-size: 12px; }
+.dashboard-appointment { display: flex; align-items: center; gap: 18px; padding: 16px; border: 1px solid var(--ui-line, #e2e8f0); border-radius: 11px; background: var(--ui-soft, #fafbff); min-width: 0; }
+.dashboard-appointment-time { flex: 0 0 105px; display: grid; gap: 3px; color: var(--ui-ink, #0f172a); }
+.dashboard-appointment-time > span { color: var(--ui-muted, #64748b); font-size: 12px; }
 .dashboard-appointment-person { flex: 1; display: grid; min-width: 0; overflow-wrap: anywhere; }
-.dashboard-appointment-person strong { color: #0f172a; }
-.dashboard-appointment-person span, .dashboard-appointment-person small { color: #64748b; font-size: 13px; }
-.dashboard-status { padding: 4px 9px; border-radius: 7px; background: #eef2ff; color: #4338ca; font-size: 12px; white-space: normal; }
-.dashboard-status-completed { background: #ecfdf5; color: #047857; }
-.dashboard-status-cancelled, .dashboard-status-no_show { background: #fff1f2; color: #9f1239; }
-.dashboard .dashboard-empty { padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b; margin-bottom: 0; }
-.dashboard-error { padding: 12px; border: 1px solid #fecdd3; border-radius: 9px; background: #fff1f2; color: #9f1239; }
-.dashboard-empty-period { color: #64748b; }
+.dashboard-appointment-person strong { color: var(--ui-ink, #0f172a); }
+.dashboard-appointment-person span, .dashboard-appointment-person small { color: var(--ui-muted, #64748b); font-size: 13px; }
+.dashboard-status { padding: 4px 9px; border-radius: 7px; background: var(--ui-accent-soft, #eef2ff); color: var(--ui-accent, #4338ca); font-size: 12px; white-space: normal; }
+.dashboard-status-completed { background: var(--ui-success-soft, #ecfdf5); color: var(--ui-success, #047857); }
+.dashboard-status-cancelled, .dashboard-status-no_show { background: var(--ui-danger-soft, #fff1f2); color: var(--ui-danger, #9f1239); }
+.dashboard .dashboard-empty { padding: 20px; background: var(--ui-soft, #f8fafc); border: 1px dashed var(--ui-line, #cbd5e1); border-radius: 10px; color: var(--ui-muted, #64748b); margin-bottom: 0; }
+.dashboard-error { padding: 12px; border: 1px solid var(--ui-danger-line, #fecdd3); border-radius: 9px; background: var(--ui-danger-soft, #fff1f2); color: var(--ui-danger, #9f1239); }
+.dashboard-empty-period { color: var(--ui-muted, #64748b); }
 @media(max-width:1100px) { .dashboard-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:760px) { .dashboard { padding: 20px 16px; } .dashboard-panel, .dashboard-metric { padding: 18px; } .dashboard h1 { font-size: 26px; } .dashboard-appointment { flex-wrap: wrap; gap: 10px; } .dashboard-status { margin-left: auto; } }
 @media(max-width:480px) { .dashboard-metrics { grid-template-columns: minmax(0,1fr); } .dashboard-range-form label { max-width: none; flex-basis: 100%; } .dashboard-range-form button { width: 100%; } .dashboard-appointment-time { flex-basis: 85px; } }

@@ -1,7 +1,8 @@
+import AppearanceSettings from '../Theme/AppearanceSettings'
 import ProfileIdentity from '../Profile/ProfileIdentity'
 import InvitationAcceptance from '../Invitations/InvitationAcceptance'
 
-export default function AccountSettings({ authContext, onAccepted, onExport }) {
+export default function AccountSettings({ authContext, onAccepted }) {
   const { user, current_salon: salon, membership } = authContext
   return (
     <>
@@ -20,13 +21,7 @@ export default function AccountSettings({ authContext, onAccepted, onExport }) {
         <p>Za pristup drugom salonu upotrijebite pozivnicu koju ste dobili od njegove ovlaštene osobe.</p>
         <InvitationAcceptance currentUser={user} onAccepted={onAccepted} />
       </section>
-      {onExport && (
-        <section className="settings-panel" aria-labelledby="salon-export-heading">
-          <h2 id="salon-export-heading">Izvoz podataka</h2>
-          <p>Preuzmite JSON datoteku trenutačno učitanih klijenata, usluga, zaposlenika i termina. Ovaj izvoz nije potpuna sigurnosna kopija salona i ne uključuje sve podatke aplikacije.</p>
-          <button type="button" onClick={onExport}>Preuzmi podatke (JSON)</button>
-        </section>
-      )}
+      <AppearanceSettings />
     </>
   )
 }

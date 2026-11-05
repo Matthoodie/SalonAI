@@ -4,7 +4,7 @@
   align-items: stretch;
   width: 100%;
   min-height: 100vh;
-  background: #f5f6fa;
+  background: var(--ui-canvas, #f5f6fa);
 }
 
 .app-main {
@@ -27,7 +27,7 @@
 .mobile-menu-button {
   border: none;
   background: transparent;
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font: inherit;
   font-size: 1.5rem;
   cursor: pointer;
@@ -57,12 +57,12 @@
     justify-content: space-between;
     min-height: 58px;
     padding: 0 18px;
-    background: #ffffff;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--ui-surface, #ffffff);
+    border-bottom: 1px solid var(--ui-line, #e2e8f0);
   }
 
   .mobile-topbar strong {
-    color: #0f172a;
+    color: var(--ui-ink, #0f172a);
     font-size: 1.05rem;
   }
 

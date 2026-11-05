@@ -1,8 +1,8 @@
 .appointment-card {
   padding: 18px 20px;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #6366f1;
+  background-color: var(--ui-surface, #ffffff);
+  border: 1px solid var(--ui-line, #e2e8f0);
+  border-left: 4px solid var(--ui-accent, #6366f1);
   border-radius: 14px;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
   transition:
@@ -17,21 +17,21 @@
 }
 
 .appointment-card-completed {
-  background-color: #f8faf9;
-  border-left-color: #22c55e;
+  background-color: var(--ui-soft, #f8faf9);
+  border-left-color: var(--ui-success, #22c55e);
 }
 
 .appointment-card-cancelled {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
-  border-left-color: #94a3b8;
+  background-color: var(--ui-soft, #f8fafc);
+  border-color: var(--ui-line, #cbd5e1);
+  border-left-color: var(--ui-muted, #94a3b8);
 }
 
 .appointment-card-cancelled .appointment-date strong,
 .appointment-card-cancelled .appointment-time strong,
 .appointment-card-cancelled .appointment-detail h3,
 .appointment-card-cancelled .appointment-detail p {
-  color: #64748b;
+  color: var(--ui-muted, #64748b);
 }
 
 .appointment-card-header {
@@ -57,7 +57,7 @@
 
 .appointment-date-label,
 .appointment-time-label {
-  color: #94a3b8;
+  color: var(--ui-muted, #94a3b8);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.07em;
@@ -65,13 +65,13 @@
 }
 
 .appointment-date strong {
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 0.92rem;
   line-height: 1.3;
 }
 
 .appointment-time strong {
-  color: #0f172a;
+  color: var(--ui-ink, #0f172a);
   font-size: 1.45rem;
   line-height: 1;
 }
@@ -88,19 +88,19 @@
 }
 
 .appointment-status-scheduled {
-  color: #4338ca;
-  background-color: #eef2ff;
+  color: var(--ui-accent, #4338ca);
+  background-color: var(--ui-accent-soft, #eef2ff);
 }
 
 .appointment-status-completed {
-  color: #15803d;
-  background-color: #dcfce7;
+  color: var(--ui-success, #15803d);
+  background-color: var(--ui-success-soft, #dcfce7);
 }
 
 .appointment-status-cancelled {
-  color: #475569;
-  background-color: #e2e8f0;
-  border: 1px solid #cbd5e1;
+  color: var(--ui-text, #475569);
+  background-color: var(--ui-line, #e2e8f0);
+  border: 1px solid var(--ui-line, #cbd5e1);
 }
 
 .appointment-info {
@@ -109,8 +109,8 @@
     repeat(3, minmax(160px, 1fr));
   gap: 18px;
   padding: 14px 0;
-  border-top: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f1f5f9;
+  border-top: 1px solid var(--ui-soft, #f1f5f9);
+  border-bottom: 1px solid var(--ui-soft, #f1f5f9);
 }
 
 .appointment-detail {
@@ -120,7 +120,7 @@
 .appointment-detail-label {
   display: block;
   margin-bottom: 4px;
-  color: #94a3b8;
+  color: var(--ui-muted, #94a3b8);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -131,7 +131,7 @@
 .appointment-detail p {
   margin: 0;
   overflow-wrap: anywhere;
-  color: #1e293b;
+  color: var(--ui-ink, #1e293b);
 }
 
 .appointment-detail h3 {
@@ -171,31 +171,31 @@
 
 .appointment-button-complete {
   color: #ffffff;
-  background-color: #16a34a;
+  background-color: var(--ui-success-fill, #16a34a);
 }
 
 .appointment-button-complete:hover {
-  background-color: #15803d;
+  background-color: var(--ui-success-fill, #15803d);
 }
 
 .appointment-button-edit {
-  color: #4338ca;
-  background-color: #eef2ff;
-  border-color: #c7d2fe;
+  color: var(--ui-accent, #4338ca);
+  background-color: var(--ui-accent-soft, #eef2ff);
+  border-color: var(--ui-accent-line, #c7d2fe);
 }
 
 .appointment-button-edit:hover {
-  background-color: #e0e7ff;
+  background-color: var(--ui-accent-soft, #e0e7ff);
 }
 
 .appointment-button-delete {
-  color: #b91c1c;
-  background-color: #fef2f2;
-  border-color: #fecaca;
+  color: var(--ui-danger, #b91c1c);
+  background-color: var(--ui-danger-soft, #fef2f2);
+  border-color: var(--ui-danger-line, #fecaca);
 }
 
 .appointment-button-delete:hover {
-  background-color: #fee2e2;
+  background-color: var(--ui-danger-soft, #fee2e2);
 }
 
 @media (max-width: 650px) {
@@ -236,4 +236,4 @@
 
 .appointment-item-list { margin: 0; padding-left: 20px; overflow-wrap: anywhere; }
 .appointment-item-list li { margin: 6px 0; }
-.appointment-item-list small { display: block; color: #60758d; }
+.appointment-item-list small { display: block; color: var(--ui-muted, #60758d); }

@@ -188,3 +188,14 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Nema javnog moda kreiranja. Nova dozvola vrijedi samo za izabrani razvojni račun.
 - Slijedi lokalni cjeloviti test novog salona, zatim grooming s pasminom i fotografijom.
 - Grooming izbor djelatnosti još ne implementira profile ljubimaca. Beauty ostaje V2.
+
+## Ažuriranje — izgled aplikacije V1
+
+- Uklonjen lokalni JSON izvoz iz korisničkih Postavki i App.jsx.
+- Dodan osobni odabir Svijetlo / Tamno / Prema uređaju; pamti se po računu u pregledniku.
+- Usklađene boje poslovnih stranica, obrazaca, kartica i statusa uz postojeću strukturu.
+- Početni Magic Wizard zadržava zaseban izgled; kreiranje salona ostaje isključeno.
+- Slijedi: grooming — više ljubimaca jednog klijenta, vrsta, pasmina, fotografija,
+  odabir ljubimca na terminu i povijest posjeta.
+- Zatim WhatsApp i dogovorene AI funkcionalnosti, mobilna/PWA i produkcijska priprema,
+  besplatni pilot te naplata. Beauty centri i složenije djelatnosti ostaju V2.
