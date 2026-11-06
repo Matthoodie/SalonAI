@@ -1,3 +1,4 @@
+import petRoutes from './routes/petRoutes.js'
 import salonOnboardingRoutes from './routes/salonOnboardingRoutes.js'
 import salonSetupRoutes from './routes/salonSetupRoutes.js'
 import express from 'express'
@@ -87,7 +88,8 @@ export function createApp({
   app.use(
     '/api/clients',
     ...privateRouteMiddleware,
-    clientRoutes
+    clientRoutes,
+    petRoutes
   )
 
   app.use(

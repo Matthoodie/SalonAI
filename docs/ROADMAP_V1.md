@@ -199,3 +199,14 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
   odabir ljubimca na terminu i povijest posjeta.
 - Zatim WhatsApp i dogovorene AI funkcionalnosti, mobilna/PWA i produkcijska priprema,
   besplatni pilot te naplata. Beauty centri i složenije djelatnosti ostaju V2.
+
+## Ažuriranje — Grooming 1 (baza i API)
+
+- Dodana podloga za više ljubimaca po klijentu: ime, vrsta, pasmina, napomena,
+  arhiviranje i ponovno aktiviranje; izolacija salona i kontrola verzije izmjene.
+- API namijenjen owner/admin računima grooming/mixed salona. Postojeći frizerski
+  tijek termina ostaje nepromijenjen. Migraciju i DB testove potvrditi lokalno.
+- Sljedeći paket: prikaz ljubimaca u CRM-u u svijetloj/tamnoj temi. Nakon toga
+  povezivanje s terminima/poviješću i fotografije, kako je dogovoreno.
+- Nastavak: WhatsApp i dogovoreni AI -> mobilna/PWA i produkcija -> besplatni pilot
+  -> naplata. Kozmetički/složeni beauty centri ostaju V2.
