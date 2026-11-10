@@ -227,3 +227,17 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Google Play/App Store: razvojni računi, potpisivanje, privatnost i brisanje računa,
   testna distribucija i pregled trgovina. Store objava nije automatski dio PWA instalacije;
   odobrenje i datum objave ovise o provjerama. Plaćanje se razrađuje nakon pilota.
+
+## Ažuriranje — Grooming 3A (backend veze termina)
+
+- Pripremljena migracija i API veza termina s jednim ljubimcem i njegovim vlasnikom.
+- Povijesne oznake ljubimca, zajednička izmjena vlasnika/ljubimca s kontrolom verzije,
+  zabrana preklapanja istog ljubimca te ograničen izbor za ovlaštene zaposlenike.
+- Stari termini ostaju neklasificirani; nema automatskog pridruživanja životinja.
+- 3A zadržava staro kreiranje bez novih polja radi kompatibilnosti postojećeg UI-ja.
+  Migraciju i cijeli integracijski suite obvezno potvrditi na TEST bazi prije DEV-a.
+- Sljedeći 3B: povezati obrazac i pooštriti backend obvezni odabir za grooming;
+  mixed person/pet; prikaz obaju identiteta u terminima, kalendaru, dashboardu,
+  pretrazi i povijesti. Grooming 3 ostaje u tijeku dok 3B ne prođe provjere.
+- Zatim fotografije/avatar → WhatsApp i dogovoreni AI → mobilna/PWA, Android/iOS
+  prototip i produkcijska priprema → besplatni pilot → naplata. Beauty ostaje V2.

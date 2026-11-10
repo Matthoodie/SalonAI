@@ -14,6 +14,7 @@ export async function findCalendarAppointments({
                 a.id,
                 a.salon_id,
                 a.client_id,
+                a.recipient_type, a.pet_id, a.pet_name, a.pet_species, a.pet_breed, a.recipient_revision,
                 a.employee_id,
                 a.service_id,
                 a.starts_at,

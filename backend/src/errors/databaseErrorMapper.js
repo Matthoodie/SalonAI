@@ -1,5 +1,12 @@
 export function mapDatabaseError(error) {
   switch (error.constraint) {
+    case 'appointments_pet_owner_salon_fk':
+      return {status:400,code:'PET_OWNER_SALON_MISMATCH',message:'Ljubimac ne pripada odabranom vlasniku i salonu.'}
+    case 'appointments_pet_no_overlap':
+      return {status:409,code:'PET_APPOINTMENT_CONFLICT',message:'Ljubimac već ima termin u odabranom vremenu.'}
+    case 'appointments_recipient_check':
+      return {status:400,code:'INVALID_RECIPIENT',message:'Podaci vlasnika i ljubimca nisu ispravni.'}
+
     case 'appointments_client_same_salon_fkey':
       return {
         status: 400,

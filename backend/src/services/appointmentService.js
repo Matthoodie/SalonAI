@@ -1,3 +1,4 @@
+import { prepareRecipient, changeLegacyAppointmentClient } from './appointmentRecipientService.js'
 import { resolveAppointmentItems } from './appointmentItemsService.js'
 import { findAppointmentItems, replaceAppointmentItems } from '../repositories/appointmentItemRepository.js'
 import { withAppointmentTransaction } from './appointmentTransaction.js'
@@ -18,7 +19,6 @@ import {
     findSalonById,
     findServiceById,
     insertAppointment,
-    updateAppointmentClient,
     updateAppointmentSchedule,
     updateAppointmentStatus,
 } from '../repositories/appointmentRepository.js'
@@ -424,79 +424,18 @@ async function rescheduleInTransaction(appointmentId,
     }
 }
 
-export async function changeAppointmentClient(
-    appointmentId,
-    salonId,
-    newClientId,
-    employeeId = null
-) {
-    const appointment =
-        await findAppointmentById(
-    appointmentId,
-    salonId,
-    employeeId
-)
-
-    if (!appointment) {
-        return {
-            error: {
-                status: 404,
-                code: 'APPOINTMENT_NOT_FOUND',
-                message: 'Appointment was not found.',
-            },
-        }
+export async function changeAppointmentClient(appointmentId,salonId,newClientId,employeeId=null) {
+  try { return await changeLegacyAppointmentClient(appointmentId,salonId,newClientId,employeeId) }
+  catch(error) {
+    const legacyMessages = {
+      APPOINTMENT_NOT_FOUND: 'Appointment was not found.',
+      APPOINTMENT_CLIENT_CHANGE_NOT_ALLOWED: 'Client can only be changed on an active appointment.',
+      CLIENT_NOT_FOUND: 'Client was not found.',
+      CLIENT_INACTIVE: 'Client is not active.',
     }
-
-    if (
-        appointment.status !== 'pending' &&
-        appointment.status !== 'confirmed'
-    ) {
-        return {
-            error: {
-                status: 409,
-                code: 'APPOINTMENT_CLIENT_CHANGE_NOT_ALLOWED',
-                message:
-                    'Client can only be changed on an active appointment.',
-            },
-        }
-    }
-
-    const client = await findClientById(
-    newClientId,
-    salonId
-)
-
-    if (!client) {
-        return {
-            error: {
-                status: 404,
-                code: 'CLIENT_NOT_FOUND',
-                message: 'Client was not found.',
-            },
-        }
-    }
-
-    if (!client.active) {
-        return {
-            error: {
-                status: 400,
-                code: 'CLIENT_INACTIVE',
-                message: 'Client is not active.',
-            },
-        }
-    }
-
-    const updatedAppointment =
-        await updateAppointmentClient(
-    appointment.id,
-    appointment.salon_id,
-    client.id,
-    employeeId
-)
-
-    return {
-        data: updatedAppointment,
-    }
+    if (error.statusCode && error.code) return {error:{status:error.statusCode,code:error.code,message:legacyMessages[error.code] ?? error.message}}
+    throw error
+  }
 }
 
 async function createInTransaction({
@@ -507,6 +446,7 @@ async function createInTransaction({
     service_ids,
     starts_at,
     notes,
+    recipient_type, pet_id,
 }, db) {
 
     const salon = await findSalonById(salon_id,
@@ -585,6 +525,8 @@ if (!client) {
     }
 }
 
+const recipient = await prepareRecipient(db,salon_id,client_id,{recipient_type,pet_id})
+
 const selection = await resolveAppointmentItems({
     salon_id, employee_id, service_id, service_ids,
 }, db)
@@ -611,6 +553,7 @@ const startsAt = new Date(starts_at)
         return availabilityResult
     }
     const appointmentData = {
+        ...recipient,
         salon_id: Number(salon_id),
         client_id: Number(client_id),
         employee_id: Number(employee_id),

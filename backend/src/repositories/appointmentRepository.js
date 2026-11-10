@@ -11,6 +11,7 @@ export async function findAllAppointments(
         a.id,
         a.salon_id,
         a.client_id,
+        a.recipient_type, a.pet_id, a.pet_name, a.pet_species, a.pet_breed, a.recipient_revision,
         a.employee_id,
         a.service_id,
         a.starts_at,
@@ -52,6 +53,7 @@ export async function findAppointmentById(id,
         a.id,
         a.salon_id,
         a.client_id,
+        a.recipient_type, a.pet_id, a.pet_name, a.pet_species, a.pet_breed, a.recipient_revision,
         a.employee_id,
         a.service_id,
         a.starts_at,
@@ -116,6 +118,7 @@ export async function insertAppointment({
     status,
     source,
     notes,
+    recipient_type = null, pet_id = null, pet_name = null, pet_species = null, pet_breed = null,
 }, db = pool) {
     const result = await db.query(
         `
@@ -130,7 +133,7 @@ export async function insertAppointment({
         duration_minutes,
         status,
         source,
-        notes
+        notes, recipient_type, pet_id, pet_name, pet_species, pet_breed
       )
       VALUES (
         $1,
@@ -143,9 +146,10 @@ export async function insertAppointment({
         $8,
         $9,
         $10,
-        $11
+        $11, $12, $13, $14, $15, $16
       )
       RETURNING
+        recipient_type, pet_id, pet_name, pet_species, pet_breed, recipient_revision,
         id,
         salon_id,
         client_id,
@@ -172,7 +176,7 @@ export async function insertAppointment({
             duration_minutes,
             status,
             source,
-            notes,
+            notes, recipient_type, pet_id, pet_name, pet_species, pet_breed,
         ]
     )
 
@@ -348,6 +352,7 @@ export async function updateAppointmentStatus(
     OR employee_id = $4
   )
       RETURNING
+        recipient_type, pet_id, pet_name, pet_species, pet_breed, recipient_revision,
         id,
         salon_id,
         client_id,
@@ -396,6 +401,7 @@ export async function updateAppointmentSchedule(appointmentId,
     OR employee_id = $5
   )
       RETURNING
+        recipient_type, pet_id, pet_name, pet_species, pet_breed, recipient_revision,
         id,
         salon_id,
         client_id,
@@ -443,6 +449,7 @@ export async function updateAppointmentClient(
     OR employee_id = $4
   )
       RETURNING
+        recipient_type, pet_id, pet_name, pet_species, pet_breed, recipient_revision,
         id,
         salon_id,
         client_id,

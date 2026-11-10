@@ -1,3 +1,4 @@
+import { parseRecipient } from '../utils/appointmentRecipient.js'
 import { parseAppointmentServiceIds } from '../utils/appointmentServices.js'
 import {
   changeAppointmentServices,
@@ -163,6 +164,7 @@ export async function createAppointment(req, res, next) {
     const {
       client_id,
       new_client,
+      recipient_type, pet_id,
       employee_id,
       service_id,
       service_ids,
@@ -201,6 +203,7 @@ export async function createAppointment(req, res, next) {
       )
     }
 
+    parseRecipient({recipient_type,pet_id}, {allowLegacy:true})
     const salonId = Number(req.currentSalon?.id)
     const requestedEmployeeId = Number(employee_id)
     const selection = parseAppointmentServiceIds({ service_id, service_ids })
@@ -273,6 +276,7 @@ export async function createAppointment(req, res, next) {
       salon_id: salonId,
       client_id: clientId,
       newClient: new_client,
+      recipient_type, pet_id,
       employee_id: requestedEmployeeId,
       service_ids: selection.data,
       starts_at,

@@ -1,3 +1,4 @@
+import { recipientView } from '../utils/appointmentRecipient.js'
 import {
     findSalonById,
 } from '../repositories/appointmentRepository.js'
@@ -51,6 +52,7 @@ function addDaysToDateKey(
 function mapCalendarAppointment(row) {
     return {
         id: Number(row.id),
+        ...recipientView(row),
         items: row.items ?? [],
 
         salon_id:

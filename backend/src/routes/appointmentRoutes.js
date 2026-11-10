@@ -1,3 +1,5 @@
+import { bookingPetOptions, updateAppointmentRecipient } from '../controllers/appointmentRecipientController.js'
+import { createClientSearchRateLimit } from '../middleware/clientSearchRateLimit.js'
 import { requireSalonRole } from '../middleware/roleMiddleware.js'
 import { Router } from 'express'
 
@@ -14,6 +16,8 @@ import {
 const router = Router()
 
 router.get('/', getAppointments)
+router.get('/pet-options', requireSalonRole('owner','admin','employee'), createClientSearchRateLimit(), bookingPetOptions)
+router.patch('/:id/recipient', requireSalonRole('owner','admin','employee'), updateAppointmentRecipient)
 router.get('/:id', getAppointment)
 router.post('/', createAppointment)
 router.patch('/:id/status', updateAppointmentStatus)
