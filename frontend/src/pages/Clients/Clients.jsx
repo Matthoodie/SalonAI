@@ -11,6 +11,7 @@ import {
   updateClientActive,
 } from '../../api/clientApi'
 import './Clients.css'
+import ClientPets from '../../components/Pets/ClientPets'
 
 import {
   mapClientToFrontend,
@@ -59,7 +60,16 @@ function Clients({
   const [selectedClientId, setSelectedClientId] =
   useState(null)
 
+  const [petBusy, setPetBusy] = useState(false)
   const clientFormRef = useRef(null)
+  const clientDetailRef = useRef(null)
+
+  useEffect(() => {
+    if (!selectedClientId) return
+    const previousFocus = document.activeElement
+    clientDetailRef.current?.querySelector('button')?.focus()
+    return () => { if (previousFocus?.isConnected) previousFocus.focus() }
+  }, [selectedClientId])
 
   useEffect(() => {
   if (selectedClientId) {
@@ -75,7 +85,14 @@ function Clients({
 
 useEffect(() => {
   function handleKeyDown(event) {
-    if (event.key === 'Escape') {
+    if (event.key === 'Tab') {
+      const controls = [...(clientDetailRef.current?.querySelectorAll('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"]') || [])].filter(element => element.getClientRects().length)
+      const first = controls[0], last = controls[controls.length - 1]
+      if (!first) { event.preventDefault(); clientDetailRef.current?.focus() }
+      else if (event.shiftKey && (document.activeElement === first || !clientDetailRef.current?.contains(document.activeElement))) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && (document.activeElement === last || !clientDetailRef.current?.contains(document.activeElement))) { event.preventDefault(); first.focus() }
+    }
+    if (event.key === 'Escape' && !petBusy) {
       setSelectedClientId(null)
     }
   }
@@ -93,7 +110,7 @@ useEffect(() => {
       handleKeyDown
     )
   }
-}, [selectedClientId])
+}, [selectedClientId, petBusy])
 
   async function addClient(newClient) {
     if (!salonId) {
@@ -531,12 +548,12 @@ const selectedClientUpcomingAppointments =
    {selectedClient && (
 <div
   className="client-detail-overlay"
-  onClick={() =>
-    setSelectedClientId(null)
-  }
+  onClick={() => { if (!petBusy) setSelectedClientId(null) }}
 >
   <section
   className="client-detail-panel"
+  ref={clientDetailRef}
+  tabIndex={-1}
   role="dialog"
   aria-modal="true"
   aria-labelledby="client-detail-title"
@@ -565,14 +582,15 @@ const selectedClientUpcomingAppointments =
        <button
   type="button"
   className="client-detail-close-button"
-  onClick={() =>
-    setSelectedClientId(null)
-  }
+  disabled={petBusy}
+  onClick={() => { if (!petBusy) setSelectedClientId(null) }}
   aria-label="Zatvori profil klijenta"
 >
   Zatvori
 </button>
     </div>
+
+    <ClientPets key={`${salonId}:${selectedClient.id}`} salonId={salonId} client={selectedClient} onBusyChange={setPetBusy} />
 
     <div className="client-detail-metrics">
       <div className="client-detail-metric">

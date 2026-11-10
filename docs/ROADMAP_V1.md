@@ -210,3 +210,20 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
   povezivanje s terminima/poviješću i fotografije, kako je dogovoreno.
 - Nastavak: WhatsApp i dogovoreni AI -> mobilna/PWA i produkcija -> besplatni pilot
   -> naplata. Kozmetički/složeni beauty centri ostaju V2.
+
+## Ažuriranje — Grooming 2 (CRM sučelje)
+
+- Klijenti → Detalji → Ljubimci: više profila, ime, vrsta, pasmina i bilješke.
+- Dodavanje, uređivanje, arhiviranje/aktiviranje; svijetla i tamna tema.
+- Kontrola ovlasti, salonske djelatnosti, verzija i neizvjesnog spremanja ostaje aktivna.
+- Grooming 3: povezivanje termina/povijesti s ljubimcem. Grooming 4: fotografije/avatar.
+- Zatim WhatsApp i dogovorene AI funkcionalnosti → mobilna/PWA i produkcijska priprema
+  → besplatni pilot → naplata. Beauty centri i složenije djelatnosti ostaju V2.
+- Mobilna faza uključuje tehnički prototip Android/iOS aplikacije (kandidat Capacitor),
+  provjeru Clerk prijave, sigurne pohrane sesije, API pristupa, kamere/fotografija,
+  navigacije, tipkovnice, safe-area prostora i stvarnih uređaja.
+- Prije javne objave: zasebna produkcijska baza i tajne, domena/HTTPS, backup i probni
+  povrat podataka, nadzor grešaka, ograničenja troškova AI-a i kontrolirano puštanje.
+- Google Play/App Store: razvojni računi, potpisivanje, privatnost i brisanje računa,
+  testna distribucija i pregled trgovina. Store objava nije automatski dio PWA instalacije;
+  odobrenje i datum objave ovise o provjerama. Plaćanje se razrađuje nakon pilota.
