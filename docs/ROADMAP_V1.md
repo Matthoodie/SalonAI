@@ -1,7 +1,8 @@
 # SalonAI — završni roadmap prve javne verzije
 
-Ažurirano: 2. studenoga 2026.
-Potvrđena polazna verzija: 4d26d21.
+Ažurirano: 11. studenoga 2026.
+Potvrđena polazna verzija: 0f5d016 (fotografije ljubimaca).
+Aktualni paket: Grooming 5 — povijest termina pojedinog ljubimca; lokalne korisničke provjere još slijede.
 
 ## Cilj prve verzije
 
@@ -28,20 +29,41 @@ Ovaj popis nije tvrdnja da je produkcijska spremnost već potvrđena.
 
 ## Aktualni slijed prema dogovoru
 
-- Uvoz fotografija/PDF-a i pregled prije spremanja: implementirani; prošireni rubni scenariji ostaju u završnoj regresiji.
-- Vizualne dorade Postavki, pregleda poslovanja, Usluga, Klijenata, Zaposlenika, Termina,
-  Kalendara i zahtjeva: paketi primijenjeni; korisnik potvrdio provjere.
-- Magic Wizard, paket 1 — backend nacrt i nastavak: potvrđeno 755/755 testova i TEST/DEV migracija.
-- Magic Wizard, paket 2 — sučelje u Postavkama: potvrđeno 143 frontend testa i ručni rad;
-  commit 4d26d21 poslan na development.
-- Aktualno: paket 3 — zatvoreno, kontrolirano kreiranje prvog salona i trajni status onboardinga.
-  Lokalni unit/API testovi prošli; TEST/DEV migracija i PostgreSQL provjere čekaju korisnika.
-  Detalji: [SALON_SETUP_PHASE3.md](SALON_SETUP_PHASE3.md).
-- Slijedi početni postupak prije dashboarda, bez poslovnog sidebara; stvarna provjera
-  obveznih podataka i potvrda dovršenosti. Postojeći saloni ostaju dostupni.
-- Zatim grooming s pasminom i fotografijom ljubimca → WhatsApp i dogovorene AI funkcionalnosti
-  → mobilna/PWA i produkcijska priprema → besplatni pilot → naplata.
-- Naplata nije uvjet za početak besplatnog pilota. Beauty centri ostaju V2.
+1. Primijenjeno i korisnički potvrđeno: uvoz cjenika, vizualno usklađivanje stranica,
+   svijetla/tamna tema, Magic Wizard, vlasnici s više ljubimaca, povezivanje termina
+   i privatne fotografije ljubimaca (0f5d016).
+2. Sada: Grooming 5 — zaseban pregled zakazanih i prethodnih termina ljubimca.
+   Dokumentacija: [GROOMING_PHASE5.md](GROOMING_PHASE5.md). Paket za TEST/DEV provjere.
+3. Grooming završnica: eventualna veličina/težina profila (opcionalni podaci), dogovor
+   o minijaturama na terminima i završna regresija. Ne proširivati zaposleničke ovlasti usput.
+4. HR/EN: jezik na početnom zaslonu, u Wizardu i Postavkama; zatim cijelo sučelje,
+   poruke i formatiranje. Zajednički sustav prije WhatsApp/AI funkcionalnosti.
+5. WhatsApp i dogovorene AI funkcionalnosti.
+6. Mobilna/PWA, tehnički prototip Android/iOS aplikacije i produkcijska priprema.
+7. Besplatni pilot, povratne informacije i stabilizacija.
+8. Naplata. Beauty centri i složeniji resursi ostaju V2.
+
+Registracija Clerk računa ne stvara automatski salon. Kreiranje prvog salona ostaje
+kontrolirano kroz postojeću serversku konfiguraciju i dopuštene Clerk identitete.
+Welcome bez obrasca za novi salon očekivan je za račun bez članstva i bez dozvole za
+kreiranje. Wizard nije uklonjen; nastavlja se nakon dopuštenog kreiranja salona.
+
+### Opseg HR/EN implementacije
+
+- Jezik sučelja je osobna postavka, odvojena od djelatnosti salona, valute i vremenske zone.
+- Prije prijave razuman početni izbor; nakon prijave pohranjena osobna postavka, s planom
+  sinkronizacije između uređaja. Zaposlenici istog salona mogu koristiti različite jezike.
+- Izdvojiti tekstove u kataloge HR/EN: navigaciju, obrasce, validaciju, statuse, prazne
+  prikaze, uvoz, grooming, zahtjeve i autentikacijske ekrane gdje je podržano.
+- API zadržava stabilne kodove grešaka; korisničke poruke prikazivati prema jeziku.
+- Datum, vrijeme, iznosi i množine koriste odabrani jezik, ali vrijeme termina i dalje
+  računa vremenska zona salona. Odabir engleskog ne mijenja EUR u drugu valutu.
+- Imena, bilješke, uneseni cjenici i pasmine ne prevode se automatski.
+- Provjeriti nedostajuće prijevode, duže tekstove, obje teme, uži prikaz, trajnost odabira
+  i promjenu računa. Ovo je plan, nije dio paketa Grooming 5.
+
+Sljedeći odjeljci i datirana ažuriranja čuvaju povijest implementacije; ovaj aktualni
+slijed ima prednost pred starijim navodima o tome što je "sljedeće" ili čeka provjeru.
 
 ## 1. Dovršetak uvoza cjenika
 
@@ -268,3 +290,14 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
   termine uz posebno definirane zaposleničke ovlasti; postojeće oznake ostaju.
 - Zatim WhatsApp i dogovorene AI funkcionalnosti → mobilna/PWA, Android/iOS prototip
   i produkcijska priprema → besplatni pilot → naplata. Beauty/složene djelatnosti V2.
+
+## Ažuriranje — Grooming 5: termini pojedinog ljubimca
+
+- Fotografije: korisnik potvrdio rad, provjere i commit/push 0f5d016.
+- Novi read-only API i CRM prikaz svih statusa termina po salonu, vlasniku i ID-u ljubimca.
+- Po 20 termina, nastavak preciznim vremenskim kursorom; bez automatskog pridruživanja
+  starih termina i bez promjene rasporeda, statistike vlasnika ili ovlasti zaposlenika.
+- Koristi indeks iz Grooming 3A. Nema nove migracije, ovisnosti ni promjene .env.
+- Lokalne provjere autora: 192 backend testa bez PostgreSQL-a, 208 frontend testova,
+  kompilacija JSX-a, React provjera povijesti i regresija fotografija. PostgreSQL,
+  puni backend suite i Vite build obvezno provjeriti priloženim verifierom kod korisnika.

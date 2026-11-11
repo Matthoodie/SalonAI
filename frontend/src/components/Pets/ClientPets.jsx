@@ -1,3 +1,4 @@
+import PetHistory from './PetHistory.jsx'
 import { petPhotoApi } from '../../api/petPhotoApi.js'
 import { PetPhoto, PetPhotoEditor } from './PetPhoto.jsx'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -11,6 +12,7 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [photoEditor, setPhotoEditor] = useState(null)
+  const [historyPet, setHistoryPet] = useState(null)
   const [editor, setEditor] = useState(null)
   const [draft, setDraft] = useState(emptyDraft)
   const [errors, setErrors] = useState({})
@@ -46,7 +48,7 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
     controller.current?.abort()
     const abort = new AbortController(), version = ++sequence.current
     controller.current = abort
-    setState('loading'); setError(''); setNotice(''); setEditor(null); setConfirmPet(null); setPhotoEditor(null)
+    setHistoryPet(null); setState('loading'); setError(''); setNotice(''); setEditor(null); setConfirmPet(null); setPhotoEditor(null)
     try {
       const rows = await petApi.list(salonId, client.id, abort.signal)
       if (alive.current && version === sequence.current) { setPets(rows); setState('ready') }
@@ -56,6 +58,7 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
     }
   }
   function openEditor(pet) {
+    setHistoryPet(null)
     setEditor(pet || 'new'); setDraft(pet ? { name: pet.name, species: pet.species, breed: pet.breed, notes: pet.notes } : emptyDraft())
     setErrors({}); setConfirmPet(null); setNotice('')
     requestAnimationFrame(() => {
@@ -130,10 +133,12 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
         <div className="pet-card-title"><PetPhoto salonId={salonId} clientId={client.id} pet={pet} /><div><h4>{pet.name}</h4><p>{PET_SPECIES[pet.species]} · {pet.breed || 'Pasmina nije unesena'}</p></div><span className={`pet-status ${pet.active ? '' : 'pet-status-archived'}`}>{pet.active ? 'Aktivan' : 'Arhiviran'}</span></div>
         {pet.notes && <p className="pet-notes">{pet.notes}</p>}
         <div className="pets-actions">
+          <button type="button" aria-expanded={String(historyPet) === String(pet.id)} aria-controls={`${prefix}-history-${pet.id}`} disabled={busy || !!editor || !!confirmPet || photoEditor !== null} onClick={() => setHistoryPet(current => String(current) === String(pet.id) ? null : pet.id)}>{String(historyPet) === String(pet.id) ? 'Zatvori termine' : 'Termini ljubimca'}</button>
           {(pet.has_photo || (ownerActive && pet.active)) && <button type="button" disabled={busy || !!editor || !!confirmPet || photoEditor !== null || pet.revision >= 2147483647 || pet.photo_version >= 2147483647} onClick={() => { setPhotoEditor(pet.id); setNotice('') }}>Fotografija</button>}
           {ownerActive && <button type="button" disabled={busy || !!editor || photoEditor !== null || pet.revision >= 2147483647} onClick={() => openEditor(pet)}>Uredi</button>}
           {(pet.active || ownerActive) && <button type="button" className={pet.active ? 'pets-danger' : 'pets-success'} disabled={busy || !!editor || photoEditor !== null || pet.revision >= 2147483647} onClick={() => setConfirmPet(pet)}>{pet.active ? 'Arhiviraj' : 'Ponovno aktiviraj'}</button>}
         </div>
+        <div id={`${prefix}-history-${pet.id}`}>{String(historyPet) === String(pet.id) && <PetHistory key={`${salonId}:${client.id}:${pet.id}`} salonId={salonId} clientId={client.id} pet={pet} />}</div>
         {String(photoEditor) === String(pet.id) && <PetPhotoEditor key={`${pet.id}:${pet.photo_version}`} pet={pet} ownerActive={ownerActive} busy={busy}
           onUpload={file => mutate(() => petPhotoApi.upload(salonId, client.id, pet, file), 'Fotografija je spremljena.')}
           onRemove={() => mutate(() => petPhotoApi.remove(salonId, client.id, pet), 'Fotografija je uklonjena.')}

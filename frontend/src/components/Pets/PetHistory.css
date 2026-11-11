@@ -1,0 +1,13 @@
+.client-pets .pet-history { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--ui-line); }
+.client-pets .pet-history-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.client-pets .pet-history h5 { margin:0; font-size:1rem; color:var(--ui-text); }
+.client-pets .pet-history-help { font-size:.875rem; line-height:1.6; color:var(--ui-muted); }
+.client-pets .pet-history-list { list-style:none; margin:16px 0; padding:0; display:grid; gap:12px; }
+.client-pets .pet-history-list > li { padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:var(--ui-surface); overflow-wrap:anywhere; }
+.client-pets .pet-history-list p { margin:8px 0; line-height:1.5; }
+.client-pets .pet-history-list ul { padding-left:20px; font-size:.9rem; line-height:1.6; }
+.client-pets .pet-history-heading time, .client-pets .pet-history-total { font-weight:700; }
+.client-pets .pet-history-status { padding:5px 10px; border-radius:999px; font-size:.8rem; font-weight:700; background:var(--ui-soft); color:var(--ui-text); }
+.client-pets .pet-history-status[data-status="completed"] { background:var(--ui-success-soft); color:var(--ui-success); }
+.client-pets .pet-history-status[data-status="cancelled"], .client-pets .pet-history-status[data-status="no_show"] { background:var(--ui-danger-soft); color:var(--ui-danger); }
+@media(max-width:540px) { .client-pets .pet-history-list > li { padding:12px; } }
