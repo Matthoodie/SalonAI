@@ -1,3 +1,5 @@
+import { petPhotoApi } from '../../api/petPhotoApi.js'
+import { PetPhoto, PetPhotoEditor } from './PetPhoto.jsx'
 import { useEffect, useId, useRef, useState } from 'react'
 import { petApi, petDraftErrors, PET_SPECIES } from '../../api/petApi.js'
 import './ClientPets.css'
@@ -8,6 +10,7 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
   const [state, setState] = useState('loading')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [photoEditor, setPhotoEditor] = useState(null)
   const [editor, setEditor] = useState(null)
   const [draft, setDraft] = useState(emptyDraft)
   const [errors, setErrors] = useState({})
@@ -43,7 +46,7 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
     controller.current?.abort()
     const abort = new AbortController(), version = ++sequence.current
     controller.current = abort
-    setState('loading'); setError(''); setNotice(''); setEditor(null); setConfirmPet(null)
+    setState('loading'); setError(''); setNotice(''); setEditor(null); setConfirmPet(null); setPhotoEditor(null)
     try {
       const rows = await petApi.list(salonId, client.id, abort.signal)
       if (alive.current && version === sequence.current) { setPets(rows); setState('ready') }
@@ -67,7 +70,7 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
       const saved = await operation()
       if (!alive.current) return
       setPets(current => [...current.filter(pet => String(pet.id) !== String(saved.id)), saved])
-      setEditor(null); setConfirmPet(null); setNotice(message)
+      setEditor(null); setConfirmPet(null); setPhotoEditor(null); setNotice(message)
     } catch (reason) {
       if (!alive.current) return
       setState('error'); setConfirmPet(null)
@@ -102,7 +105,7 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
   return <section className="client-pets" aria-labelledby={`${prefix}-title`} aria-busy={busy || state === 'loading'}>
     <div className="pets-heading"><div><span className="pets-eyebrow">GROOMING</span><h3 id={`${prefix}-title`}>Ljubimci</h3>
       <p>Profili ljubimaca vlasnika {client.name}.</p></div>
-      {state === 'ready' && ownerActive && <button type="button" className="pets-primary" disabled={busy || !!editor} onClick={() => openEditor(null)}>+ Dodaj ljubimca</button>}
+      {state === 'ready' && ownerActive && <button type="button" className="pets-primary" disabled={busy || !!editor || photoEditor !== null} onClick={() => openEditor(null)}>+ Dodaj ljubimca</button>}
     </div>
     {!ownerActive && <p className="pets-warning">Vlasnik je arhiviran. Možete pregledavati i arhivirati ljubimce. Za dodavanje, uređivanje ili ponovno aktiviranje najprije aktivirajte vlasnika.</p>}
     {state === 'loading' && <p role="status">Učitavanje ljubimaca…</p>}
@@ -121,15 +124,20 @@ export default function ClientPets({ salonId, client, onBusyChange }) {
         <button type="button" disabled={busy} onClick={() => setEditor(null)}>Odustani</button></div>
     </form>}
     {state === 'ready' && <>
-      <div className="pets-list-heading"><span>Aktivni: {pets.filter(pet => pet.active).length} · Ukupno: {pets.length}</span><button type="button" disabled={busy || !!editor || !!confirmPet} onClick={reload}>Osvježi popis</button></div>
+      <div className="pets-list-heading"><span>Aktivni: {pets.filter(pet => pet.active).length} · Ukupno: {pets.length}</span><button type="button" disabled={busy || !!editor || photoEditor !== null || !!confirmPet} onClick={reload}>Osvježi popis</button></div>
       {!pets.length && <div className="pets-empty">Još nema ljubimaca. Jednom vlasniku možete dodati više životinja.</div>}
       <div className="pets-list">{ordered.map(pet => <article className="pet-card" key={pet.id} data-archived={!pet.active}>
-        <div className="pet-card-title"><span className="pet-avatar" aria-hidden="true">{[...pet.name][0]?.toLocaleUpperCase('hr')}</span><div><h4>{pet.name}</h4><p>{PET_SPECIES[pet.species]} · {pet.breed || 'Pasmina nije unesena'}</p></div><span className={`pet-status ${pet.active ? '' : 'pet-status-archived'}`}>{pet.active ? 'Aktivan' : 'Arhiviran'}</span></div>
+        <div className="pet-card-title"><PetPhoto salonId={salonId} clientId={client.id} pet={pet} /><div><h4>{pet.name}</h4><p>{PET_SPECIES[pet.species]} · {pet.breed || 'Pasmina nije unesena'}</p></div><span className={`pet-status ${pet.active ? '' : 'pet-status-archived'}`}>{pet.active ? 'Aktivan' : 'Arhiviran'}</span></div>
         {pet.notes && <p className="pet-notes">{pet.notes}</p>}
         <div className="pets-actions">
-          {ownerActive && <button type="button" disabled={busy || !!editor || pet.revision >= 2147483647} onClick={() => openEditor(pet)}>Uredi</button>}
-          {(pet.active || ownerActive) && <button type="button" className={pet.active ? 'pets-danger' : 'pets-success'} disabled={busy || !!editor || pet.revision >= 2147483647} onClick={() => setConfirmPet(pet)}>{pet.active ? 'Arhiviraj' : 'Ponovno aktiviraj'}</button>}
+          {(pet.has_photo || (ownerActive && pet.active)) && <button type="button" disabled={busy || !!editor || !!confirmPet || photoEditor !== null || pet.revision >= 2147483647 || pet.photo_version >= 2147483647} onClick={() => { setPhotoEditor(pet.id); setNotice('') }}>Fotografija</button>}
+          {ownerActive && <button type="button" disabled={busy || !!editor || photoEditor !== null || pet.revision >= 2147483647} onClick={() => openEditor(pet)}>Uredi</button>}
+          {(pet.active || ownerActive) && <button type="button" className={pet.active ? 'pets-danger' : 'pets-success'} disabled={busy || !!editor || photoEditor !== null || pet.revision >= 2147483647} onClick={() => setConfirmPet(pet)}>{pet.active ? 'Arhiviraj' : 'Ponovno aktiviraj'}</button>}
         </div>
+        {String(photoEditor) === String(pet.id) && <PetPhotoEditor key={`${pet.id}:${pet.photo_version}`} pet={pet} ownerActive={ownerActive} busy={busy}
+          onUpload={file => mutate(() => petPhotoApi.upload(salonId, client.id, pet, file), 'Fotografija je spremljena.')}
+          onRemove={() => mutate(() => petPhotoApi.remove(salonId, client.id, pet), 'Fotografija je uklonjena.')}
+          onClose={() => setPhotoEditor(null)} />}
         {String(confirmPet?.id) === String(pet.id) && <div className="pets-confirm" role="group" aria-label="Potvrda promjene statusa">
           <p>{pet.active ? `Arhivirati ljubimca ${pet.name}? Profil će ostati sačuvan.` : `Ponovno aktivirati ljubimca ${pet.name}?`}</p>
           <div className="pets-actions"><button type="button" disabled={busy} className={pet.active ? 'pets-danger' : 'pets-success'} onClick={() => mutate(() => petApi.setActive(salonId, client.id, pet, !pet.active), pet.active ? 'Ljubimac je arhiviran.' : 'Ljubimac je ponovno aktiviran.')}>Potvrdi</button><button type="button" disabled={busy} onClick={() => setConfirmPet(null)}>Odustani</button></div>

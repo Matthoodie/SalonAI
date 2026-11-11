@@ -1,4 +1,4 @@
-const columns = 'id,salon_id,client_id,name,species,breed,notes,active,revision,created_at,updated_at'
+const columns = 'id,salon_id,client_id,name,species,breed,notes,active,revision,created_at,updated_at,photo_version,(photo_data IS NOT NULL) AS has_photo'
 export async function lockPetAccess(db, { salonId, userId }) {
   const result = await db.query(`SELECT s.id FROM salons s
     JOIN salon_memberships m ON m.salon_id=s.id JOIN users u ON u.id=m.user_id

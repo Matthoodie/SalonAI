@@ -252,3 +252,19 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Kompatibilnost starih termina bez nagađanja životinje.
 - Detalji i ručna provjera: GROOMING_PHASE3B.md. Zaključiti nakon lokalnog TEST suitea, builda i korisničke provjere.
 - Sljedeće: fotografije ljubimaca; WhatsApp/AI; mobilna/PWA i produkcija; besplatni pilot; naplata.
+
+### Grooming 3B — lokalna provjera potvrđena
+
+- Korisnički izvještaj: 869/869 backend, 188/188 frontend, Vite build i diff check
+  uspješni; ručni scenariji potvrđeni. Paket je spreman za commit prije fotografija.
+
+### Grooming 4 — fotografije profila (paket za provjeru)
+
+- Jedna fotografija po ljubimcu; pregled, zamjena i potvrđeno uklanjanje u CRM-u.
+- Obrada i smanjivanje na serveru, bez EXIF/GPS i bez javnih URL-ova; baza čuva
+  obrađenu sliku. Jedna migracija, bez novih ovisnosti ili AI poziva.
+- Detalji: GROOMING_PHASE4.md. Zaključiti nakon lokalnih TEST/DEV i ručnih provjera.
+- Preostale grooming dorade: zasebna povijest ljubimca i eventualne minijature uz
+  termine uz posebno definirane zaposleničke ovlasti; postojeće oznake ostaju.
+- Zatim WhatsApp i dogovorene AI funkcionalnosti → mobilna/PWA, Android/iOS prototip
+  i produkcijska priprema → besplatni pilot → naplata. Beauty/složene djelatnosti V2.

@@ -2,7 +2,7 @@ import pool from '../database/pool.js'
 import {petError,petId,validatePet,validatePetActive} from '../utils/petValidation.js'
 import {lockPetAccess,lockPetBusiness,lockPetClient,listPets,insertPet,lockPet,savePet} from '../repositories/petRepository.js'
 
-async function withClient(context, run) {
+export async function withPetClient(context, run) {
   const salonId=petId(context.salonId), userId=petId(context.userId), clientId=petId(context.clientId)
   const db=await pool.connect()
   try {
@@ -24,18 +24,18 @@ function requireActiveClient(client) {
   if (!client.active) throw petError('Najprije ponovno aktivirajte vlasnika ljubimca.','PET_CLIENT_ARCHIVED',409)
 }
 export async function getClientPets(context) {
-  return withClient(context,(db,ids)=>listPets(db,ids.salonId,ids.clientId))
+  return withPetClient(context,(db,ids)=>listPets(db,ids.salonId,ids.clientId))
 }
 export async function createClientPet({body,...context}) {
   const input=validatePet(body)
-  return withClient(context,(db,ids,client)=>{
+  return withPetClient(context,(db,ids,client)=>{
     requireActiveClient(client)
     return insertPet(db,ids.salonId,ids.clientId,input)
   })
 }
 async function update(context,input,statusOnly) {
   const id=petId(context.petId)
-  return withClient(context,async(db,ids,client)=>{
+  return withPetClient(context,async(db,ids,client)=>{
     const pet=await lockPet(db,ids.salonId,ids.clientId,id)
     if (!pet) throw petError('Ljubimac nije pronađen za ovog klijenta.','PET_NOT_FOUND',404)
     if (pet.revision!==input.expected_revision) throw petError('Profil je promijenjen. Ponovno ga učitajte prije spremanja.','PET_VERSION_CONFLICT',409)

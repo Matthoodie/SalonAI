@@ -59,6 +59,9 @@ export function createSalonApiContext({
       )
     }
 
+    const { responseType = 'json', ...fetchOptions } = options
+    if (!['json', 'blob'].includes(responseType)) throw new Error('Nepodržan format odgovora.')
+
     const requestGeneration = generation
     const requestSalonId = selectedSalonId
     const controller = new AbortController()
@@ -88,7 +91,7 @@ export function createSalonApiContext({
 
     try {
       const response = await fetchImpl(path, {
-        ...options,
+        ...fetchOptions,
         headers,
         signal: controller.signal,
         cache: 'no-store',
@@ -96,9 +99,9 @@ export function createSalonApiContext({
 
       assertCurrentGeneration(requestGeneration)
 
-      // API moduli čitaju JSON. Tijelo čitamo dok je zahtjev
-      // još vezan uz ovaj kontekst i njegov AbortController.
-      const bodyText = await response.text()
+      // Read the complete body while bound to this salon generation.
+      const binary = responseType === 'blob' && response.ok
+      const body = binary ? await response.arrayBuffer() : await response.text()
 
       assertCurrentGeneration(requestGeneration)
 
@@ -107,9 +110,16 @@ export function createSalonApiContext({
         status: response.status,
         headers: response.headers,
 
+        async blob() {
+          assertCurrentGeneration(requestGeneration)
+          if (!binary) throw new Error('Fotografija nije dostupna.')
+          return new Blob([body], { type: response.headers.get('content-type') || '' })
+        },
+
         async json() {
           assertCurrentGeneration(requestGeneration)
-          return JSON.parse(bodyText)
+          if (binary) throw new Error('Očekivan je binarni odgovor.')
+          return JSON.parse(body)
         },
       }
     } catch (error) {

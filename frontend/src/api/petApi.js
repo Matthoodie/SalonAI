@@ -31,7 +31,9 @@ export function validatePetRow(row, salonId, clientId) {
       typeof row.active !== 'boolean' || !Number.isInteger(row.revision) || row.revision < 1 || row.revision > 2147483647 ||
       Object.keys(petDraftErrors(row)).length || fields.some(key => row[key] !== row[key].trim()) ||
       !['created_at', 'updated_at'].every(key => typeof row[key] === 'string' && Number.isFinite(Date.parse(row[key])))) throw invalid()
-  return Object.fromEntries(['id', 'salon_id', 'client_id', ...fields, 'active', 'revision', 'created_at', 'updated_at'].map(key => [key, row[key]]))
+  const hasPhoto = row.has_photo === undefined ? false : row.has_photo, photoVersion = row.photo_version === undefined ? 0 : row.photo_version
+  if (typeof hasPhoto !== 'boolean' || !Number.isInteger(photoVersion) || photoVersion < 0 || photoVersion > 2147483647 || (hasPhoto && photoVersion < 1)) throw invalid()
+  return { has_photo: hasPhoto, photo_version: photoVersion, ...Object.fromEntries(['id', 'salon_id', 'client_id', ...fields, 'active', 'revision', 'created_at', 'updated_at'].map(key => [key, row[key]])) }
 }
 const messages = {
   PET_FORBIDDEN: 'Nemate ovlasti za upravljanje ljubimcima.',
