@@ -1,3 +1,4 @@
+import { recipientLabel } from '../../api/appointmentRecipientView.js'
 import { formatServicePrice } from '../../api/appointmentItemsView.js'
 import './AppointmentCard.css'
 
@@ -90,10 +91,10 @@ function AppointmentCard({
       <div className="appointment-info">
         <div className="appointment-detail">
           <span className="appointment-detail-label">
-            Klijent
+            {appointment.petId?'Ljubimac i vlasnik':'Klijent'}
           </span>
 
-          <h3>{appointment.clientName}</h3>
+          <h3>{recipientLabel(appointment)}</h3>
         </div>
 
         <div className="appointment-detail">

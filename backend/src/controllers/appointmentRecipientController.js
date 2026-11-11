@@ -1,3 +1,4 @@
+import pool from '../database/pool.js'
 import { SALON_PERMISSION_KEYS } from '../permissions/salonPermissions.js'
 import { resolveAppointmentPermissionScope } from '../services/salonPermissionService.js'
 import { getBookingPetOptions, changeAppointmentRecipient } from '../services/appointmentRecipientService.js'
@@ -23,5 +24,14 @@ export async function updateAppointmentRecipient(req,res,next) {
       permissionKey:SALON_PERMISSION_KEYS.APPOINTMENT_CHANGE_CLIENT})
     const data=await changeAppointmentRecipient({salonId,appointmentId,employeeScope:scope.employeeId,body:req.body})
     res.json({data})
+  } catch(error) { next(error) }
+}
+
+export async function bookingRecipientContext(req,res,next) {
+  res.set('Cache-Control','no-store')
+  try {
+    const salonId=recipientId(req.currentSalon?.id)
+    const row=(await pool.query('SELECT business_type FROM salon_setup WHERE salon_id=$1',[salonId])).rows[0]
+    res.json({data:{salon_id:salonId,business_type:row?.business_type??null}})
   } catch(error) { next(error) }
 }

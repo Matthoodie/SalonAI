@@ -9,8 +9,11 @@ import { recipientError, recipientId, parseRecipient, parseRecipientChange, vali
 export async function prepareRecipient(db, salonId, clientId, input) {
   const selection = parseRecipient(input, { allowLegacy: true })
   const empty = { ...selection, pet_name: null, pet_species: null, pet_breed: null }
-  if (selection.recipient_type === null) return empty
   const setup = await lockPetBusiness(db, salonId)
+  if (selection.recipient_type === null) {
+    if (setup?.business_type === 'grooming') throw recipientError('APPOINTMENT_PET_REQUIRED','Odaberite ljubimca za grooming termin.')
+    return empty
+  }
   validateRecipientBusiness(selection.recipient_type, setup?.business_type)
   const client = await lockPetClient(db, salonId, clientId)
   if (!client) throw recipientError('CLIENT_NOT_FOUND','Vlasnik nije pronađen u ovom salonu.',404)

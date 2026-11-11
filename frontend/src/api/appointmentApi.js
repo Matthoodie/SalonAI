@@ -1,3 +1,4 @@
+import { recipientPayload } from './appointmentRecipientView.js'
 import { serviceIds as validateServiceIds } from './appointmentItemsView.js'
 import { salonFetch } from './salonApiContext.js'
 export async function updateAppointmentStatus(
@@ -117,6 +118,8 @@ export async function changeAppointmentClient(
 export async function createAppointment({
   clientId,
   newClient,
+  recipientType,
+  petId,
   employeeId,
   serviceId,
   serviceIds,
@@ -134,6 +137,7 @@ export async function createAppointment({
         ...(newClient
           ? { new_client: newClient }
           : { client_id: clientId }),
+        ...(recipientType === undefined ? {} : recipientPayload(recipientType,petId)),
         employee_id: employeeId,
         ...(serviceIds !== undefined
           ? { service_ids: validateServiceIds(serviceIds) }

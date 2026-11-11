@@ -42,6 +42,12 @@ async function fixture(run) {
 }
 async function create(input) {const r=await prepareAppointmentCreation(input);assert.equal(r.error,undefined,JSON.stringify(r.error));return r.data}
 const legacy=f=>{const {recipient_type,pet_id,...r}=f.input;return r}
+// Simulate a genuine pre-upgrade row; new grooming writes must not create these.
+async function createLegacy(f,extra={}) {
+  const a=await create({...f.input,...extra})
+  await pool.query('UPDATE appointments SET recipient_type=NULL,pet_id=NULL,pet_name=NULL,pet_species=NULL,pet_breed=NULL WHERE id=$1',[a.id])
+  return findAppointmentById(a.id,f.salonId)
+}
 const change=(f,a,extra={})=>changeAppointmentRecipient({salonId:f.salonId,appointmentId:a.id,body:{client_id:f.clientId,recipient_type:'pet',pet_id:f.petId,expected_recipient_revision:a.recipient_revision,...extra}})
 async function api(f,role,run) {
   const app=createFixedTenantTestApp(f.salonId,{role,employeeId:f.employeeId,userId:role==='employee'?f.employeeUserId:f.userId})
@@ -60,8 +66,8 @@ test('recipient DB: creation retains owner and authoritative pet snapshot across
   const calendar=await getCalendarContext({salonId:f.salonId,from:'2030-01-09',to:'2030-01-09'})
   assert.equal(calendar.data.appointments[0].pet_name,'Siri');assert.equal(calendar.data.appointments[0].client.id,f.clientId)
 }))
-test('recipient DB: old clients remain compatible and existing bookings are not guessed',()=>fixture(async f=>{
-  const a=await create(legacy(f));assert.equal(a.pet_id,null);assert.equal(a.recipient_type,null);assert.equal(a.recipient_revision,1)
+test('recipient DB: existing legacy bookings are not guessed and can be linked',()=>fixture(async f=>{
+  const a=await createLegacy(f);assert.equal(a.pet_id,null);assert.equal(a.recipient_type,null);assert.equal(a.recipient_revision,1)
   const b=await change(f,a);assert.equal(Number(b.pet_id),f.petId);assert.equal(b.recipient_revision,2)
 }))
 test('recipient DB: same-name animals remain distinct bookings and identities',()=>fixture(async f=>{
@@ -102,7 +108,7 @@ test('recipient DB: owner and pet switch atomically, invalid pairs roll back',()
   await assert.rejects(change(f,a),{code:'APPOINTMENT_RECIPIENT_CONFLICT'})
 }))
 test('recipient DB: concurrent edits have exactly one winner',()=>fixture(async f=>{
-  const a=await create(legacy(f))
+  const a=await createLegacy(f)
   const r=await Promise.allSettled([change(f,a),change(f,a,{pet_id:f.secondPetId})])
   assert.equal(r.filter(x=>x.status==='fulfilled').length,1)
   assert.equal(r.find(x=>x.status==='rejected').reason.code,'APPOINTMENT_RECIPIENT_CONFLICT')
@@ -110,7 +116,7 @@ test('recipient DB: concurrent edits have exactly one winner',()=>fixture(async 
 test('recipient DB: legacy client mutation cannot move a pet and advances version for legacy rows',()=>fixture(async f=>{
   const a=await create(f.input)
   assert.equal((await changeAppointmentClient(a.id,f.salonId,f.otherClientId)).error.code,'APPOINTMENT_RECIPIENT_UPDATE_REQUIRED')
-  const b=await create({...legacy(f),starts_at:'2030-01-09T11:00:00Z'})
+  const b=await createLegacy(f,{starts_at:'2030-01-09T11:00:00Z'})
   const c=await changeAppointmentClient(b.id,f.salonId,f.otherClientId)
   assert.equal(c.error,undefined);assert.equal(c.data.recipient_revision,2)
   await assert.rejects(change(f,b),{code:'APPOINTMENT_RECIPIENT_CONFLICT'})
@@ -143,7 +149,7 @@ test('recipient DB: composite FK/check reject forged/null metadata and protect r
   await assert.rejects(pool.query('DELETE FROM client_pets WHERE id=$1',[f.petId]),{code:'23503'})
 }))
 test('recipient DB: migration down/up in rolled-back test transaction preserves legacy bookings',()=>fixture(async f=>{
-  const a=await create(legacy(f)),db=await pool.connect()
+  const a=await createLegacy(f),db=await pool.connect()
   try {
     await db.query('BEGIN')
     const run=async(fn)=>{let sql;fn({sql:s=>{sql=s}});await db.query(sql)}
@@ -189,3 +195,20 @@ test('recipient options DB: excludes archived pets and paginates duplicate names
   assert.equal(new Set([...a.pets,...b.pets].map(p=>p.id)).size,52)
   assert.equal(a.pets.some(p=>Number(p.id)===f.petId),false)
 }))
+
+test('recipient DB: omitted grooming recipient rejected through appointment and booking services',()=>fixture(async f=>{
+  await assert.rejects(prepareAppointmentCreation(legacy(f)),{code:'APPOINTMENT_PET_REQUIRED'})
+  const {createBooking}=await import('../src/services/bookingService.js')
+  await assert.rejects(createBooking({...legacy(f),date:'2030-01-09',start_time:'10:00'}),{code:'APPOINTMENT_PET_REQUIRED'})
+  assert.equal((await findAllAppointments(f.salonId)).length,0)
+  await pool.query("UPDATE salon_setup SET business_type='hair' WHERE salon_id=$1",[f.salonId])
+  assert.equal((await create(legacy(f))).recipient_type,null)
+}))
+test('recipient API DB: business context is scoped and grooming omission rejected',()=>fixture(async f=>api(f,'employee',async req=>{
+  const c=await req('/appointments/recipient-context')
+  assert.equal(c.status,200);assert.equal(c.cache,'no-store')
+  assert.deepEqual(c.body.data,{salon_id:f.salonId,business_type:'grooming'})
+  const {salon_id,...body}=legacy(f)
+  const a=await req('/appointments','POST',body)
+  assert.equal(a.status,400);assert.equal(a.body.error.code,'APPOINTMENT_PET_REQUIRED')
+})))

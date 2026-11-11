@@ -271,3 +271,10 @@
 @media (max-width: 600px) {
   .appointment-form .appointment-service-picker, .appointment-form .appointment-services-editor { padding: 10px; }
 }
+
+.appointment-recipient{padding:18px;margin:0 0 24px;border:1px solid var(--ui-accent-line);border-radius:14px;background:var(--ui-accent-soft);text-align:left}
+.appointment-recipient p{font-size:14px;line-height:1.65;color:var(--ui-muted);overflow-wrap:anywhere}
+.appointment-recipient select{width:100%;min-width:0}
+.appointment-recipient button{margin:8px 8px 0 0;white-space:normal}
+.appointment-recipient .form-field{margin-bottom:12px}
+.appointment-recipient .form-error-visible{color:var(--ui-danger)}

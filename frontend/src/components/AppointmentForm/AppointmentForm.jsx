@@ -1,3 +1,6 @@
+import PetSelection from './PetSelection.jsx'
+import { appointmentRecipientApi } from '../../api/appointmentRecipientApi.js'
+import { validRecipientId } from '../../api/appointmentRecipientView.js'
 import ServiceSelection from './ServiceSelection.jsx'
 import AppointmentServicesEditor from './AppointmentServicesEditor.jsx'
 import { appointmentServicesApi } from '../../api/appointmentServicesApi.js'
@@ -101,6 +104,26 @@ function AppointmentForm({
   const [clientName, setClientName] = useState('')
   const [clientId, setClientId] = useState('')
   const [pendingClient, setPendingClient] = useState(null)
+  const salonId=authContext?.current_salon?.id
+  const [recipientContext,setRecipientContext]=useState({key:'',loading:true,business:null,error:''})
+  const [contextVersion,setContextVersion]=useState(0)
+  const [recipientType,setRecipientType]=useState(null)
+  const [petId,setPetId]=useState('')
+  useEffect(()=>{
+    const controller=new AbortController();let current=true
+    setRecipientContext({key:String(salonId),loading:true,business:null,error:''})
+    appointmentRecipientApi.context(salonId,controller.signal).then(d=>{
+      if(current)setRecipientContext({key:String(salonId),loading:false,business:d.business_type,error:''})
+    }).catch(e=>{if(current&&!controller.signal.aborted)setRecipientContext({key:String(salonId),loading:false,business:null,error:e.message})})
+    return ()=>{current=false;controller.abort()}
+  },[salonId,contextVersion])
+  const contextReady=recipientContext.key===String(salonId)&&!recipientContext.loading&&!recipientContext.error
+  const business=contextReady?recipientContext.business:null
+  const supportsPets=['grooming','mixed'].includes(business)
+  const effectiveType=recipientType ?? (editingAppointment ? null : business==='grooming'?'pet':'person')
+  const petUnchanged=!!editingAppointment && String(clientId)===String(editingAppointment.clientId) && effectiveType===editingAppointment.recipientType && String(petId||'')===String(editingAppointment.petId||'')
+  const recipientDirty=!!editingAppointment && (String(clientId)!==String(editingAppointment.clientId)||effectiveType!==(editingAppointment.recipientType??null)||String(petId||'')!==String(editingAppointment.petId||''))
+
   const [clientSearch, setClientSearch] = useState('')
   const [isClientSearchOpen, setIsClientSearchOpen] =
     useState(false)
@@ -408,6 +431,8 @@ function AppointmentForm({
   const employeeInputRef = useRef(null)
 
   useEffect(() => {
+    setRecipientType(editingAppointment?.recipientType??null)
+    setPetId(editingAppointment?.petId==null?'':String(editingAppointment.petId))
     if (editingAppointment) {
       setDate(
         editingAppointment.date || getTodayDate()
@@ -559,13 +584,13 @@ function AppointmentForm({
     ? canReschedule || canChangeClient
     : canCreate
 
-  const canQuickAddClient = canEditClientFields && (
+  const canQuickAddClient = effectiveType!=='pet' && business!=='grooming' && canEditClientFields && (
     !editingAppointment ||
     ['owner', 'admin'].includes(authContext?.membership?.role)
   )
 
   async function handleSubmit() {
-    if (!canSubmitForm || isCreating || isUpdating || servicesDirty) {
+    if (!canSubmitForm || !contextReady || isCreating || isUpdating || servicesDirty) {
       return
     }
 
@@ -686,7 +711,12 @@ function AppointmentForm({
       !selectedClient &&
       clientName === editingClientName
 
+    const petError = (!editingAppointment || recipientDirty) && effectiveType==='pet' && !validRecipientId(petId)
+      ? 'Odaberite ljubimca odabranog vlasnika.'
+      : (!editingAppointment || recipientDirty) && business==='grooming' && effectiveType!=='pet'
+        ? 'Odaberite ljubimca za grooming termin.' : ''
     const newErrors = {
+      pet:petError,
       date: date
         ? ''
         : 'Odaberite datum termina.',
@@ -728,6 +758,8 @@ function AppointmentForm({
         timeInputRef.current?.focus()
       } else if (newErrors.clientName) {
         clientNameInputRef.current?.focus()
+      } else if (newErrors.pet) {
+        document.getElementById('appointment-pet')?.focus()
       } else if (newErrors.service) {
         serviceInputRef.current?.focus()
       } else if (newErrors.employee) {
@@ -741,6 +773,8 @@ function AppointmentForm({
       const updateSucceeded =
         await onUpdateAppointment({
           ...editingAppointment,
+          recipientType:effectiveType,
+          petId:effectiveType==='pet'?petId:null,
           clientId:
             selectedClient?.id ??
             editingAppointment.clientId,
@@ -760,6 +794,8 @@ function AppointmentForm({
           date,
           time,
 
+          recipientType:effectiveType,
+          petId:effectiveType==='pet'?petId:null,
           clientId: pendingClient
             ? undefined
             : selectedClient.id,
@@ -787,6 +823,8 @@ function AppointmentForm({
     }
 
     setSelectedLookupClient(null)
+    setPetId('')
+    setRecipientType(null)
     setDate(salonTimezone ? getSalonLocalDateParts(new Date().toISOString(), salonTimezone).date : getTodayDate())
     setTime('')
     setClientName('')
@@ -897,7 +935,7 @@ function AppointmentForm({
 
       <div className="form-field">
         <label htmlFor="appointment-client">
-          Klijent
+          {supportsPets?'Vlasnik / klijent':'Klijent'}
         </label>
 
         <input
@@ -917,6 +955,8 @@ function AppointmentForm({
             setSelectedLookupClient(null)
             setClientSearch(event.target.value)
             setClientId('')
+            setPetId('')
+            if (supportsPets) setRecipientType(business==='grooming'?'pet':effectiveType)
             setClientName('')
             setIsClientSearchOpen(true)
           }}
@@ -950,9 +990,12 @@ function AppointmentForm({
                   <button
                     type="button"
                     className="appointment-client-result"
+                    disabled={!canEditClientFields || isUpdating || isCreating}
                     onClick={() => {
                       setSelectedLookupClient(client)
                       setClientId(String(client.id))
+                      setPetId('')
+                      if (business==='grooming') setRecipientType('pet')
                       setPendingClient(null)
                       setClientName(client.name)
                       setClientSearch(client.name)
@@ -988,6 +1031,7 @@ function AppointmentForm({
             type="button"
             className="appointment-client-quick-add-toggle"
             hidden={!canQuickAddClient}
+            disabled={isUpdating || isCreating}
             onClick={() => {
               setIsClientSearchOpen(false)
 
@@ -1038,6 +1082,23 @@ function AppointmentForm({
           {errors.clientName || '\u00A0'}
         </p>
       </div>
+
+      {!contextReady && <div role="status"><p>{recipientContext.error||'Učitavanje vrste salona…'}</p>
+        {recipientContext.error&&<button type="button" onClick={()=>setContextVersion(v=>v+1)}>Ponovi učitavanje</button>}</div>}
+      {contextReady && supportsPets && <div className="appointment-recipient">
+        {editingAppointment && !editingAppointment.recipientType && <p>Stari termin nema povezanu životinju. Možete zadržati postojeći termin ili mu dodijeliti ljubimca.</p>}
+        {business==='mixed' && <div className="form-field"><label htmlFor="appointment-recipient-type">Usluga je namijenjena</label>
+          <select id="appointment-recipient-type" value={effectiveType??''} disabled={!canEditClientFields||isUpdating||isCreating} onChange={e=>{setRecipientType(e.target.value||null);setPetId('');setPendingClient(null);setIsQuickAddClientOpen(false)}}>
+            {editingAppointment&&!editingAppointment.recipientType&&<option value="">Zadrži stari zapis</option>}
+            <option value="person">Osobi</option><option value="pet">Ljubimcu</option>
+          </select></div>}
+        {business==='grooming'&&editingAppointment&&!effectiveType&&canEditClientFields&&<button type="button" disabled={isUpdating||isCreating} onClick={()=>setRecipientType('pet')}>Poveži ljubimca s terminom</button>}
+        {effectiveType==='pet'&&<PetSelection key={[salonId,clientId,editingAppointment?.id??''].join(':')} salonId={salonId} clientId={clientId} appointmentId={editingAppointment?.id} value={petId}
+          savedPet={petUnchanged&&editingAppointment.petId?editingAppointment:null}
+          disabled={!canEditClientFields||isUpdating||isCreating} error={errors.pet}
+          onChange={id=>{setPetId(id);setErrors(e=>({...e,pet:''}))}} />}
+        {effectiveType==='pet'&&!clientId&&<p>Za novog vlasnika najprije otvorite Klijenti, dodajte vlasnika i njegovog ljubimca. Zatim ih odaberite u terminu.</p>}
+      </div>}
 
       <div ref={serviceInputRef} tabIndex={-1}>
         {editingAppointment ? (
@@ -1197,7 +1258,7 @@ function AppointmentForm({
           employee={selectedEmployeeForAvailability} authContext={authContext}
           disabled={isUpdating || isCreating}
           otherChanges={date !== editingAppointment.date || time !== editingAppointment.time ||
-            String(clientId) !== String(editingAppointment.clientId)}
+            String(clientId) !== String(editingAppointment.clientId) || recipientDirty}
           onSave={onChangeServices} onDirtyChange={setServicesDirty}
         />
       )}
@@ -1209,7 +1270,7 @@ function AppointmentForm({
           className="primary-button"
           onClick={handleSubmit}
           disabled={
-            !canSubmitForm || servicesDirty ||
+            !canSubmitForm || !contextReady || servicesDirty ||
             isUpdating ||
             isCreating
           }

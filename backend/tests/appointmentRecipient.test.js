@@ -50,9 +50,16 @@ test('recipient: business gate stops before client and pet reads',async()=>{
   await assert.rejects(prepareRecipient(db,1,2,{recipient_type:'pet',pet_id:3}),{code:'PET_BUSINESS_DISABLED'})
   assert.equal(db.calls.length,1)
 })
-test('recipient: unchanged old frontend creates unclassified recipient without guessing',async()=>{
-  const db=mock();const r=await prepareRecipient(db,1,2,{})
-  assert.equal(r.recipient_type,null);assert.equal(r.pet_id,null);assert.equal(db.calls.length,0)
+test('recipient: omitted fields cannot bypass grooming requirement',async()=>{
+  const db=mock()
+  await assert.rejects(prepareRecipient(db,1,2,{}),{code:'APPOINTMENT_PET_REQUIRED'})
+  assert.equal(db.calls.length,1)
+})
+test('recipient: legacy non-grooming callers remain compatible',async()=>{
+  for(const business of ['hair','mixed','other',null]) {
+    const db=mock({business});const r=await prepareRecipient(db,1,2,{})
+    assert.equal(r.recipient_type,null);assert.equal(r.pet_id,null);assert.equal(db.calls.length,1)
+  }
 })
 test('recipient: person clears all pet fields and does not look up animals',async()=>{
   const db=mock({business:'mixed'});const r=await prepareRecipient(db,1,2,{recipient_type:'person'})

@@ -1,3 +1,4 @@
+import { recipientSummary } from './appointmentRecipientView.js'
 import { serviceSummary } from './appointmentItemsView.js'
 
 const STATUS_LABELS = {
@@ -124,6 +125,7 @@ export function mapCalendarAppointmentToFrontend(
       appointment.notes,
 
     ...serviceSummary(appointment),
+    ...recipientSummary(appointment),
   }
 }
 

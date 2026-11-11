@@ -7,8 +7,8 @@ export function recipientId(value) {
   }
   return Number(value)
 }
-// Transitional 3A contract: omitted fields preserve old clients. 3B will supply
-// an explicit type and make a pet mandatory in the grooming booking UI.
+// Legacy syntax remains readable. prepareRecipient rejects omitted fields for
+// new grooming bookings after checking the business type inside the transaction.
 export function parseRecipient(body, { allowLegacy = false } = {}) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw recipientError('INVALID_RECIPIENT','Neispravan primatelj usluge.')
   const type = body.recipient_type

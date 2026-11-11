@@ -1,3 +1,5 @@
+import { appointmentRecipientApi } from '../../api/appointmentRecipientApi.js'
+import { recipientSummary, recipientChanged, recipientUpdate } from '../../api/appointmentRecipientView.js'
 import { appointmentServicesApi } from '../../api/appointmentServicesApi.js'
 import { serviceSummary, canChangeAppointmentServices } from '../../api/appointmentItemsView.js'
 import {
@@ -144,7 +146,7 @@ function Appointments({
     )
 
     try {
-      await updateAppointmentStatus(
+      const saved = await updateAppointmentStatus(
         appointmentId,
         'completed'
       )
@@ -157,6 +159,7 @@ function Appointments({
                 appointmentId
                 ? {
                   ...appointment,
+                  ...recipientUpdate(saved,appointment,clientList),
                   status: 'Završen',
                   statusCode: 'completed',
                 }
@@ -212,7 +215,7 @@ function Appointments({
     )
 
     try {
-      await updateAppointmentStatus(
+      const saved = await updateAppointmentStatus(
         appointmentId,
         'cancelled'
       )
@@ -225,6 +228,7 @@ function Appointments({
                 appointmentId
                 ? {
                   ...appointment,
+                  ...recipientUpdate(saved,appointment,clientList),
                   status: 'Otkazano',
                   statusCode: 'cancelled',
                 }
@@ -330,6 +334,8 @@ async function quickAddClient(newClient) {
 
       const backendAppointment = await createAppointment({
         clientId: newAppointment.clientId,
+        recipientType: newAppointment.recipientType,
+        petId: newAppointment.petId,
         newClient: newClient
           ? mapClientToPayload(newClient)
           : undefined,
@@ -375,6 +381,7 @@ async function quickAddClient(newClient) {
         source: backendAppointment.source,
         notes: backendAppointment.notes,
         ...serviceSummary(backendAppointment),
+        ...recipientSummary(backendAppointment),
       }
 
       setAppointmentList((currentAppointments) => [
@@ -408,8 +415,7 @@ async function updateAppointment(
   }
 
   const clientChanged =
-    String(updatedAppointment.clientId) !==
-    String(editingAppointment.clientId)
+    recipientChanged(updatedAppointment, editingAppointment)
 
   const employeeChanged =
     String(updatedAppointment.employeeId) !==
@@ -469,7 +475,7 @@ async function updateAppointment(
     scheduleChanged
   ) {
     window.alert(
-      'Klijenta i datum/vrijeme termina zasad mijenjaj odvojeno.'
+      'Vlasnika/ljubimca i datum/vrijeme termina mijenjajte odvojeno.'
     )
 
     return false
@@ -505,10 +511,9 @@ async function updateAppointment(
   try {
     if (clientChanged) {
       const backendAppointment =
-        await changeAppointmentClient(
-          updatedAppointment.id,
-          updatedAppointment.clientId
-        )
+        updatedAppointment.recipientType
+          ? await appointmentRecipientApi.change({salonId:authContext.current_salon.id,appointmentId:updatedAppointment.id,clientId:updatedAppointment.clientId,type:updatedAppointment.recipientType,petId:updatedAppointment.petId,revision:editingAppointment.recipientRevision})
+          : await changeAppointmentClient(updatedAppointment.id,updatedAppointment.clientId)
 
       setAppointmentList(
         (currentAppointments) =>
@@ -519,11 +524,12 @@ async function updateAppointment(
                 ? {
                     ...appointment,
 
+                    ...recipientSummary(backendAppointment),
                     clientId:
                       backendAppointment.client_id,
 
                     clientName:
-                      updatedAppointment.clientName,
+                      backendAppointment.client_name ?? updatedAppointment.clientName,
                   }
                 : appointment
           )
@@ -556,6 +562,7 @@ async function updateAppointment(
               ? {
                   ...appointment,
 
+                  ...recipientUpdate(backendAppointment,appointment,clientList),
                   date:
                     updatedAppointment.date,
 
@@ -605,7 +612,7 @@ async function updateAppointment(
         throw new Error('Odgovor ne odgovara izvornom terminu. Osvježite podatke.')
       }
       const updated = {
-        ...appointment, ...serviceSummary(saved),
+        ...appointment, ...serviceSummary(saved), ...recipientUpdate(saved,appointment,clientList),
         startsAt: saved.starts_at, endsAt: saved.ends_at,
       }
       setAppointmentList(rows => rows.map(row => String(row.id) === String(saved.id) ? updated : row))
@@ -711,6 +718,8 @@ async function updateAppointment(
 
         const searchableText = [
           appointment.clientName,
+          appointment.petName,
+          appointment.petBreed,
           appointment.serviceName,
           appointment.service,
           appointment.date,

@@ -51,3 +51,10 @@ test('recipient HTTP: malformed recipient/query fails before database access',()
   assert.equal((await send('/appointments/10/recipient','PATCH',{client_id:2,recipient_type:'pet',pet_id:3,expected_recipient_revision:1,pet_name:'Injected'})).status,400)
   assert.equal(calls.length,0)
 }))
+
+test('recipient HTTP: employee may read business kind but no owner or pet data via context',()=>withApi('employee',async(send,calls)=>{
+  const r=await send('/appointments/recipient-context')
+  assert.equal(r.status,200);assert.equal(r.cache,'no-store')
+  assert.deepEqual(r.body.data,{salon_id:1,business_type:'grooming'})
+  assert.deepEqual(calls[0].args,[1]);assert.equal(calls.length,1)
+}))

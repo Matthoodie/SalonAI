@@ -1,3 +1,4 @@
+import { recipientLabel } from '../../api/appointmentRecipientView.js'
 import { useEffect, useState } from 'react'
 import { appointmentCount, formatDate, formatMoney, periodRange, salonDate, scheduleView, summarizeAppointments } from './dashboardView.js'
 import './Dashboard.css'
@@ -14,7 +15,7 @@ function AppointmentRow({ appointment, timeZone, showDate = false }) {
         <strong>{time}</strong>
       </div>
       <div className="dashboard-appointment-person">
-        <strong>{appointment.clientName || 'Nepoznat klijent'}</strong>
+        <strong>{recipientLabel(appointment)}</strong>
         <span>{appointment.serviceName || appointment.service || 'Nepoznata usluga'}</span>
         {appointment.employeeName && <small>{appointment.employeeName}</small>}
       </div>

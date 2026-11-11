@@ -1,3 +1,4 @@
+import { recipientLabel } from '../../api/appointmentRecipientView.js'
 import {
   useEffect,
   useRef,
@@ -697,6 +698,7 @@ const selectedClientUpcomingAppointments =
             </div>
 
             <div className="client-history-service">
+              {appointment.petId && <p>{recipientLabel(appointment)}</p>}
               <strong>
                 {appointment.serviceName ||
                   appointment.service ||
@@ -764,6 +766,7 @@ const selectedClientUpcomingAppointments =
             </div>
 
             <div className="client-history-service">
+              {appointment.petId && <p>{recipientLabel(appointment)}</p>}
               <strong>
                 {appointment.serviceName ||
                   appointment.service ||

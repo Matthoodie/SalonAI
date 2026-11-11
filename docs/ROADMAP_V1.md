@@ -241,3 +241,14 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
   pretrazi i povijesti. Grooming 3 ostaje u tijeku dok 3B ne prođe provjere.
 - Zatim fotografije/avatar → WhatsApp i dogovoreni AI → mobilna/PWA, Android/iOS
   prototip i produkcijska priprema → besplatni pilot → naplata. Beauty ostaje V2.
+
+
+### Grooming 3B — integracija termina (paket za provjeru)
+
+- Odabir vlasnika i ljubimca u obrascu, mješoviti tok osoba/ljubimac.
+- Obvezni ljubimac za novo grooming kreiranje i na backendu.
+- Atomska promjena vlasnika/ljubimca s postojećim zaposleničkim ovlastima.
+- Prikaz spremljenih podataka ljubimca i vlasnika u terminima, kalendaru, dashboardu i povijesti vlasnika.
+- Kompatibilnost starih termina bez nagađanja životinje.
+- Detalji i ručna provjera: GROOMING_PHASE3B.md. Zaključiti nakon lokalnog TEST suitea, builda i korisničke provjere.
+- Sljedeće: fotografije ljubimaca; WhatsApp/AI; mobilna/PWA i produkcija; besplatni pilot; naplata.

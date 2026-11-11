@@ -1,3 +1,4 @@
+import { recipientLabel } from '../../api/appointmentRecipientView.js'
 import {
   canUseAppointmentPermission,
   canEditAppointment,
@@ -512,8 +513,8 @@ function editAppointmentFromCalendar(appointmentId) {
   aria-disabled={!canEditThisAppointment}
   aria-label={
     canEditThisAppointment
-      ? `Uredi termin za ${appointment.clientName} u ${appointment.time}`
-      : `Termin za ${appointment.clientName} u ${appointment.time}`
+      ? `Uredi termin za ${recipientLabel(appointment)} u ${appointment.time}`
+      : `Termin za ${recipientLabel(appointment)} u ${appointment.time}`
   }
 >
   <div className="selected-day-appointment-time">
@@ -521,7 +522,7 @@ function editAppointmentFromCalendar(appointmentId) {
   </div>
 
   <div className="selected-day-appointment-info">
-  <h3>{appointment.clientName}</h3>
+  <h3>{recipientLabel(appointment)}</h3>
 
   <p>
     {appointment.serviceName ||
