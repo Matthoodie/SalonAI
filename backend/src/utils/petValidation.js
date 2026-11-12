@@ -7,9 +7,9 @@ export function petId(value) {
   }
   return Number(value)
 }
-function exactFields(body, fields) {
+function exactFields(body, fields, optional = []) {
   if (!body || typeof body !== 'object' || Array.isArray(body) ||
-      Object.keys(body).length !== fields.length || fields.some(key => !Object.hasOwn(body,key))) {
+      Object.keys(body).some(key => !fields.includes(key) && !optional.includes(key)) || fields.some(key => !Object.hasOwn(body,key))) {
     throw petError('Pošaljite sva očekivana polja, bez dodatnih podataka.')
   }
 }
@@ -25,9 +25,18 @@ function text(value, max, required = false, multiline = false) {
   return clean
 }
 export function validatePet(body, editing = false) {
-  exactFields(body, ['name','species','breed','notes', ...(editing ? ['expected_revision'] : [])])
+  exactFields(body, ['name','species','breed','notes', ...(editing ? ['expected_revision'] : [])], ['size_category','weight_grams'])
+  const measurements = {}
+  if (Object.hasOwn(body, 'size_category')) {
+    if (body.size_category !== null && !['small','medium','large','giant'].includes(body.size_category)) throw petError('Odaberite valjanu veličinu ljubimca.')
+    measurements.size_category = body.size_category
+  }
+  if (Object.hasOwn(body, 'weight_grams')) {
+    if (body.weight_grams !== null && (!Number.isInteger(body.weight_grams) || body.weight_grams < 1 || body.weight_grams > 200000)) throw petError('Težina mora biti od 0,001 do 200 kg ili prazna.')
+    measurements.weight_grams = body.weight_grams
+  }
   if (!['dog','cat','other'].includes(body.species)) throw petError('Odaberite vrstu životinje.')
-  return { name: text(body.name,100,true), species: body.species,
+  return { ...measurements, name: text(body.name,100,true), species: body.species,
     breed: text(body.breed,150), notes: text(body.notes,2000,false,true),
     ...(editing ? { expected_revision: revision(body.expected_revision) } : {}) }
 }

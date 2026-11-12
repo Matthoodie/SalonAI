@@ -1,3 +1,4 @@
+import { measurementErrors, measurementPayload, validMeasurements, measurementsMatch } from './petMeasurements.js'
 import { salonFetch } from './salonApiContext.js'
 
 export const PET_SPECIES = { dog: 'Pas', cat: 'Mačka', other: 'Druga životinja' }
@@ -5,7 +6,7 @@ const fields = ['name', 'species', 'breed', 'notes']
 const validId = value => ['string', 'number'].includes(typeof value) && /^[1-9]\d*$/.test(String(value)) && Number.isSafeInteger(Number(value))
 const invalid = () => Object.assign(new Error('Podatke ljubimca nije moguće potvrditi. Osvježite popis.'), { code: 'PET_INVALID_RESPONSE' })
 export function petDraftErrors(draft) {
-  const errors = {}
+  const errors = measurementErrors(draft || {})
   for (const [key, limit, required] of [['name', 100, true], ['breed', 150, false], ['notes', 2000, false]]) {
     const value = draft?.[key]
     const controls = key === 'notes' ? /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u : /[\u0000-\u001f\u007f]/u
@@ -18,7 +19,7 @@ export function petDraftErrors(draft) {
 }
 export function petPayload(draft, revision) {
   if (Object.keys(petDraftErrors(draft)).length) throw Object.assign(new Error('Provjerite označena polja.'), { code: 'PET_INVALID_INPUT' })
-  const result = Object.fromEntries(fields.map(key => [key, draft[key].trim()]))
+  const result = { ...Object.fromEntries(fields.map(key => [key, draft[key].trim()])), ...measurementPayload(draft) }
   if (revision !== undefined) {
     if (!Number.isInteger(revision) || revision < 1 || revision >= 2147483647) throw invalid()
     result.expected_revision = revision
@@ -26,14 +27,14 @@ export function petPayload(draft, revision) {
   return result
 }
 export function validatePetRow(row, salonId, clientId) {
-  if (!validId(salonId) || !validId(clientId) || !validId(row?.id) || !validId(row?.salon_id) || !validId(row?.client_id) ||
+  if (!validMeasurements(row || {}) || !validId(salonId) || !validId(clientId) || !validId(row?.id) || !validId(row?.salon_id) || !validId(row?.client_id) ||
       String(row.salon_id) !== String(salonId) || String(row.client_id) !== String(clientId) ||
       typeof row.active !== 'boolean' || !Number.isInteger(row.revision) || row.revision < 1 || row.revision > 2147483647 ||
       Object.keys(petDraftErrors(row)).length || fields.some(key => row[key] !== row[key].trim()) ||
       !['created_at', 'updated_at'].every(key => typeof row[key] === 'string' && Number.isFinite(Date.parse(row[key])))) throw invalid()
   const hasPhoto = row.has_photo === undefined ? false : row.has_photo, photoVersion = row.photo_version === undefined ? 0 : row.photo_version
   if (typeof hasPhoto !== 'boolean' || !Number.isInteger(photoVersion) || photoVersion < 0 || photoVersion > 2147483647 || (hasPhoto && photoVersion < 1)) throw invalid()
-  return { has_photo: hasPhoto, photo_version: photoVersion, ...Object.fromEntries(['id', 'salon_id', 'client_id', ...fields, 'active', 'revision', 'created_at', 'updated_at'].map(key => [key, row[key]])) }
+  return { size_category: row.size_category ?? null, weight_grams: row.weight_grams ?? null, has_photo: hasPhoto, photo_version: photoVersion, ...Object.fromEntries(['id', 'salon_id', 'client_id', ...fields, 'active', 'revision', 'created_at', 'updated_at'].map(key => [key, row[key]])) }
 }
 const messages = {
   PET_FORBIDDEN: 'Nemate ovlasti za upravljanje ljubimcima.',
@@ -69,18 +70,18 @@ export function createPetApi({ request = salonFetch } = {}) {
     create(salonId, clientId, draft) {
       const payload = petPayload(draft)
       return read(path(salonId, clientId), write('POST', payload), salonId, clientId,
-        row => row.active && row.revision === 1 && fields.every(key => row[key] === payload[key]))
+        row => measurementsMatch(row, payload) && row.active && row.revision === 1 && fields.every(key => row[key] === payload[key]))
     },
     update(salonId, clientId, pet, draft) {
       if (!Number.isInteger(pet?.revision)) throw invalid()
       const payload = petPayload(draft, pet.revision)
       return read(path(salonId, clientId, pet.id), write('PUT', payload), salonId, clientId,
-        row => String(row.id) === String(pet.id) && row.revision === pet.revision + 1 && row.active === pet.active && fields.every(key => row[key] === payload[key]))
+        row => measurementsMatch(row, payload, pet) && String(row.id) === String(pet.id) && row.revision === pet.revision + 1 && row.active === pet.active && fields.every(key => row[key] === payload[key]))
     },
     setActive(salonId, clientId, pet, active) {
       if (typeof active !== 'boolean' || !Number.isInteger(pet.revision) || pet.revision < 1 || pet.revision >= 2147483647) throw invalid()
       return read(path(salonId, clientId, pet.id) + '/active', write('PATCH', { active, expected_revision: pet.revision }), salonId, clientId,
-        row => String(row.id) === String(pet.id) && row.active === active && row.revision === pet.revision + (pet.active === active ? 0 : 1) && fields.every(key => row[key] === pet[key]))
+        row => measurementsMatch(row, {}, pet) && String(row.id) === String(pet.id) && row.active === active && row.revision === pet.revision + (pet.active === active ? 0 : 1) && fields.every(key => row[key] === pet[key]))
     },
   }
 }

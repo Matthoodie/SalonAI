@@ -1,4 +1,4 @@
-const columns = 'id,salon_id,client_id,name,species,breed,notes,active,revision,created_at,updated_at,photo_version,(photo_data IS NOT NULL) AS has_photo'
+const columns = 'id,salon_id,client_id,name,species,breed,notes,size_category,weight_grams,active,revision,created_at,updated_at,photo_version,(photo_data IS NOT NULL) AS has_photo'
 export async function lockPetAccess(db, { salonId, userId }) {
   const result = await db.query(`SELECT s.id FROM salons s
     JOIN salon_memberships m ON m.salon_id=s.id JOIN users u ON u.id=m.user_id
@@ -16,16 +16,19 @@ export async function listPets(db, salonId, clientId) {
   return (await db.query(`SELECT ${columns} FROM client_pets WHERE salon_id=$1 AND client_id=$2 ORDER BY active DESC,name,id`,[salonId,clientId])).rows
 }
 export async function insertPet(db, salonId, clientId, input) {
-  return (await db.query(`INSERT INTO client_pets(salon_id,client_id,name,species,breed,notes)
-    VALUES ($1,$2,$3,$4,$5,$6) RETURNING ${columns}`,
-  [salonId,clientId,input.name,input.species,input.breed,input.notes])).rows[0]
+  return (await db.query(`INSERT INTO client_pets(salon_id,client_id,name,species,breed,notes,size_category,weight_grams)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING ${columns}`,
+  [salonId,clientId,input.name,input.species,input.breed,input.notes,input.size_category ?? null,input.weight_grams ?? null])).rows[0]
 }
 export async function lockPet(db, salonId, clientId, id) {
   return (await db.query(`SELECT ${columns} FROM client_pets WHERE salon_id=$1 AND client_id=$2 AND id=$3 FOR UPDATE`,[salonId,clientId,id])).rows[0] ?? null
 }
 export async function savePet(db, salonId, clientId, id, input, statusOnly) {
   const values = statusOnly ? [input.active] : [input.name,input.species,input.breed,input.notes]
-  const set = statusOnly ? 'active=$4' : 'name=$4,species=$5,breed=$6,notes=$7'
+  let set = statusOnly ? 'active=$4' : 'name=$4,species=$5,breed=$6,notes=$7'
+  if (!statusOnly) for (const field of ['size_category','weight_grams']) {
+    if (Object.hasOwn(input,field)) { values.push(input[field]); set += `,${field}=$${values.length + 3}` }
+  }
   return (await db.query(`UPDATE client_pets SET ${set},revision=revision+1,updated_at=clock_timestamp()
     WHERE salon_id=$1 AND client_id=$2 AND id=$3 RETURNING ${columns}`,[salonId,clientId,id,...values])).rows[0]
 }

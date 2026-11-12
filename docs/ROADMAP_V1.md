@@ -1,8 +1,8 @@
 # SalonAI — završni roadmap prve javne verzije
 
-Ažurirano: 11. studenoga 2026.
-Potvrđena polazna verzija: 0f5d016 (fotografije ljubimaca).
-Aktualni paket: Grooming 5 — povijest termina pojedinog ljubimca; lokalne korisničke provjere još slijede.
+Ažurirano: 12. studenoga 2026.
+Potvrđena polazna verzija: e5db279 (povijest termina ljubimca).
+Aktualni paket: Grooming 6 — neobavezna veličina i težina; lokalne korisničke provjere još slijede.
 
 ## Cilj prve verzije
 
@@ -32,10 +32,12 @@ Ovaj popis nije tvrdnja da je produkcijska spremnost već potvrđena.
 1. Primijenjeno i korisnički potvrđeno: uvoz cjenika, vizualno usklađivanje stranica,
    svijetla/tamna tema, Magic Wizard, vlasnici s više ljubimaca, povezivanje termina
    i privatne fotografije ljubimaca (0f5d016).
-2. Sada: Grooming 5 — zaseban pregled zakazanih i prethodnih termina ljubimca.
-   Dokumentacija: [GROOMING_PHASE5.md](GROOMING_PHASE5.md). Paket za TEST/DEV provjere.
-3. Grooming završnica: eventualna veličina/težina profila (opcionalni podaci), dogovor
-   o minijaturama na terminima i završna regresija. Ne proširivati zaposleničke ovlasti usput.
+2. Grooming 5 potvrđen: zaseban pregled zakazanih i prethodnih termina ljubimca;
+   904 backend testa i 208 frontend testova, build i ručne provjere; commit e5db279.
+3. Sada: Grooming 6 — neobavezna veličina/težina profila i završna regresija.
+   Dokumentacija: [GROOMING_PHASE6.md](GROOMING_PHASE6.md). TEST/DEV provjere slijede.
+   Minijature fotografija na terminima ostaju zasebna, neobavezna dorada uz definirane
+   ovlasti; nisu uvjet za početak HR/EN faze.
 4. HR/EN: jezik na početnom zaslonu, u Wizardu i Postavkama; zatim cijelo sučelje,
    poruke i formatiranje. Zajednički sustav prije WhatsApp/AI funkcionalnosti.
 5. WhatsApp i dogovorene AI funkcionalnosti.
@@ -301,3 +303,17 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Lokalne provjere autora: 192 backend testa bez PostgreSQL-a, 208 frontend testova,
   kompilacija JSX-a, React provjera povijesti i regresija fotografija. PostgreSQL,
   puni backend suite i Vite build obvezno provjeriti priloženim verifierom kod korisnika.
+
+## Ažuriranje — Grooming 6: veličina i težina
+
+- e5db279 uspješno poslan na development; radna grana čista prema korisničkom ispisu.
+- Pripremljena dva neobavezna podatka profila: ručna kategorija veličine i težina u kg.
+- Težina se pohranjuje kao cijeli broj grama. Unos dopušta zarez ili točku i do tri
+  decimale. Prazno nije nula. Veličina se ne nagađa prema težini ili pasmini.
+- Stari profil ima NULL; stari API zahtjev koji izostavi nova polja čuva prethodne
+  vrijednosti. Izričito prazno polje u novom obrascu briše samo taj podatak.
+- Jedna dodajuća migracija, bez novih ovisnosti. Fotografije, termin i povijest ostaju
+  povezani s istim profilom. Cijena/trajanje termina ne mijenjaju se prema težini.
+- Nakon TEST/DEV i ručne regresije zaključiti grooming paket i prijeći na HR/EN.
+  Cijeli nastavak: HR/EN → WhatsApp/AI → mobilna/PWA, Android/iOS prototip i produkcija
+  → besplatni pilot → naplata. Beauty centri ostaju V2.
