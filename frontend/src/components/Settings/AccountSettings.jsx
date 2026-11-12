@@ -1,26 +1,30 @@
+import { useLanguage } from '../Language/LanguageProvider'
+import LanguageSettings from '../Language/LanguageSettings'
 import AppearanceSettings from '../Theme/AppearanceSettings'
 import ProfileIdentity from '../Profile/ProfileIdentity'
 import InvitationAcceptance from '../Invitations/InvitationAcceptance'
 
 export default function AccountSettings({ authContext, onAccepted }) {
+  const { t } = useLanguage()
   const { user, current_salon: salon, membership } = authContext
   return (
     <>
       <div className="settings-page-heading">
-        <p className="settings-eyebrow">VAŠ RAČUN I SALON</p>
-        <h1>Postavke</h1>
-        <p>Uredite svoj profil i pristup salonima.</p>
+        <p className="settings-eyebrow">{t('settings.eyebrow')}</p>
+        <h1>{t('settings.title')}</h1>
+        <p>{t('settings.description')}</p>
       </div>
       <section className="settings-panel" aria-labelledby="personal-profile-heading">
-        <h2 id="personal-profile-heading">Moj profil</h2>
+        <h2 id="personal-profile-heading">{t('settings.profile')}</h2>
         <ProfileIdentity currentUser={user} role={membership.role} showEdit />
       </section>
       <section className="settings-panel" aria-labelledby="salon-membership-heading">
-        <h2 id="salon-membership-heading">Saloni i članstva</h2>
-        <p>Trenutačni salon: <strong>{salon.name}</strong></p>
-        <p>Za pristup drugom salonu upotrijebite pozivnicu koju ste dobili od njegove ovlaštene osobe.</p>
+        <h2 id="salon-membership-heading">{t('settings.memberships')}</h2>
+        <p>{t('settings.current')} <strong>{salon.name}</strong></p>
+        <p>{t('settings.invitation')}</p>
         <InvitationAcceptance currentUser={user} onAccepted={onAccepted} />
       </section>
+      <LanguageSettings />
       <AppearanceSettings />
     </>
   )

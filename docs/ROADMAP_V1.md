@@ -317,3 +317,15 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Nakon TEST/DEV i ručne regresije zaključiti grooming paket i prijeći na HR/EN.
   Cijeli nastavak: HR/EN → WhatsApp/AI → mobilna/PWA, Android/iOS prototip i produkcija
   → besplatni pilot → naplata. Beauty centri ostaju V2.
+
+
+## HR/EN — phase 1A (after Grooming 6)
+
+- Implemented personal browser language preference (HR default / EN), separate per account.
+- Selectors: Welcome, onboarding, Settings and Settings wizard; open forms retain drafts.
+- First translated surfaces: Welcome shell and account/language settings.
+- English coverage remains partial and is labelled in the selector.
+- NEXT 1B: invitation, salon creation, both wizard bodies/validation; then full operational UI and locale presentation.
+- Language never changes salon timezone/currency or user-entered data. No new migration/dependency.
+- See LANGUAGE_PHASE1A.md for exact coverage and verification.
+- Following stages remain WhatsApp/agreed AI -> mobile/PWA/store preparation and production -> free pilot -> billing.

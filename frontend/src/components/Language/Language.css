@@ -1,0 +1,12 @@
+.language-control { display: grid; gap: 8px; width: min(100%, 300px); text-align: left; }
+.language-control label { font-size: 14px; font-weight: 600; }
+.language-control select { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--ui-line, #cbd5e1); border-radius: 10px; background: var(--ui-surface, #fff); color: var(--ui-ink, #17243c); font: inherit; }
+.language-control select:focus-visible { outline: 3px solid #8b80ff; outline-offset: 2px; }
+.language-notice, .language-progress { margin: 0; font-size: 13px; line-height: 1.5; }
+.language-notice:empty { display: none; }
+.salon-welcome-header .language-control, .onboarding-header .language-control { color: #f8fafc; }
+.salon-welcome-header .language-control select, .onboarding-header .language-control select { background: #fff; color: #17243c; }
+.salon-welcome-header { flex-wrap: wrap; gap: 16px; }
+.onboarding-header .language-control { max-width: 240px; }
+.salon-setup-header { flex-wrap: wrap; gap: 16px; }
+@media (max-width: 600px) { .salon-welcome-header .language-control, .onboarding-header .language-control { width: 100%; max-width: none; } }

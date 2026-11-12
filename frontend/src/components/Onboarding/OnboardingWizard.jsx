@@ -1,3 +1,5 @@
+import {LanguageProvider} from '../Language/LanguageProvider'
+import LanguageSelector from '../Language/LanguageSelector'
 import {lazy,Suspense,useEffect,useRef,useState} from 'react'
 import {useClerk} from '@clerk/react-router'
 import {salonSetupApi} from '../../api/salonSetupApi.js'
@@ -12,7 +14,7 @@ const Services=lazy(()=>import('../../pages/Services/Services'))
 const Employees=lazy(()=>import('../../pages/Employees/Employees'))
 const steps=['salon','team','services','schedule','review']
 const labels=['Salon','Tim','Usluge','Raspored','Pregled']
-export default function OnboardingWizard({authContext,onRefresh,workspaces=[],onSelect,api=onboardingApi,setupApi=salonSetupApi}){
+function OnboardingWizardContent({authContext,onRefresh,workspaces=[],onSelect,api=onboardingApi,setupApi=salonSetupApi}){
  const {current_salon:salon,user,membership}=authContext
  const clerk=useClerk(),owner=membership.role==='owner'
  const [data,setData]=useState(null),[step,setStep]=useState('salon'),[services,setServices]=useState([]),[employees,setEmployees]=useState([])
@@ -65,7 +67,7 @@ export default function OnboardingWizard({authContext,onRefresh,workspaces=[],on
  const hint=key=>fieldErrors[key]&&<span id={'onboarding-'+key+'-error'} className="onboarding-field-error">{fieldErrors[key]}</span>
  const examples=serviceExamples(draft?.business_type)
 
- return <div className="salon-onboarding"><header className="onboarding-header"><strong>SalonAI</strong><span>{salon.name}</span>{workspaces.length>1&&<label>Salon<select aria-label="Odabrani salon" disabled={busy} value={String(salon.id)} onChange={e=>onSelect(e.target.value)}>{workspaces.map(w=><option key={w.salon.id} value={String(w.salon.id)}>{w.salon.name}</option>)}</select></label>}<button type="button" onClick={signOut} disabled={busy}>Odjavi se</button></header>
+ return <div className="salon-onboarding"><header className="onboarding-header"><strong>SalonAI</strong><LanguageSelector showProgress /><span>{salon.name}</span>{workspaces.length>1&&<label>Salon<select aria-label="Odabrani salon" disabled={busy} value={String(salon.id)} onChange={e=>onSelect(e.target.value)}>{workspaces.map(w=><option key={w.salon.id} value={String(w.salon.id)}>{w.salon.name}</option>)}</select></label>}<button type="button" onClick={signOut} disabled={busy}>Odjavi se</button></header>
  <main className="onboarding-main"><p className="onboarding-eyebrow">POSTAVLJANJE SALONA</p>
  <h1 ref={heading} tabIndex={-1}>{finished?'Vaš salon je spreman':owner?`${labels[steps.indexOf(step)]} — korak ${steps.indexOf(step)+1} od 5`:'Salon se priprema za rad'}</h1>
  {error&&<p className="onboarding-error" role="alert">{error}</p>}
@@ -98,4 +100,8 @@ export default function OnboardingWizard({authContext,onRefresh,workspaces=[],on
  </>}
  </>}
  </main></div>
+}
+
+export default function OnboardingWizard(props) {
+ return <LanguageProvider userId={props.authContext.user.id}><OnboardingWizardContent {...props}/></LanguageProvider>
 }

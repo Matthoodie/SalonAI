@@ -1,3 +1,4 @@
+import LanguageSelector from '../Language/LanguageSelector'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { salonSetupApi, SETUP_STEPS, setupPayload } from '../../api/salonSetupApi.js'
@@ -92,6 +93,7 @@ export default function SalonSetupWizard({ salonId, api = salonSetupApi }) {
 
   return <section className="settings-panel salon-setup" aria-labelledby="salon-setup-title">
     <div className="salon-setup-header">
+      <LanguageSelector showProgress />
       <div><p className="settings-eyebrow">MAGIC WIZARD</p><h2 id="salon-setup-title">Postavljanje salona</h2>
         <p>Prođite osnovne izbore i nastavite uređivati svoj salon.</p></div>
       {!open && <button type="button" className="setup-primary" onClick={load}>Otvori postavljanje</button>}

@@ -1,3 +1,4 @@
+import {LanguageProvider} from '../Language/LanguageProvider'
 import {ThemeProvider,useTheme} from '../Theme/ThemeProvider'
 import '../Theme/theme.css'
 import { useState } from 'react'
@@ -64,5 +65,5 @@ function LayoutContent({
 }
 
 export default function Layout(props) {
-  return <ThemeProvider key={String(props.currentUser?.id || "guest")} userId={props.currentUser?.id}><LayoutContent {...props}/></ThemeProvider>
+  return <LanguageProvider userId={props.currentUser?.id}><ThemeProvider key={String(props.currentUser?.id || "guest")} userId={props.currentUser?.id}><LayoutContent {...props}/></ThemeProvider></LanguageProvider>
 }

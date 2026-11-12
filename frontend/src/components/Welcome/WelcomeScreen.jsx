@@ -1,51 +1,55 @@
 import { useState } from 'react'
+import { LanguageProvider, useLanguage } from '../Language/LanguageProvider'
+import LanguageSelector from '../Language/LanguageSelector'
 import { useClerk } from '@clerk/react-router'
 import InvitationAcceptance from '../Invitations/InvitationAcceptance'
 import './WelcomeScreen.css'
 import CreateSalon from '../Onboarding/CreateSalon'
 import '../Onboarding/OnboardingWizard.css'
 
-export default function WelcomeScreen({ user, workspaces, busy, error, onRetry, onSelect, onAccepted }) {
+function WelcomeScreenContent({ user, workspaces, busy, error, onRetry, onSelect, onAccepted }) {
+  const { t } = useLanguage()
   const clerk = useClerk()
   const [signingOut, setSigningOut] = useState(false)
-  const [signOutError, setSignOutError] = useState('')
+  const [signOutError, setSignOutError] = useState(false)
 
   async function signOut() {
     if (signingOut) return
     setSigningOut(true)
-    setSignOutError('')
+    setSignOutError(false)
     try { await clerk.signOut({ redirectUrl: '/' }) }
-    catch { setSignOutError('Odjava nije uspjela. Pokušajte ponovno.'); setSigningOut(false) }
+    catch { setSignOutError(true); setSigningOut(false) }
   }
 
   return (
     <div className="salon-welcome">
       <header className="salon-welcome-header">
         <span className="salon-welcome-brand">SalonAI</span>
+        {user && <LanguageSelector showProgress />}
         <button type="button" className="salon-welcome-secondary" onClick={signOut} disabled={signingOut}>
-          {signingOut ? 'Odjava…' : 'Odjavi se'}
+          {signingOut ? t('welcome.signingOut') : t('welcome.signOut')}
         </button>
       </header>
       <main className="salon-welcome-main" aria-busy={busy}>
-        <p className="salon-welcome-eyebrow">DOBRO DOŠLI</p>
-        <h1>{workspaces.length ? 'Odaberite svoj salon' : 'Vaš prostor za rad počinje ovdje'}</h1>
-        {user && <p className="salon-welcome-account">Prijavljeni račun: <strong>{user.email || user.display_name}</strong></p>}
-        {signOutError && <p role="alert" className="salon-welcome-error">{signOutError}</p>}
-        {busy ? <div className="salon-welcome-panel" role="status">Učitavanje dostupnih salona…</div> : error ? (
+        <p className="salon-welcome-eyebrow">{t('welcome.eyebrow')}</p>
+        <h1>{workspaces.length ? t('welcome.choose') : t('welcome.title')}</h1>
+        {user && <p className="salon-welcome-account">{t('welcome.account')} <strong>{user.email || user.display_name}</strong></p>}
+        {signOutError && <p role="alert" className="salon-welcome-error">{t('welcome.signOutError')}</p>}
+        {busy ? <div className="salon-welcome-panel" role="status">{t('welcome.loading')}</div> : error ? (
           <div className="salon-welcome-panel">
             <p role="alert" className="salon-welcome-error">{error}</p>
-            <button type="button" className="salon-welcome-primary" onClick={onRetry}>Ponovno učitaj salone</button>
+            <button type="button" className="salon-welcome-primary" onClick={onRetry}>{t('welcome.retry')}</button>
           </div>
         ) : user ? (
           <>
             {workspaces.length > 0 ? (
-              <section className="salon-welcome-panel" aria-label="Dostupni saloni">
-                <p>Odaberite salon u kojem želite nastaviti raditi.</p>
+              <section className="salon-welcome-panel" aria-label={t('welcome.available')}>
+                <p>{t('welcome.pick')}</p>
                 <ul className="salon-welcome-workspaces">
                   {workspaces.map(({ salon, membership }) => (
                     <li key={salon.id}>
                       <button type="button" onClick={() => onSelect(salon.id)}>
-                        <span><strong>{salon.name}</strong><small>{({ owner: 'Vlasnik', admin: 'Administrator', employee: 'Zaposlenik' })[membership.role]}</small></span>
+                        <span><strong>{salon.name}</strong><small>{(['owner','admin','employee'].includes(membership.role) ? t('role.' + membership.role) : '')}</small></span>
                         <span aria-hidden="true">→</span>
                       </button>
                     </li>
@@ -54,19 +58,23 @@ export default function WelcomeScreen({ user, workspaces, busy, error, onRetry, 
               </section>
             ) : (
               <div className="salon-welcome-panel salon-welcome-intro">
-                <h2>Pridružite se svom timu</h2>
-                <p>Za pristup salonu potrebna vam je pozivnica njegova vlasnika ili administratora. Ako je još nemate, zatražite kod pozivnice.</p>
-                <p className="salon-welcome-note">Otvaranje novih salona trenutačno je dostupno samo u kontroliranom testiranju.</p>
+                <h2>{t('welcome.join')}</h2>
+                <p>{t('welcome.invitation')}</p>
+                <p className="salon-welcome-note">{t('welcome.controlled')}</p>
               </div>
             )}
             {workspaces.length === 0 && <CreateSalon key={user.id} user={user} onCreated={onAccepted} />}
             <InvitationAcceptance key={user.id} currentUser={user} onAccepted={onAccepted} initiallyOpen={workspaces.length === 0} />
-            <button type="button" className="salon-welcome-refresh" onClick={onRetry}>Osvježi dostupne salone</button>
+            <button type="button" className="salon-welcome-refresh" onClick={onRetry}>{t('welcome.refresh')}</button>
           </>
         ) : (
-          <div className="salon-welcome-panel"><p>Nije moguće potvrditi korisnički račun.</p><button type="button" className="salon-welcome-primary" onClick={onRetry}>Pokušaj ponovno</button></div>
+          <div className="salon-welcome-panel"><p>{t('welcome.unconfirmed')}</p><button type="button" className="salon-welcome-primary" onClick={onRetry}>{t('welcome.tryAgain')}</button></div>
         )}
       </main>
     </div>
   )
+}
+
+export default function WelcomeScreen(props) {
+  return <LanguageProvider userId={props.user?.id}><WelcomeScreenContent {...props} /></LanguageProvider>
 }
