@@ -10,3 +10,7 @@
 .onboarding-header .language-control { max-width: 240px; }
 .salon-setup-header { flex-wrap: wrap; gap: 16px; }
 @media (max-width: 600px) { .salon-welcome-header .language-control, .onboarding-header .language-control { width: 100%; max-width: none; } }
+
+.language-progress-note { margin: 0 0 1.5rem; padding: .85rem 1rem; border: 1px solid rgba(160,170,255,.28); border-radius: 12px; color: #dce2ff; background: rgba(100,110,210,.09); font-size: .9rem; line-height: 1.55; }
+.salon-welcome-header .language-control, .onboarding-header .language-control { flex: 0 1 280px; }
+@media (max-width: 600px) { .salon-welcome-header .language-control, .onboarding-header .language-control { flex-basis: 100%; } }

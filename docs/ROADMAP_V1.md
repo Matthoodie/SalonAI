@@ -329,3 +329,15 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Language never changes salon timezone/currency or user-entered data. No new migration/dependency.
 - See LANGUAGE_PHASE1A.md for exact coverage and verification.
 - Following stages remain WhatsApp/agreed AI -> mobile/PWA/store preparation and production -> free pilot -> billing.
+
+## HR/EN — phase 1B (package ready for local verification)
+
+- Phase 1A committed/pushed as a1ae2e7; user confirmed language preference and Welcome behaviour.
+- Translated invitation acceptance, controlled creation and both wizard frames/instructions/validation.
+- Live errors translate on language switch; drafts, request IDs, setup revision and account/salon scopes are preserved.
+- Partial-coverage notice moved out of Welcome/onboarding headers. Obsolete Settings wizard help updated.
+- Author checks: 229 frontend tests, App JSX compilation and mocked React flow regression checks.
+- Pending user verification: installed Vite build and manual HR/EN acceptance; see LANGUAGE_PHASE1B.md.
+- Remaining: full shared shell/Settings, embedded employee/service/import components, then other operational pages and locale formatting.
+- Salon creation remains controlled; language work never enables it or repeats a mutation.
+- After language rollout: WhatsApp/agreed AI -> mobile/PWA/store and production preparation -> free pilot -> billing.

@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {flowText,flowError} from '../Language/flowText.js'
 import { useEffect, useRef, useState } from 'react'
 import './InvitationAcceptance.css'
 
@@ -10,6 +12,8 @@ function InvitationAcceptance({
   onAccepted,
   initiallyOpen = false,
 }) {
+ const {language} = useLanguage()
+ const f = source => flowText(language,source)
   const [token, setToken] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
@@ -61,8 +65,7 @@ function InvitationAcceptance({
       }
 
       setError(
-        requestError.message ||
-          'Pozivnicu nije moguće prihvatiti.'
+        requestError
       )
     } finally {
       savingRef.current = false
@@ -75,46 +78,34 @@ function InvitationAcceptance({
 
   return (
     <details className="invitation-acceptance" open={initiallyOpen || undefined}>
-      <summary>
-        Pridruži se salonu kodom pozivnice
-      </summary>
+      <summary>{f("Pridruži se salonu kodom pozivnice")} </summary>
 
       <div className="invitation-acceptance-body">
-        <h2>Pridruživanje salonu</h2>
+        <h2>{f("Pridruživanje salonu")}</h2>
 
-        <p>
-          Prijavljeni račun: <strong>{currentUser.email}</strong>
+        <p>{f("Prijavljeni račun:")} <strong>{currentUser.email}</strong>
         </p>
 
         {acceptedMembership ? (
           <div>
-            <p role="status">
-              Pozivnica je prihvaćena. Možete otvoriti salon.
-            </p>
+            <p role="status">{f("Pozivnica je prihvaćena. Možete otvoriti salon.")} </p>
 
             <button
               type="button"
               onClick={() =>
                 onAccepted(acceptedMembership.salon_id)
               }
-            >
-              Otvori salon
-            </button>
+            >{f("Otvori salon")} </button>
           </div>
         ) : (
           <form
+            noValidate
             onSubmit={handleSubmit}
             style={{ display: 'grid', gap: '12px' }}
           >
-            <p>
-              Unesite kod koji vam je dostavio administrator.
-              Primarna potvrđena e-mail adresa vašeg računa
-              mora odgovarati adresi na pozivnici.
-            </p>
+            <p>{f("Unesite kod koji vam je dostavio administrator. Primarna potvrđena e-mail adresa vašeg računa mora odgovarati adresi na pozivnici.")} </p>
 
-            <label htmlFor="invitation-accept-token">
-              Kod pozivnice
-            </label>
+            <label htmlFor="invitation-accept-token">{f("Kod pozivnice")} </label>
 
             <input
               id="invitation-accept-token"
@@ -126,13 +117,15 @@ function InvitationAcceptance({
               spellCheck={false}
               disabled={isSaving}
               required
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? 'invitation-accept-error' : undefined}
               style={{ width: '100%', boxSizing: 'border-box' }}
             />
 
-            {error && <p role="alert">{error}</p>}
+            {error && <p id="invitation-accept-error" role="alert">{flowError(language,error)}</p>}
 
             <button type="submit" disabled={isSaving}>
-              {isSaving ? 'Prihvaćanje…' : 'Prihvati pozivnicu'}
+              {isSaving ? f('Prihvaćanje…') : f('Prihvati pozivnicu')}
             </button>
           </form>
         )}

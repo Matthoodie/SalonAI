@@ -8,7 +8,7 @@ import CreateSalon from '../Onboarding/CreateSalon'
 import '../Onboarding/OnboardingWizard.css'
 
 function WelcomeScreenContent({ user, workspaces, busy, error, onRetry, onSelect, onAccepted }) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const clerk = useClerk()
   const [signingOut, setSigningOut] = useState(false)
   const [signOutError, setSignOutError] = useState(false)
@@ -25,12 +25,13 @@ function WelcomeScreenContent({ user, workspaces, busy, error, onRetry, onSelect
     <div className="salon-welcome">
       <header className="salon-welcome-header">
         <span className="salon-welcome-brand">SalonAI</span>
-        {user && <LanguageSelector showProgress />}
+        {user && <LanguageSelector />}
         <button type="button" className="salon-welcome-secondary" onClick={signOut} disabled={signingOut}>
           {signingOut ? t('welcome.signingOut') : t('welcome.signOut')}
         </button>
       </header>
       <main className="salon-welcome-main" aria-busy={busy}>
+        {user && language === 'en' && <p className="language-progress-note">{t('language.partial')}</p>}
         <p className="salon-welcome-eyebrow">{t('welcome.eyebrow')}</p>
         <h1>{workspaces.length ? t('welcome.choose') : t('welcome.title')}</h1>
         {user && <p className="salon-welcome-account">{t('welcome.account')} <strong>{user.email || user.display_name}</strong></p>}
@@ -63,8 +64,8 @@ function WelcomeScreenContent({ user, workspaces, busy, error, onRetry, onSelect
                 <p className="salon-welcome-note">{t('welcome.controlled')}</p>
               </div>
             )}
-            {workspaces.length === 0 && <CreateSalon key={user.id} user={user} onCreated={onAccepted} />}
-            <InvitationAcceptance key={user.id} currentUser={user} onAccepted={onAccepted} initiallyOpen={workspaces.length === 0} />
+            {workspaces.length === 0 && <CreateSalon key={`create:${user.id}`} user={user} onCreated={onAccepted} />}
+            <InvitationAcceptance key={`invitation:${user.id}`} currentUser={user} onAccepted={onAccepted} initiallyOpen={workspaces.length === 0} />
             <button type="button" className="salon-welcome-refresh" onClick={onRetry}>{t('welcome.refresh')}</button>
           </>
         ) : (
