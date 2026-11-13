@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {serviceText,serviceError,importReviewText} from '../Language/serviceText.js'
 import PricelistRecognition from './PricelistRecognition.jsx'
 import { appendRecognizedRows } from './recognitionDraft.js'
 import { useEffect, useRef, useState } from 'react'
@@ -6,6 +8,9 @@ import { newDraftRow, selectedPayload, editDraftRow, applyDuration, fingerprint,
 import './ServiceImport.css'
 
 export default function ServiceImport({userId,salonId,onImported,onClose}) {
+  const {language}=useLanguage()
+  const f=source=>serviceText(language,source)
+
   const [initial] = useState(() => {
     try {
       const store=createPendingStore(window.sessionStorage,userId,salonId)
@@ -47,7 +52,7 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
   function close() {
     if(busy.current || recognizing) return
     if(!pending && !success && rows.some(row=>row.name || row.category || row.price_eur || row.default_duration_minutes) &&
-      !window.confirm('Zatvoriti i odbaciti nespremljeni nacrt?')) return
+      !window.confirm(f('Zatvoriti i odbaciti nespremljeni nacrt?'))) return
     onClose()
   }
   async function check() {
@@ -104,7 +109,7 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
         } catch {if(alive.current){setPhase('uncertain');setMessage('Zapis potvrde nije moguće ukloniti. Provjerite ishod istim zahtjevom.')}}
       } else if(alive.current) {
         setPhase('uncertain')
-        setMessage('Spremanje nije potvrđeno. Stavke su zaključane kako se isti uvoz ne bi poslao pod novom oznakom. '+(error.message||''))
+        setMessage(['Spremanje nije potvrđeno. Stavke su zaključane kako se isti uvoz ne bi poslao pod novom oznakom.', error])
       }
     } finally {busy.current=false}
   }
@@ -114,55 +119,55 @@ export default function ServiceImport({userId,salonId,onImported,onClose}) {
   const canSave=!locked && payload && reviewIsCurrent(review,payload)
   return <section className="service-import" aria-labelledby="service-import-title" aria-busy={recognizing||phase==='checking'||phase==='saving'}>
     <div className="service-import-heading">
-      <div><span className="services-eyebrow">Priprema kataloga</span><h2 id="service-import-title" tabIndex={-1} ref={heading}>Pripremi uvoz cjenika</h2></div>
-      <button type="button" onClick={close} disabled={recognizing||phase==='saving'||phase==='checking'}>Zatvori</button>
+      <div><span className="services-eyebrow">{f("Priprema kataloga")}</span><h2 id="service-import-title" tabIndex={-1} ref={heading}>{f("Pripremi uvoz cjenika")}</h2></div>
+      <button type="button" onClick={close} disabled={recognizing||phase==='saving'||phase==='checking'}>{f("Zatvori")}</button>
     </div>
-    <p>Unesite stavke, dopunite podatke i odaberite što želite dodati. Postojeće usluge ostaju sačuvane.</p>
-    <p className="service-import-note">Stavke možete unijeti ručno ili prepoznati iz dokumenta. Prepoznavanje ne sprema usluge automatski. Nespremljeni nacrt vrijedi dok je ovaj obrazac otvoren.</p>
-    {message && <p className="service-import-alert" role="alert">{message}</p>}
+    <p>{f("Unesite stavke, dopunite podatke i odaberite što želite dodati. Postojeće usluge ostaju sačuvane.")}</p>
+    <p className="service-import-note">{f("Stavke možete unijeti ručno ili prepoznati iz dokumenta. Prepoznavanje ne sprema usluge automatski. Nespremljeni nacrt vrijedi dok je ovaj obrazac otvoren.")}</p>
+    {message && <p className="service-import-alert" role="alert">{serviceError(language,message)}</p>}
     {pending && <div className="service-import-warning" role="status">
-      <strong>{phase==='saving'?'Spremanje je u tijeku…':'Postoji nepotvrđen ishod spremanja.'}</strong>
-      <p>Oznaka i podaci ove potvrde sačuvani su u ovom pregledniku i kartici, zasebno za korisnika i salon. Ponovna provjera koristi isti zahtjev i neće dodati iste stavke dvaput. Zatvaranje kartice može ukloniti taj zapis.</p>
-      <button type="button" onClick={save} disabled={phase==='saving'}>Provjeri ishod istog uvoza</button>
+      <strong>{phase==='saving'?f('Spremanje je u tijeku…'):f('Postoji nepotvrđen ishod spremanja.')}</strong>
+      <p>{f("Oznaka i podaci ove potvrde sačuvani su u ovom pregledniku i kartici, zasebno za korisnika i salon. Ponovna provjera koristi isti zahtjev i neće dodati iste stavke dvaput. Zatvaranje kartice može ukloniti taj zapis.")}</p>
+      <button type="button" onClick={save} disabled={phase==='saving'}>{f("Provjeri ishod istog uvoza")}</button>
     </div>}
     {success ? <div className="service-import-success" role="status">
-      <h3>Uvoz je potvrđen</h3><p>Dodano usluga: <strong>{success.created_count}</strong>. {success.replayed?'Prikazana je potvrda prethodno spremljenog uvoza.':''}</p>
-      <p>U zaposlenicima odaberite tko pruža nove usluge kako bi bile dostupne pri rezerviranju.</p>
-      {refreshFailed && <><p>Uvoz je spremljen, ali osvježavanje kataloga nije uspjelo. Nemojte ponovno unositi iste stavke.</p><button type="button" onClick={refresh}>Osvježi katalog</button></>}
-      <button type="button" onClick={onClose}>Završi</button>
+      <h3>{f("Uvoz je potvrđen")}</h3><p>{f("Dodano usluga:")} <strong>{success.created_count}</strong>. {success.replayed?f('Prikazana je potvrda prethodno spremljenog uvoza.'):''}</p>
+      <p>{f("U zaposlenicima odaberite tko pruža nove usluge kako bi bile dostupne pri rezerviranju.")}</p>
+      {refreshFailed && <><p>{f("Uvoz je spremljen, ali osvježavanje kataloga nije uspjelo. Nemojte ponovno unositi iste stavke.")}</p><button type="button" onClick={refresh}>{f("Osvježi katalog")}</button></>}
+      <button type="button" onClick={onClose}>{f("Završi")}</button>
     </div> : <>
       <PricelistRecognition salonId={salonId} disabled={locked && !recognizing} onBusyChange={value=>{busy.current=value;setRecognizing(value)}} onAppend={items=>change(appendRecognizedRows(rows,items))} />
       <fieldset className="service-import-bulk" disabled={locked}>
-        <legend>Zajedničko trajanje</legend>
-        <label>Trajanje (min)<input type="text" inputMode="numeric" value={bulkDuration} onChange={e=>setBulkDuration(e.target.value)} placeholder="npr. 30" /></label>
-        <label className="service-import-check"><input type="checkbox" checked={onlyMissing} onChange={e=>setOnlyMissing(e.target.checked)} />Samo stavke kojima trajanje nedostaje</label>
-        <button type="button" disabled={!selected} onClick={()=>{try{change(applyDuration(rows,bulkDuration,onlyMissing))}catch(error){setMessage(error.message)}}}>Primijeni na odabrane</button>
+        <legend>{f("Zajedničko trajanje")}</legend>
+        <label>{f("Trajanje (min)")}<input type="text" inputMode="numeric" value={bulkDuration} onChange={e=>setBulkDuration(e.target.value)} placeholder={f("npr. 30")} /></label>
+        <label className="service-import-check"><input type="checkbox" checked={onlyMissing} onChange={e=>setOnlyMissing(e.target.checked)} />{f("Samo stavke kojima trajanje nedostaje")}</label>
+        <button type="button" disabled={!selected} onClick={()=>{try{change(applyDuration(rows,bulkDuration,onlyMissing))}catch(error){setMessage(error.message)}}}>{f("Primijeni na odabrane")}</button>
       </fieldset>
-      <div className="service-import-selection"><strong>Odabrano {selected} / {rows.length}</strong><button type="button" disabled={locked} onClick={()=>change(rows.map(row=>({...row,selected:true})))}>Odaberi sve</button><button type="button" disabled={locked} onClick={()=>change(rows.map(row=>({...row,selected:false})))}>Poništi odabir</button></div>
+      <div className="service-import-selection"><strong>{f("Odabrano")} {selected} / {rows.length}</strong><button type="button" disabled={locked} onClick={()=>change(rows.map(row=>({...row,selected:true})))}>{f("Odaberi sve")}</button><button type="button" disabled={locked} onClick={()=>change(rows.map(row=>({...row,selected:false})))}>{f("Poništi odabir")}</button></div>
       <div className="service-import-rows">{rows.map((row,index)=>{
         const result=review?.data.rows.find(item=>item.row_id===row.row_id)
         const hint=duplicateHints[row.row_id]
         const duplicateResult=result || (hint?.name===row.name && hint?.category===row.category ? hint.result : null)
         const edit=(field,value)=>change(editDraftRow(rows,row.row_id,field,value))
         return <fieldset key={row.row_id} className={'service-import-row'+(!row.selected?' service-import-row-skipped':'')} disabled={locked}>
-          <legend>Stavka {index+1}</legend>
-          <div className="service-import-row-heading"><label className="service-import-check"><input type="checkbox" checked={row.selected} onChange={e=>edit('selected',e.target.checked)} />Uključi u uvoz</label><button type="button" onClick={()=>change(rows.filter(item=>item.row_id!==row.row_id))}>Ukloni stavku</button></div>
+          <legend>{f("Stavka")} {index+1}</legend>
+          <div className="service-import-row-heading"><label className="service-import-check"><input type="checkbox" checked={row.selected} onChange={e=>edit('selected',e.target.checked)} />{f("Uključi u uvoz")}</label><button type="button" onClick={()=>change(rows.filter(item=>item.row_id!==row.row_id))}>{f("Ukloni stavku")}</button></div>
           <div className="service-import-fields">{[
-            ['name','Naziv usluge','npr. Osnovna njega'],['category','Kategorija','Ostalo'],['price_eur','Cijena (€)','npr. 25,00'],['default_duration_minutes','Trajanje (min)','Obavezno dopuniti'],
-          ].map(([field,label,placeholder])=><label key={field}>{label}<input type="text" inputMode={field==='price_eur'?'decimal':field==='default_duration_minutes'?'numeric':undefined} value={row[field]} maxLength={field==='name'?150:field==='category'?100:20} onChange={e=>edit(field,e.target.value)} placeholder={placeholder} aria-invalid={Boolean(result?.issues.some(issue=>issue.field===field))} /></label>)}</div>
+            ['name',f('Naziv usluge'),f('npr. Osnovna njega')],['category',f('Kategorija'),'Ostalo'],['price_eur',f('Cijena (€)'),f('npr. 25,00')],['default_duration_minutes',f('Trajanje (min)'),f('Obavezno dopuniti')],
+          ].map(([field,label,placeholder])=><label key={field}>{f(label)}<input type="text" inputMode={field==='price_eur'?'decimal':field==='default_duration_minutes'?'numeric':undefined} value={row[field]} maxLength={field==='name'?150:field==='category'?100:20} onChange={e=>edit(field,e.target.value)} placeholder={f(placeholder)} aria-invalid={Boolean(result?.issues.some(issue=>issue.field===field))} /></label>)}</div>
           {row.recognition_note && <p className="recognition-row-note">{row.recognition_note}</p>}
           {row.selected && result && <div className={result.ready?'service-import-ready':'service-import-row-issues'}>
-            <strong>{result.ready?'Spremno za uvoz':'Potrebna provjera'}</strong>
-            {result.issues.length>0 && <ul>{result.issues.map((issue,i)=><li key={i}>{issue.message}</li>)}</ul>}
-            {result.duplicate_count>0 && <><p>Postojeće usluge istog naziva ({result.duplicate_count}):</p><ul>{result.duplicates.map(duplicate=><li key={duplicate.service_id}>{duplicate.name} · {duplicate.category} · {duplicate.active?'aktivna':'neaktivna'}</li>)}</ul></>}
-            {result.duplicate_row_ids.length>0 && <p>Isti naziv imaju i stavke nacrta: {result.duplicate_row_ids.map(id=>rows.findIndex(item=>item.row_id===id)+1).join(', ')}.</p>}
+            <strong>{result.ready?f('Spremno za uvoz'):f('Potrebna provjera')}</strong>
+            {result.issues.length>0 && <ul>{result.issues.map((issue,i)=><li key={i}>{serviceError(language,issue.message)}</li>)}</ul>}
+            {result.duplicate_count>0 && <><p>{f("Postojeće usluge istog naziva (")}{result.duplicate_count}):</p><ul>{result.duplicates.map(duplicate=><li key={duplicate.service_id}>{duplicate.name} · {duplicate.category} · {duplicate.active?f('aktivna'):f('neaktivna')}</li>)}</ul></>}
+            {result.duplicate_row_ids.length>0 && <p>{f("Isti naziv imaju i stavke nacrta:")} {result.duplicate_row_ids.map(id=>rows.findIndex(item=>item.row_id===id)+1).join(', ')}.</p>}
           </div>}
-          {row.selected && !result && duplicateResult && (duplicateResult.duplicate_count>0 || duplicateResult.duplicate_row_ids.length>0) && <p className="service-import-note">Prethodna provjera pronašla je isti naziv u katalogu ili nacrtu. Nakon odabira potvrde ponovno provjerite sve stavke.</p>}
-          {row.selected && (row.allow_duplicate || Boolean(duplicateResult && (duplicateResult.duplicate_count || duplicateResult.duplicate_row_ids.length))) && <label className="service-import-check service-import-duplicate"><input type="checkbox" checked={row.allow_duplicate} onChange={e=>edit('allow_duplicate',e.target.checked)} />Pregledao/la sam podudaranja i želim dodati zasebnu uslugu istog naziva.</label>}
+          {row.selected && !result && duplicateResult && (duplicateResult.duplicate_count>0 || duplicateResult.duplicate_row_ids.length>0) && <p className="service-import-note">{f("Prethodna provjera pronašla je isti naziv u katalogu ili nacrtu. Nakon odabira potvrde ponovno provjerite sve stavke.")}</p>}
+          {row.selected && (row.allow_duplicate || Boolean(duplicateResult && (duplicateResult.duplicate_count || duplicateResult.duplicate_row_ids.length))) && <label className="service-import-check service-import-duplicate"><input type="checkbox" checked={row.allow_duplicate} onChange={e=>edit('allow_duplicate',e.target.checked)} />{f("Pregledao/la sam podudaranja i želim dodati zasebnu uslugu istog naziva.")}</label>}
         </fieldset>
       })}</div>
-      <div className="service-import-actions"><button type="button" disabled={locked || rows.length>=MAX_ROWS} onClick={()=>change([...rows,newDraftRow()])}>+ Dodaj stavku</button><button type="button" disabled={locked || !selected} onClick={check}>{phase==='checking'?'Provjera…':'Provjeri odabrane stavke'}</button><button type="button" className="service-import-primary" disabled={!canSave} onClick={save}>Potvrdi uvoz ({selected})</button></div>
-      <p className="service-import-note" role="status">{review?`Spremno: ${review.data.ready_count}. Za dopunu ili pregled: ${review.data.needs_review_count}.`:'Nakon svake izmjene ponovno provjerite odabrane stavke. Najviše 100 stavki po uvozu.'}</p>
+      <div className="service-import-actions"><button type="button" disabled={locked || rows.length>=MAX_ROWS} onClick={()=>change([...rows,newDraftRow()])}>{f("+ Dodaj stavku")}</button><button type="button" disabled={locked || !selected} onClick={check}>{phase==='checking'?f('Provjera…'):f('Provjeri odabrane stavke')}</button><button type="button" className="service-import-primary" disabled={!canSave} onClick={save}>{f("Potvrdi uvoz (")}{selected})</button></div>
+      <p className="service-import-note" role="status">{review?importReviewText(language,review.data.ready_count,review.data.needs_review_count):f('Nakon svake izmjene ponovno provjerite odabrane stavke. Najviše 100 stavki po uvozu.')}</p>
     </>}
   </section>
 }

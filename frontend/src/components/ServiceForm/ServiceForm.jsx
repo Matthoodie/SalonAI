@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {serviceText} from '../Language/serviceText.js'
 import { useEffect, useRef, useState } from 'react'
 import './ServiceForm.css'
 import {focusProblem,serviceExamples} from '../Onboarding/onboardingPresentation.js'
@@ -12,6 +14,9 @@ function ServiceForm({
   isCreating = false,
   isUpdating = false,
 }) {
+  const {language}=useLanguage()
+  const f=source=>serviceText(language,source)
+
   const examples = serviceExamples(businessType)
   const formRef = useRef(null)
   const nameInputRef = useRef(null)
@@ -174,14 +179,14 @@ function ServiceForm({
         <div>
           <span className="service-form-eyebrow">
             {editingService
-              ? 'Uređivanje usluge'
-              : 'Nova usluga'}
+              ? f('Uređivanje usluge')
+              : f('Nova usluga')}
           </span>
 
           <h2>
             {editingService
-              ? 'Uredi uslugu'
-              : 'Dodaj uslugu'}
+              ? f('Uredi uslugu')
+              : f('Dodaj uslugu')}
           </h2>
         </div>
 
@@ -189,7 +194,7 @@ function ServiceForm({
           type="button"
           className="service-form-close-button"
           onClick={onCancel}
-          aria-label="Zatvori formu"
+          aria-label={f("Zatvori formu")}
           disabled={isSaving}
         >
           ×
@@ -197,9 +202,7 @@ function ServiceForm({
       </div>
 
       <div className="service-form-field">
-        <label htmlFor="service-name">
-          Naziv usluge
-        </label>
+        <label htmlFor="service-name">{f("Naziv usluge")} </label>
 
         <input
           ref={nameInputRef}
@@ -221,7 +224,7 @@ function ServiceForm({
               )
             }
           }}
-          placeholder={examples.name}
+          placeholder={f(examples.name)}
           className={
             errors.name
               ? 'service-input-error'
@@ -230,14 +233,12 @@ function ServiceForm({
         />
 
         <p id="service-name-error" className="service-form-error">
-          {errors.name || '\u00A0'}
+          {f(errors.name) || '\u00A0'}
         </p>
       </div>
 
       <div className="service-form-field">
-        <label htmlFor="service-category">
-          Kategorija
-        </label>
+        <label htmlFor="service-category">{f("Kategorija")} </label>
 
         <input
           id="service-category"
@@ -248,20 +249,14 @@ function ServiceForm({
               event.target.value
             )
           }
-          placeholder={examples.category}
+          placeholder={f(examples.category)}
         />
 
-        <p className="service-form-help">
-          Ako kategoriju ne unesete,
-          usluga će biti spremljena pod
-          "Ostalo".
-        </p>
+        <p className="service-form-help">{f("Ako kategoriju ne unesete, usluga će biti spremljena pod \"Ostalo\".")} </p>
       </div>
 
       <div className="service-form-field">
-        <label htmlFor="service-price">
-          Cijena (€)
-        </label>
+        <label htmlFor="service-price">{f("Cijena (€)")} </label>
 
         <input
           id="service-price"
@@ -293,14 +288,12 @@ function ServiceForm({
         />
 
         <p id="service-price-error" className="service-form-error">
-          {errors.price || '\u00A0'}
+          {f(errors.price) || '\u00A0'}
         </p>
       </div>
 
       <div className="service-form-field">
-        <label htmlFor="service-duration">
-          Zadano trajanje (min)
-        </label>
+        <label htmlFor="service-duration">{f("Zadano trajanje (min)")} </label>
 
         <input
           id="service-duration"
@@ -327,7 +320,7 @@ function ServiceForm({
               )
             }
           }}
-          placeholder="npr. 30"
+          placeholder={f("npr. 30")}
           className={
             errors.duration
               ? 'service-input-error'
@@ -336,7 +329,7 @@ function ServiceForm({
         />
 
         <p id="service-duration-error" className="service-form-error">
-          {errors.duration || '\u00A0'}
+          {f(errors.duration) || '\u00A0'}
         </p>
       </div>
 
@@ -348,10 +341,10 @@ function ServiceForm({
           disabled={isSaving}
         >
           {isSaving
-            ? 'Spremanje...'
+            ? f('Spremanje...')
             : editingService
-              ? 'Spremi promjene'
-              : 'Dodaj uslugu'}
+              ? f('Spremi promjene')
+              : f('Dodaj uslugu')}
         </button>
 
         <button
@@ -359,9 +352,7 @@ function ServiceForm({
           className="service-form-secondary-button"
           onClick={onCancel}
           disabled={isSaving}
-        >
-          Odustani
-        </button>
+        >{f("Odustani")} </button>
       </div>
     </div>
   )

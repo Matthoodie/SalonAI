@@ -354,3 +354,16 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
   1G absence/blocked requests plus remaining messages and global locale QA.
 - Full English is not yet complete. No migration, dependency or salon-creation configuration change.
 - Following roadmap remains WhatsApp/agreed AI -> mobile/PWA/store/production -> free pilot -> billing.
+
+## HR/EN — phase 1D-A (ready for local acceptance)
+
+- Phase 1C accepted and pushed as 5998dfd; working tree clean in user output.
+- Phase 1D split into 1D-A Services/import and 1D-B Employees/schedules/invitations/memberships.
+  Seven functional phases now use eight planned installation packages.
+- 1D-A translates Services and embedded forms, manual import, review/duplicates and recognition UI.
+- EUR display follows HR/EN; names/categories/source notes and request data remain unchanged.
+- 243 frontend tests, App compilation and mocked UI import/recognition regression passed before packaging.
+- User Vite build/manual checks pending; details in LANGUAGE_PHASE1DA.md.
+- Remaining: 1D-B -> 1E Appointments/Calendar/Dashboard -> 1F Clients/pets -> 1G requests/global locale audit.
+- Track bundle optimization before production: phase 1C main chunk warning at 501.68 kB.
+- No new migration/dependency/configuration change. Following product roadmap remains unchanged.

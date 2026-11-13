@@ -1,3 +1,5 @@
+import {useLanguage} from '../../components/Language/LanguageProvider'
+import {serviceText,serviceError,servicePrice} from '../../components/Language/serviceText.js'
 import { useState } from 'react'
 import ServiceImport from '../../components/ServiceImport/ServiceImport.jsx'
 
@@ -17,16 +19,9 @@ import {
 
 import './Services.css'
 
-function formatPrice(price) {
-  return new Intl.NumberFormat('hr-HR', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(price)
-}
-
-function formatDuration(defaultDurationMinutes) {
+function formatDuration(defaultDurationMinutes, language) {
   if (!defaultDurationMinutes) {
-    return 'Nije definirano'
+    return serviceText(language,'Nije definirano')
   }
 
   const hours = Math.floor(
@@ -55,6 +50,9 @@ function Services({
   canManageServices = false,
   businessType,
 }) {
+  const {language}=useLanguage()
+  const f=source=>serviceText(language,source)
+
   const [isImportOpen, setIsImportOpen] = useState(false)
 
   async function refreshImportedServices() {
@@ -102,9 +100,7 @@ function Services({
     }
 
     if (!salonId) {
-      window.alert(
-        'Podaci salona nisu učitani. Pokušajte ponovno.'
-      )
+      window.alert(serviceError(language, 'Podaci salona nisu učitani. Pokušajte ponovno.'))
 
       return false
     }
@@ -150,10 +146,7 @@ function Services({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Uslugu trenutno nije moguće kreirati.'
-      )
+      window.alert(serviceError(language, error || 'Uslugu trenutno nije moguće kreirati.'))
 
       return false
     } finally {
@@ -177,9 +170,7 @@ function Services({
     }
 
     if (!salonId) {
-      window.alert(
-        'Podaci salona nisu učitani. Pokušajte ponovno.'
-      )
+      window.alert(serviceError(language, 'Podaci salona nisu učitani. Pokušajte ponovno.'))
 
       return false
     }
@@ -228,10 +219,7 @@ function Services({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Uslugu trenutno nije moguće urediti.'
-      )
+      window.alert(serviceError(language, error || 'Uslugu trenutno nije moguće urediti.'))
 
       return false
     } finally {
@@ -252,9 +240,7 @@ function Services({
     }
 
     if (!salonId) {
-      window.alert(
-        'Podaci salona nisu učitani. Pokušajte ponovno.'
-      )
+      window.alert(serviceError(language, 'Podaci salona nisu učitani. Pokušajte ponovno.'))
 
       return
     }
@@ -315,10 +301,7 @@ function Services({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Status usluge trenutno nije moguće promijeniti.'
-      )
+      window.alert(serviceError(language, error || 'Status usluge trenutno nije moguće promijeniti.'))
     } finally {
       setUpdatingServiceActiveId(
         null
@@ -376,16 +359,14 @@ function Services({
     <div className="services-page">
       <div className="services-page-header">
         <div>
-          <span className="services-eyebrow">
-            Katalog ponude
-          </span>
+          <span className="services-eyebrow">{f("Katalog ponude")} </span>
 
-          <h1>Usluge</h1>
+          <h1>{f("Usluge")}</h1>
 
           <p>
             {canManageServices
-              ? 'Upravljajte cijenama, zadanim trajanjem i dostupnošću usluga salona.'
-              : 'Pregled usluga salona, njihovih cijena i zadanog trajanja.'}
+              ? f('Upravljajte cijenama, zadanim trajanjem i dostupnošću usluga salona.')
+              : f('Pregled usluga salona, njihovih cijena i zadanog trajanja.')}
           </p>
         </div>
 
@@ -398,18 +379,14 @@ function Services({
               setIsFormOpen(true)
               setFormFocusRequest(value => value + 1)
             }}
-          >
-            + Nova usluga
-          </button>
+          >{f("+ Nova usluga")} </button>
         )}
       </div>
 
       {canManageServices && (
         <div className="services-import-entry">
           <button type="button" className="service-action-button"
-            onClick={() => setIsImportOpen(true)} disabled={isImportOpen}>
-            Pripremi uvoz cjenika
-          </button>
+            onClick={() => setIsImportOpen(true)} disabled={isImportOpen}>{f("Pripremi uvoz cjenika")} </button>
         </div>
       )}
       {canManageServices && isImportOpen && (
@@ -432,21 +409,21 @@ function Services({
 
       <div className="services-summary">
         <div className="services-summary-item">
-          <span>Ukupno</span>
+          <span>{f("Ukupno")}</span>
           <strong>
             {serviceList.length}
           </strong>
         </div>
 
         <div className="services-summary-item">
-          <span>Aktivne</span>
+          <span>{f("Aktivne")}</span>
           <strong>
             {activeServicesCount}
           </strong>
         </div>
 
         <div className="services-summary-item">
-          <span>Neaktivne</span>
+          <span>{f("Neaktivne")}</span>
           <strong>
             {inactiveServicesCount}
           </strong>
@@ -455,9 +432,7 @@ function Services({
 
       <div className="services-toolbar">
         <div className="services-search">
-          <label htmlFor="services-search">
-            Pretraži usluge
-          </label>
+          <label htmlFor="services-search">{f("Pretraži usluge")} </label>
 
           <input
             id="services-search"
@@ -468,14 +443,12 @@ function Services({
                 event.target.value
               )
             }
-            placeholder="Upišite naziv usluge..."
+            placeholder={f("Upišite naziv usluge...")}
           />
         </div>
 
         <div className="services-filter">
-          <label htmlFor="services-category-filter">
-            Kategorija
-          </label>
+          <label htmlFor="services-category-filter">{f("Kategorija")} </label>
 
           <select
             id="services-category-filter"
@@ -486,9 +459,7 @@ function Services({
               )
             }
           >
-            <option value="all">
-              Sve kategorije
-            </option>
+            <option value="all">{f("Sve kategorije")} </option>
 
             {categories.map(
               (category) => (
@@ -504,9 +475,7 @@ function Services({
         </div>
 
         <div className="services-filter">
-          <label htmlFor="services-status-filter">
-            Status
-          </label>
+          <label htmlFor="services-status-filter">{f("Status")} </label>
 
           <select
             id="services-status-filter"
@@ -517,17 +486,11 @@ function Services({
               )
             }
           >
-            <option value="all">
-              Sve
-            </option>
+            <option value="all">{f("Sve")} </option>
 
-            <option value="active">
-              Aktivne
-            </option>
+            <option value="active">{f("Aktivne")} </option>
 
-            <option value="inactive">
-              Neaktivne
-            </option>
+            <option value="inactive">{f("Neaktivne")} </option>
           </select>
         </div>
       </div>
@@ -538,12 +501,12 @@ function Services({
             ✂️
           </span>
 
-          <h2>Nema dodanih usluga</h2>
+          <h2>{f("Nema dodanih usluga")}</h2>
 
           <p>
             {canManageServices
-              ? 'Dodajte prvu uslugu kako biste mogli povezati cijene i trajanje s terminima.'
-              : 'Usluge salona još nisu dostupne. Obratite se administratoru salona.'}
+              ? f('Dodajte prvu uslugu kako biste mogli povezati cijene i trajanje s terminima.')
+              : f('Usluge salona još nisu dostupne. Obratite se administratoru salona.')}
           </p>
         </div>
       ) : (
@@ -560,9 +523,7 @@ function Services({
               >
                 <div className="service-card-header">
                   <div>
-                    <span className="service-card-label">
-                      Usluga
-                    </span>
+                    <span className="service-card-label">{f("Usluga")} </span>
 
                     <h2>{service.name}</h2>
 
@@ -580,30 +541,26 @@ function Services({
                     }
                   >
                     {service.active
-                      ? 'Aktivna'
-                      : 'Neaktivna'}
+                      ? f('Aktivna')
+                      : f('Neaktivna')}
                   </span>
                 </div>
 
                 <div className="service-card-details">
                   <div className="service-card-detail">
-                    <span>Cijena</span>
+                    <span>{f("Cijena")}</span>
 
                     <strong>
-                      {formatPrice(
-                        service.price
-                      )}
+                      {servicePrice(language,service.price)}
                     </strong>
                   </div>
 
                   <div className="service-card-detail">
-                    <span>
-                      Zadano trajanje
-                    </span>
+                    <span>{f("Zadano trajanje")} </span>
 
                     <strong>
                       {formatDuration(
-                        service.defaultDurationMinutes
+                        service.defaultDurationMinutes, language
                       )}
                     </strong>
                   </div>
@@ -615,9 +572,7 @@ function Services({
                       type="button"
                       className="service-action-button"
                       onClick={() => startEditingService(service)}
-                    >
-                      Uredi
-                    </button>
+                    >{f("Uredi")} </button>
 
                     <button
                       type="button"
@@ -626,10 +581,10 @@ function Services({
                       disabled={updatingServiceActiveId !== null}
                     >
                       {updatingServiceActiveId === service.id
-                        ? 'Spremanje...'
+                        ? f('Spremanje...')
                         : service.active
-                          ? 'Deaktiviraj'
-                          : 'Aktiviraj'}
+                          ? f('Deaktiviraj')
+                          : f('Aktiviraj')}
                     </button>
                   </div>
                 )}
