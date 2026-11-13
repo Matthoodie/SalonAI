@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {shellText,shellError,historyTime} from '../Language/shellText.js'
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -24,12 +26,12 @@ function wasCancelled(error) {
   )
 }
 
-function personLabel(name, email, id) {
+function personLabel(name, email, id, language) {
   if (name && email) {
     return `${name} (${email})`
   }
 
-  return name || email || `Korisnik #${id}`
+  return name || email || `${language==='en'?'User':'Korisnik'} #${id}`
 }
 
 function valueLabel(value, action) {
@@ -55,6 +57,9 @@ function PermissionHistory({
   refreshToken = 0,
   salonTimezone = 'Europe/Zagreb',
 }) {
+ const {language} = useLanguage()
+ const f = source => shellText(language,source)
+
   const [isOpen, setIsOpen] = useState(false)
   const [changes, setChanges] = useState([])
   const [nextBeforeId, setNextBeforeId] = useState(null)
@@ -102,7 +107,7 @@ function PermissionHistory({
             generation === generationRef.current &&
             !wasCancelled(requestError)
           ) {
-            setError(requestError.message)
+            setError(requestError)
           }
         } finally {
           if (
@@ -182,7 +187,7 @@ function PermissionHistory({
         generation === generationRef.current &&
         !wasCancelled(requestError)
       ) {
-        setError(requestError.message)
+        setError(requestError)
       }
     } finally {
       if (
@@ -204,16 +209,11 @@ function PermissionHistory({
       }}
       className="settings-panel permission-history"
     >
-      <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
-        Povijest promjena ovlasti i delegacija
-      </summary>
+      <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{f("Povijest promjena ovlasti i delegacija")} </summary>
 
       {isOpen && (
         <div style={{ marginTop: '16px' }}>
-          <p>
-            Promjene svih zaposlenika u odabranom salonu.
-            Najnoviji zapisi prikazani su prvi.
-          </p>
+          <p>{f("Promjene svih zaposlenika u odabranom salonu. Najnoviji zapisi prikazani su prvi.")} </p>
 
           <button
             type="button"
@@ -221,38 +221,36 @@ function PermissionHistory({
             onClick={() => {
               setReloadToken((value) => value + 1)
             }}
-          >
-            Osvježi povijest
-          </button>
+          >{f("Osvježi povijest")} </button>
 
-          {error && <p role="alert">{error}</p>}
+          {error && <p role="alert">{shellError(language,error)}</p>}
 
           {isLoading ? (
-            <p role="status">Učitavanje povijesti…</p>
+            <p role="status">{f("Učitavanje povijesti…")}</p>
           ) : changes.length === 0 ? (
-            !error && <p>Još nema zabilježenih promjena ovlasti.</p>
+            !error && <p>{f("Još nema zabilježenih promjena ovlasti.")}</p>
           ) : (
             <>
               <ol className="history-list">
                 {changes.map((change) => (
                   <li className="history-card" key={change.id}>
                     <div className="history-heading">
-                      <strong>{permissionLabels[change.permission_key] || change.permission_key}</strong>
+                      <strong>{f(permissionLabels[change.permission_key]) || change.permission_key}</strong>
                       <time dateTime={change.created_at}>
-                        {new Date(change.created_at).toLocaleString('hr-HR', { timeZone: salonTimezone })}
+                        {historyTime(language,change.created_at,salonTimezone)}
                       </time>
                     </div>
-                    <p className="history-kind">{change.action === 'admin_delegation' ? 'Delegacija administratorima' : 'Ovlast zaposlenika'}</p>
+                    <p className="history-kind">{change.action === 'admin_delegation' ? f('Delegacija administratorima') : f('Ovlast zaposlenika')}</p>
                     <dl className="history-details">
-                      <div><dt>Odnosi se na</dt><dd>{change.action === 'admin_delegation'
-                        ? 'Administratori ovog salona'
-                        : personLabel(change.target_display_name, change.target_email, change.target_user_id)}</dd></div>
-                      <div><dt>Promijenio/la</dt><dd>{personLabel(change.actor_display_name, change.actor_email, change.actor_user_id)}
-                        <small>Uloga pri promjeni: {roleLabels[change.actor_role] || change.actor_role}</small></dd></div>
+                      <div><dt>{f("Odnosi se na")}</dt><dd>{change.action === 'admin_delegation'
+                        ? f('Administratori ovog salona')
+                        : personLabel(change.target_display_name, change.target_email, change.target_user_id, language)}</dd></div>
+                      <div><dt>{f("Promijenio/la")}</dt><dd>{personLabel(change.actor_display_name, change.actor_email, change.actor_user_id, language)}
+                        <small>{f("Uloga pri promjeni:")} {f(roleLabels[change.actor_role]) || change.actor_role}</small></dd></div>
                     </dl>
                     <dl className="history-transition">
-                      <div><dt>Prije</dt><dd>{valueLabel(change.previous_value, change.action)}</dd></div>
-                      <div><dt>Poslije</dt><dd>{valueLabel(change.next_value, change.action)}</dd></div>
+                      <div><dt>{f("Prije")}</dt><dd>{f(valueLabel(change.previous_value, change.action))}</dd></div>
+                      <div><dt>{f("Poslije")}</dt><dd>{f(valueLabel(change.next_value, change.action))}</dd></div>
                     </dl>
                   </li>
                 ))}
@@ -266,25 +264,17 @@ function PermissionHistory({
                   style={{ marginTop: '12px' }}
                 >
                   {isLoadingMore
-                    ? 'Učitavanje…'
-                    : 'Učitaj starije promjene'}
+                    ? f('Učitavanje…')
+                    : f('Učitaj starije promjene')}
                 </button>
               )}
             </>
           )}
 
-          <p>
-            Vrijeme je prikazano za {salonTimezone}.
-            Imena i e-mail adrese prikazuju aktualne podatke računa.
-            Uloga izvršitelja i vrijednosti postavke zabilježene
-            su u trenutku promjene.
+          <p>{f("Vrijeme je prikazano za")} {salonTimezone}{f('. Imena i e-mail adrese prikazuju aktualne podatke računa. Uloga izvršitelja i vrijednosti postavke zabilježene su u trenutku promjene.')}
           </p>
 
-          <p>
-            „Naslijedi pravilo uloge” označava uklonjenu pojedinačnu
-            postavku. Ovaj zapis ne prikazuje povijesnu vrijednost
-            zajedničkog pravila uloge.
-          </p>
+          <p>{f("„Naslijedi pravilo uloge” označava uklonjenu pojedinačnu postavku. Ovaj zapis ne prikazuje povijesnu vrijednost zajedničkog pravila uloge.")} </p>
         </div>
       )}
     </details>

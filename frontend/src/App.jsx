@@ -1,3 +1,4 @@
+import WorkspaceSelector from './components/Header/WorkspaceSelector'
 import {
   lazy,
   useEffect,
@@ -724,37 +725,8 @@ function App() {
       canAccessFullCrm={canAccessFullCrm}
       role={authContext?.membership?.role}
       workspaceControl={workspaces.length > 0 && (
-        <div className="workspace-select">
-          <label htmlFor="active-salon">
-            Salon
-          </label>
-
-          <select
-            id="active-salon"
-            value={
-              authContext
-                ? String(authContext.current_salon.id)
-                : ''
-            }
-            disabled={isBusy}
-            onChange={(event) =>
-              changeWorkspace(event.target.value)
-            }
-          >
-            <option value="" disabled>
-              Odaberite salon
-            </option>
-
-            {workspaces.map((workspace) => (
-              <option
-                key={workspace.salon.id}
-                value={String(workspace.salon.id)}
-              >
-                {workspace.salon.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <WorkspaceSelector workspaces={workspaces} currentSalonId={authContext?.current_salon.id}
+          busy={isBusy} onSelect={changeWorkspace} />
       )}
     >
 

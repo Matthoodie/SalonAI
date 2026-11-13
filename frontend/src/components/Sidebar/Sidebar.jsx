@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {shellText} from '../Language/shellText.js'
 import { NavLink } from 'react-router-dom'
 import './Sidebar.css'
 
@@ -6,6 +8,9 @@ function Sidebar({
   onCloseMobileMenu,
   canAccessFullCrm = false,
 }) {
+ const {language} = useLanguage()
+ const f = source => shellText(language,source)
+
   return (
      <aside
   className={
@@ -18,7 +23,7 @@ function Sidebar({
   <button
   type="button"
   className="sidebar-mobile-close"
-  aria-label="Zatvori navigaciju"
+  aria-label={f("Zatvori navigaciju")}
   onClick={onCloseMobileMenu}
 >
   ×
@@ -28,9 +33,7 @@ function Sidebar({
       <nav>
         <ul>
           <li>
-            <NavLink to="/" end onClick={onCloseMobileMenu}>
-              Pregled poslovanja
-            </NavLink>
+            <NavLink to="/" end onClick={onCloseMobileMenu}>{f("Pregled poslovanja")} </NavLink>
           </li>
 
           {canAccessFullCrm && (
@@ -38,9 +41,7 @@ function Sidebar({
               <NavLink
                 to="/clients"
                 onClick={onCloseMobileMenu}
-              >
-                Klijenti
-              </NavLink>
+              >{f("Klijenti")} </NavLink>
             </li>
           )}
 
@@ -48,48 +49,34 @@ function Sidebar({
   <NavLink
   to="/services"
   onClick={onCloseMobileMenu}
-  >
-    Usluge
-  </NavLink>
+  >{f("Usluge")} </NavLink>
 </li>
 
 <li>
   <NavLink
     to="/employees"
     onClick={onCloseMobileMenu}
-  >
-    Zaposlenici
-  </NavLink>
+  >{f("Zaposlenici")} </NavLink>
 </li>
           <li>
             <NavLink to="/appointments"
-            onClick={onCloseMobileMenu}>
-              Termini
-            </NavLink>
+            onClick={onCloseMobileMenu}>{f("Termini")} </NavLink>
           </li>
 <li>
   <NavLink to="/calendar"
-  onClick={onCloseMobileMenu}>
-    Kalendar
-  </NavLink>
+  onClick={onCloseMobileMenu}>{f("Kalendar")} </NavLink>
 </li>
           <li>
-            <NavLink to="/time-off-requests" onClick={onCloseMobileMenu}>
-              Zahtjevi za odsutnost
-            </NavLink>
+            <NavLink to="/time-off-requests" onClick={onCloseMobileMenu}>{f("Zahtjevi za odsutnost")} </NavLink>
           </li>
           <li>
-            <NavLink to="/blocked-time-requests" onClick={onCloseMobileMenu}>
-              Zahtjevi za blokirano vrijeme
-            </NavLink>
+            <NavLink to="/blocked-time-requests" onClick={onCloseMobileMenu}>{f("Zahtjevi za blokirano vrijeme")} </NavLink>
           </li>
           <li>
               <NavLink
                 to="/settings"
                 onClick={onCloseMobileMenu}
-              >
-                Postavke
-              </NavLink>
+              >{f("Postavke")} </NavLink>
             </li>
 
         </ul>

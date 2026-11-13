@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {shellText} from '../Language/shellText.js'
 import {LanguageProvider} from '../Language/LanguageProvider'
 import {ThemeProvider,useTheme} from '../Theme/ThemeProvider'
 import '../Theme/theme.css'
@@ -13,6 +15,9 @@ function LayoutContent({
   workspaceControl,
   canAccessFullCrm = false,
 }) {
+ const {language} = useLanguage()
+ const f = source => shellText(language,source)
+
   const {resolved}=useTheme()
   const [isMobileMenuOpen, setIsMobileMenuOpen] =
     useState(false)
@@ -30,7 +35,7 @@ function LayoutContent({
       <button
         type="button"
         className="mobile-menu-backdrop"
-        aria-label="Zatvori navigaciju"
+        aria-label={f("Zatvori navigaciju")}
         onClick={() =>
           setIsMobileMenuOpen(false)
         }
@@ -44,7 +49,7 @@ function LayoutContent({
         <button
           type="button"
           className="mobile-menu-button"
-          aria-label="Otvori navigaciju"
+          aria-label={f("Otvori navigaciju")}
           aria-expanded={isMobileMenuOpen}
           onClick={() =>
             setIsMobileMenuOpen(true)

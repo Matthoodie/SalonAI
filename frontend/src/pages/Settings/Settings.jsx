@@ -1,3 +1,5 @@
+import {useLanguage} from '../../components/Language/LanguageProvider'
+import {shellText,shellError,permissionQuestion,delegationQuestion} from '../../components/Language/shellText.js'
 import PermissionHistory from '../../components/Settings/PermissionHistory'
 
 import { useEffect, useRef, useState } from 'react'
@@ -32,6 +34,9 @@ function Settings({
   salonId,
   salonTimezone = 'Europe/Zagreb',
 }) {
+ const {language} = useLanguage()
+ const f = source => shellText(language,source)
+
   const [data, setData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isBusy, setIsBusy] = useState(false)
@@ -134,13 +139,12 @@ function Settings({
               current,
               'Neki nespremljeni izbori uklonjeni su jer članstvo ili ovlast uređivanja više nisu dostupni.',
             ]
-              .filter(Boolean)
-              .join(' ')
+              .flat().filter(Boolean)
           )
         }
       } catch (requestError) {
         if (!cancelled && !wasCancelled(requestError)) {
-          setError(requestError.message)
+          setError(requestError)
         }
       } finally {
         if (!cancelled) {
@@ -172,7 +176,7 @@ function Settings({
   function confirmDiscard() {
     return (
       !hasUnsavedChanges ||
-      window.confirm('Odbaciti nespremljene izbore u ovom obrascu?')
+      window.confirm(f('Odbaciti nespremljene izbore u ovom obrascu?'))
     )
   }
 
@@ -251,7 +255,7 @@ function Settings({
         mountedRef.current &&
         !wasCancelled(requestError)
       ) {
-        setError(requestError.message)
+        setError(requestError)
       }
     } finally {
       busyRef.current = false
@@ -289,7 +293,7 @@ function Settings({
         : valueLabels[choice]
 
     const question =
-      `Spremiti "${label}: ${choiceLabel}" za ${name}?`
+      permissionQuestion(language,label,choiceLabel,name)
 
     if (!window.confirm(question)) {
       return
@@ -320,9 +324,7 @@ function Settings({
     const enabled = !permission.admin_delegated
     const label = permissionLabels[permission.key]
 
-    const question = enabled
-      ? `Dopustiti administratorima ovog salona uređivanje postavke "${label}" za zaposlenike?`
-      : `Ukinuti administratorima uređivanje postavke "${label}"? Već spremljene ovlasti zaposlenika ostat će nepromijenjene.`
+    const question = delegationQuestion(language,label,enabled)
 
     if (!window.confirm(question)) {
       return
@@ -339,45 +341,34 @@ function Settings({
 
   return (
     <div className="salon-permission-settings">
-      <h2 className="settings-section-title">Upravljanje ovlastima</h2>
+      <h2 className="settings-section-title">{f("Upravljanje ovlastima")}</h2>
 
-      <p>
-        Operativne ovlasti zaposlenika u odabranom salonu.
-        Promjene ovdje ne dodjeljuju administratorsku ulogu.
-      </p>
+      <p>{f("Operativne ovlasti zaposlenika u odabranom salonu. Promjene ovdje ne dodjeljuju administratorsku ulogu.")} </p>
 
       <button
         type="button"
         onClick={refreshSettings}
         disabled={isLoading || isBusy}
         style={{ marginBottom: '16px' }}
-      >
-        Osvježi postavke
-      </button>
+      >{f("Osvježi postavke")} </button>
 
-      {error && <p role="alert">{error}</p>}
-      {notice && <p role="status">{notice}</p>}
-      {isLoading && <p role="status">Učitavanje postavki…</p>}
-      {isBusy && <p role="status">Spremanje…</p>}
+      {error && <p role="alert">{shellError(language,error)}</p>}
+      {notice && <p role="status">{f(notice)}</p>}
+      {isLoading && <p role="status">{f("Učitavanje postavki…")}</p>}
+      {isBusy && <p role="status">{f("Spremanje…")}</p>}
 
       {!isLoading && data && (
         <>
           <section className="settings-panel">
-            <h3>Ovlasti zaposlenika</h3>
+            <h3>{f("Ovlasti zaposlenika")}</h3>
 
-            <p>
-              „Naslijedi pravilo uloge” koristi zajedničko pravilo
-              zaposleničke uloge. „Vlastiti termini” dopušta radnju
-              samo na terminima tog zaposlenika.
-            </p>
+            <p>{f("„Naslijedi pravilo uloge” koristi zajedničko pravilo zaposleničke uloge. „Vlastiti termini” dopušta radnju samo na terminima tog zaposlenika.")} </p>
 
             {data.members.length === 0 ? (
-              <p>Nema aktivnih zaposleničkih članstava za podešavanje.</p>
+              <p>{f("Nema aktivnih zaposleničkih članstava za podešavanje.")}</p>
             ) : (
               <>
-                <label htmlFor="permission-member">
-                  Zaposlenik
-                </label>
+                <label htmlFor="permission-member">{f("Zaposlenik")} </label>
 
                 <select
                   id="permission-member"
@@ -414,10 +405,7 @@ function Settings({
                   <>
                     {(!selectedMember.user_active ||
                       !selectedMember.employee_active) && (
-                      <p>
-                        Račun ili profil zaposlenika nije aktivan.
-                        Spremanje ovlasti ne mijenja njihove statuse.
-                      </p>
+                      <p>{f("Račun ili profil zaposlenika nije aktivan. Spremanje ovlasti ne mijenja njihove statuse.")} </p>
                     )}
 
                     <div className="permission-cards">
@@ -427,15 +415,15 @@ function Settings({
                         const changed = choice !== storedChoice(key)
                         return (
                           <article className="permission-card" key={key}>
-                            <h4>{permissionLabels[key] || key}</h4>
+                            <h4>{f(permissionLabels[key]) || key}</h4>
                             <dl className="permission-values">
-                              <div><dt>Pravilo uloge</dt><dd>{valueLabels[permission.inherited_value]}</dd></div>
-                              <div><dt>Trenutačno spremljeno</dt><dd>{valueLabels[selectedMember.effective_permissions[key]]}</dd></div>
+                              <div><dt>{f("Pravilo uloge")}</dt><dd>{f(valueLabels[permission.inherited_value])}</dd></div>
+                              <div><dt>{f("Trenutačno spremljeno")}</dt><dd>{f(valueLabels[selectedMember.effective_permissions[key]])}</dd></div>
                             </dl>
                             <div className="permission-choice">
-                              <span className="field-caption">Pojedinačna postavka</span>
+                              <span className="field-caption">{f("Pojedinačna postavka")}</span>
                                   <select
-                                    aria-label={`Ovlast: ${permissionLabels[key]}`}
+                                    aria-label={`${language==='en'?'Permission':'Ovlast'}: ${f(permissionLabels[key])}`}
                                     value={choice}
                                     disabled={
                                       isBusy ||
@@ -449,14 +437,12 @@ function Settings({
                                       }))
                                     }}
                                   >
-                                    <option value="inherit">
-                                      Naslijedi pravilo uloge
-                                    </option>
-                                    <option value="deny">Zabranjeno</option>
-                                    <option value="self">Vlastiti termini</option>
+                                    <option value="inherit">{f("Naslijedi pravilo uloge")} </option>
+                                    <option value="deny">{f("Zabranjeno")}</option>
+                                    <option value="self">{f("Vlastiti termini")}</option>
                                   </select>
 
-                                  {changed && <div><small>Nespremljen izbor</small></div>}
+                                  {changed && <div><small>{f("Nespremljen izbor")}</small></div>}
                             </div>
                             <div className="permission-save">
                                   {permission.can_edit === true ? (
@@ -464,11 +450,9 @@ function Settings({
                                       type="button"
                                       disabled={isBusy || !changed}
                                       onClick={() => savePermission(permission)}
-                                    >
-                                      Spremi
-                                    </button>
+                                    >{f("Spremi")} </button>
                                   ) : (
-                                    <small>Uređivanje nije delegirano.</small>
+                                    <small>{f("Uređivanje nije delegirano.")}</small>
                                   )}
                             </div>
                           </article>
@@ -476,8 +460,8 @@ function Settings({
                       })}
                     </div>
                     <details className="settings-help">
-                      <summary>Kako se spremaju promjene?</summary>
-                      <p>Svaka ovlast sprema se zasebno. Spremanje i osvježavanje postavki čuvaju druge nespremljene izbore dok ih smijete uređivati. Osvježavanje cijele stranice i promjena salona odbacuju nespremljene izbore.</p>
+                      <summary>{f("Kako se spremaju promjene?")}</summary>
+                      <p>{f("Svaka ovlast sprema se zasebno. Spremanje i osvježavanje postavki čuvaju druge nespremljene izbore dok ih smijete uređivati. Osvježavanje cijele stranice i promjena salona odbacuju nespremljene izbore.")}</p>
                     </details>
                   </>
                 )}
@@ -487,24 +471,20 @@ function Settings({
 
           {data.can_manage_delegation === true && (
             <section className="settings-panel">
-              <h3>Delegacija administratorima</h3>
+              <h3>{f("Delegacija administratorima")}</h3>
 
-              <p>
-                Odaberite koje postavke administratori smiju uređivati
-                za zaposlenike. Ovo pravilo vrijedi za administratore
-                ovog salona. Oni ne mogu mijenjati ovu delegaciju.
-              </p>
+              <p>{f("Odaberite koje postavke administratori smiju uređivati za zaposlenike. Ovo pravilo vrijedi za administratore ovog salona. Oni ne mogu mijenjati ovu delegaciju.")} </p>
 
               {data.permissions.map((permission) => (
                 <div key={permission.key} className="delegation-row">
                   <strong>
-                    {permissionLabels[permission.key]}
+                    {f(permissionLabels[permission.key])}
                   </strong>
 
                   <span>
                     {permission.admin_delegated
-                      ? 'Delegirano administratorima'
-                      : 'Uređuje samo vlasnik'}
+                      ? f('Delegirano administratorima')
+                      : f('Uređuje samo vlasnik')}
                   </span>
 
                   <button
@@ -513,8 +493,8 @@ function Settings({
                     onClick={() => changeDelegation(permission)}
                   >
                     {permission.admin_delegated
-                      ? 'Ukini delegaciju'
-                      : 'Dopusti administratorima'}
+                      ? f('Ukini delegaciju')
+                      : f('Dopusti administratorima')}
                   </button>
                 </div>
               ))}
