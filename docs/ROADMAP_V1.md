@@ -378,3 +378,17 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - No migrations, dependencies or configuration changes.
 - Next: 1E Appointments/Calendar/Dashboard -> 1F Clients/pets -> 1G requests/global HR/EN audit.
 - Public salon creation remains intentionally disabled. Product roadmap and bundle optimization unchanged.
+
+## HR/EN — phase 1E-A (ready for local acceptance)
+
+- 1D-B accepted and pushed as 199b0e5; 251/251 tests and manual checks confirmed.
+- 1E split into 1E-A Calendar/Dashboard and 1E-B Appointments/booking forms.
+  Seven functional phases now use nine planned installation packages.
+- 1E-A translates overview labels, statuses, calendar dates, counts and EUR display.
+- Existing permissions, date keys, salon timezone calculations, statistics and callbacks retained.
+- User-entered owner/pet/breed/service/employee names remain literal.
+- 259 frontend tests, App JSX compilation, mocked React regression and installer checks passed.
+- Installed Vite build and manual HR/EN/light/dark/mobile acceptance pending.
+- Next: 1E-B -> 1F Clients/pets -> 1G requests and global locale QA.
+- No migrations/dependencies/config changes. Public salon creation remains controlled.
+- See LANGUAGE_PHASE1EA.md. Bundle optimization and the following product roadmap remain tracked.

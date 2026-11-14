@@ -1,4 +1,5 @@
-import { recipientLabel } from '../../api/appointmentRecipientView.js'
+import {useLanguage} from '../../components/Language/LanguageProvider'
+import {overviewText,overviewLocale,overviewCount,overviewStatus,overviewRecipient} from '../../components/Language/overviewText.js'
 import {
   canUseAppointmentPermission,
   canEditAppointment,
@@ -26,8 +27,8 @@ function formatDateKey(date) {
   return `${year}-${month}-${day}`
 }
 
-function formatFullDate(date) {
-  return new Intl.DateTimeFormat('hr-HR', {
+function formatFullDate(date, language) {
+  return new Intl.DateTimeFormat(overviewLocale(language), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -84,6 +85,9 @@ function Calendar({
   appointmentsLoading,
   appointmentsLoadError,
 }) {
+  const {language}=useLanguage()
+  const f=source=>overviewText(language,source)
+
 
   const canCreateAppointment = canUseAppointmentPermission(
     authContext,
@@ -137,12 +141,12 @@ function Calendar({
   const selectedDateKey = formatDateKey(selectedDate)
 
   const displayedMonthLabel =
-    new Intl.DateTimeFormat('hr-HR', {
+    new Intl.DateTimeFormat(overviewLocale(language), {
       month: 'long',
       year: 'numeric',
     }).format(displayedDate)
 
-  const selectedDateLabel = formatFullDate(selectedDate)
+  const selectedDateLabel = formatFullDate(selectedDate,language)
 
   const selectedDateAppointments = appointmentList
     .filter(
@@ -234,15 +238,11 @@ function editAppointmentFromCalendar(appointmentId) {
       <div className="calendar-page">
         <div className="calendar-page-header">
           <div>
-            <span className="calendar-eyebrow">
-              Upravljanje rasporedom
-            </span>
+            <span className="calendar-eyebrow">{f("Upravljanje rasporedom")} </span>
 
-            <h1>Kalendar</h1>
+            <h1>{f("Kalendar")}</h1>
 
-            <p>
-              Učitavanje termina...
-            </p>
+            <p>{f("Učitavanje termina...")} </p>
           </div>
         </div>
       </div>
@@ -254,15 +254,11 @@ function editAppointmentFromCalendar(appointmentId) {
       <div className="calendar-page">
         <div className="calendar-page-header">
           <div>
-            <span className="calendar-eyebrow">
-              Upravljanje rasporedom
-            </span>
+            <span className="calendar-eyebrow">{f("Upravljanje rasporedom")} </span>
 
-            <h1>Kalendar</h1>
+            <h1>{f("Kalendar")}</h1>
 
-            <p>
-              Termine trenutno nije moguće učitati.
-            </p>
+            <p>{f("Termine trenutno nije moguće učitati.")} </p>
           </div>
         </div>
       </div>
@@ -273,15 +269,11 @@ function editAppointmentFromCalendar(appointmentId) {
     <div className="calendar-page">
       <div className="calendar-page-header">
         <div>
-          <span className="calendar-eyebrow">
-            Upravljanje rasporedom
-          </span>
+          <span className="calendar-eyebrow">{f("Upravljanje rasporedom")} </span>
 
-          <h1>Kalendar</h1>
+          <h1>{f("Kalendar")}</h1>
 
-          <p>
-            Odaberite mjesec, godinu ili točan datum i pregledajte termine.
-          </p>
+          <p>{f("Odaberite mjesec, godinu ili točan datum i pregledajte termine.")} </p>
         </div>
       </div>
 
@@ -293,7 +285,7 @@ function editAppointmentFromCalendar(appointmentId) {
               className="calendar-navigation-button"
               onClick={showPreviousMonth}
               disabled={displayedDate.getFullYear() === 1900 && displayedDate.getMonth() === 0}
-              aria-label="Prikaži prethodni mjesec"
+              aria-label={f("Prikaži prethodni mjesec")}
             >
               ‹
             </button>
@@ -302,16 +294,14 @@ function editAppointmentFromCalendar(appointmentId) {
               type="button"
               className="calendar-today-button"
               onClick={showCurrentMonth}
-            >
-              Danas
-            </button>
+            >{f("Danas")} </button>
 
             <button
               type="button"
               className="calendar-navigation-button"
               onClick={showNextMonth}
               disabled={displayedDate.getFullYear() === 2100 && displayedDate.getMonth() === 11}
-              aria-label="Prikaži sljedeći mjesec"
+              aria-label={f("Prikaži sljedeći mjesec")}
             >
               ›
             </button>
@@ -324,25 +314,22 @@ function editAppointmentFromCalendar(appointmentId) {
         </div>
         <div className="calendar-date-controls">
           <form onSubmit={goToMonth} className="calendar-period-form">
-            <label>Mjesec
-              <select aria-label="Mjesec" value={monthInput} onChange={event => setMonthInput(Number(event.target.value))}>
+            <label>{f("Mjesec")} <select aria-label={f("Mjesec")} value={monthInput} onChange={event => setMonthInput(Number(event.target.value))}>
                 {Array.from({ length: 12 }, (_, month) => <option key={month} value={month}>
-                  {new Intl.DateTimeFormat('hr-HR', { month: 'long' }).format(new Date(2026, month, 1))}
+                  {new Intl.DateTimeFormat(overviewLocale(language), { month: 'long' }).format(new Date(2026, month, 1))}
                 </option>)}
               </select>
             </label>
-            <label>Godina
-              <input type="number" min="1900" max="2100" step="1" required value={yearInput}
+            <label>{f("Godina")} <input type="number" min="1900" max="2100" step="1" required value={yearInput}
                 onChange={event => setYearInput(event.target.value)} />
             </label>
-            <button type="submit">Prikaži mjesec</button>
+            <button type="submit">{f("Prikaži mjesec")}</button>
           </form>
           <form onSubmit={goToDate} className="calendar-jump-form">
-            <label>Idi na datum
-              <input type="date" min="1900-01-01" max="2100-12-31" required value={dateInput}
+            <label>{f("Idi na datum")} <input type="date" min="1900-01-01" max="2100-12-31" required value={dateInput}
                 onChange={event => setDateInput(event.target.value)} />
             </label>
-            <button type="submit">Prikaži dan</button>
+            <button type="submit">{f("Prikaži dan")}</button>
           </form>
         </div>
 
@@ -352,7 +339,7 @@ function editAppointmentFromCalendar(appointmentId) {
               key={weekDay}
               className="calendar-weekday"
             >
-              {weekDay}
+              {overviewText(language,weekDay)}
             </div>
           ))}
         </div>
@@ -410,8 +397,8 @@ function editAppointmentFromCalendar(appointmentId) {
                 onClick={() =>
                   selectCalendarDay(calendarDay)
                 }
-                aria-label={`Odaberi ${formatFullDate(
-                  calendarDay.date
+                aria-label={`${language==='en'?'Select':'Odaberi'} ${formatFullDate(
+                  calendarDay.date,language
                 )}`}
                 aria-pressed={
                   calendarDay.dateKey === selectedDateKey
@@ -424,15 +411,12 @@ function editAppointmentFromCalendar(appointmentId) {
                 {appointmentCount > 0 && (
                   <div className="calendar-day-appointments">
                     <span className="calendar-day-count">
-                      {appointmentCount}{' '}
-                      {appointmentCount === 1
-                        ? 'termin'
-                        : 'termina'}
+                      {overviewCount(language,appointmentCount)}
                     </span>
 
                     {completedCount > 0 && (
                       <span className="calendar-day-completed-count">
-                        {completedCount} završeno
+                        {completedCount} {language==='en'?'completed':'završeno'}
                       </span>
                     )}
                   </div>
@@ -446,20 +430,14 @@ function editAppointmentFromCalendar(appointmentId) {
       <section className="selected-day-panel">
         <div className="selected-day-header">
           <div>
-            <span className="selected-day-eyebrow">
-              Odabrani datum
-            </span>
+            <span className="selected-day-eyebrow">{f("Odabrani datum")} </span>
 
             <h2>{selectedDateLabel}</h2>
 
             <p className="selected-day-summary">
               {selectedDateAppointments.length === 0
-                ? 'Nema zakazanih termina'
-                : `${selectedDateAppointments.length} ${
-                    selectedDateAppointments.length === 1
-                      ? 'termin'
-                      : 'termina'
-                  }`}
+                ? f('Nema zakazanih termina')
+                : overviewCount(language,selectedDateAppointments.length)}
             </p>
           </div>
 
@@ -468,9 +446,7 @@ function editAppointmentFromCalendar(appointmentId) {
     type="button"
     className="selected-day-add-button"
     onClick={createAppointmentForSelectedDate}
-  >
-    + Novi termin
-  </button>
+  >{f("+ Novi termin")} </button>
 )}
         </div>
 
@@ -480,12 +456,9 @@ function editAppointmentFromCalendar(appointmentId) {
               🗓️
             </span>
 
-            <h3>Nema termina za ovaj datum</h3>
+            <h3>{f("Nema termina za ovaj datum")}</h3>
 
-            <p>
-              Odaberite drugi datum ili dodajte novi termin
-              na stranici Termini.
-            </p>
+            <p>{f("Odaberite drugi datum ili dodajte novi termin na stranici Termini.")} </p>
           </div>
         ) : (
           <div className="selected-day-appointments">
@@ -513,8 +486,8 @@ function editAppointmentFromCalendar(appointmentId) {
   aria-disabled={!canEditThisAppointment}
   aria-label={
     canEditThisAppointment
-      ? `Uredi termin za ${recipientLabel(appointment)} u ${appointment.time}`
-      : `Termin za ${recipientLabel(appointment)} u ${appointment.time}`
+      ? `${language==='en'?'Edit appointment for':'Uredi termin za'} ${overviewRecipient(language,appointment)} ${language==='en'?'at':'u'} ${appointment.time}`
+      : `${language==='en'?'Appointment for':'Termin za'} ${overviewRecipient(language,appointment)} ${language==='en'?'at':'u'} ${appointment.time}`
   }
 >
   <div className="selected-day-appointment-time">
@@ -522,17 +495,17 @@ function editAppointmentFromCalendar(appointmentId) {
   </div>
 
   <div className="selected-day-appointment-info">
-  <h3>{recipientLabel(appointment)}</h3>
+  <h3>{overviewRecipient(language,appointment)}</h3>
 
   <p>
     {appointment.serviceName ||
       appointment.service ||
-      'Nepoznata usluga'}
+      f('Nepoznata usluga')}
   </p>
 
   <span className="selected-day-appointment-employee">
     {appointment.employeeName ||
-      'Zaposlenik nije dodijeljen'}
+      f('Zaposlenik nije dodijeljen')}
   </span>
 </div>
 
@@ -543,7 +516,7 @@ function editAppointmentFromCalendar(appointmentId) {
         : 'selected-day-appointment-status'
     }
   >
-    {appointment.status}
+    {overviewStatus(language,appointment)}
   </span>
 </button>
                 )
