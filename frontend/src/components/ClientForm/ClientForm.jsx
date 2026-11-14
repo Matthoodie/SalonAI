@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {bookingText,bookingError} from '../Language/bookingText.js'
 import { useEffect, useState } from 'react'
 import './ClientForm.css'
 
@@ -16,6 +18,9 @@ function ClientForm({
   onCancelEdit,
   editingClient,
 }) {
+  const {language}=useLanguage()
+  const f=source=>bookingText(language,source)
+
   const [name, setName] = useState('')
   const [isOccasional, setIsOccasional] = useState(false)
   const [phoneCountryCode, setPhoneCountryCode] = useState('+385')
@@ -90,7 +95,7 @@ function ClientForm({
       setErrors((current) => ({
         ...current,
         phone:
-          `Klijent s ovim brojem već postoji: ${duplicateClient.name}.`,
+          {kind:'duplicateClient',name:duplicateClient.name},
       }))
       return
     }
@@ -149,26 +154,24 @@ function ClientForm({
   return (
     <div className={`client-form${editingClient ? ' client-form-editing' : ''}`}>
       <div className="client-form-heading">
-      <span className="client-form-eyebrow">{editingClient ? 'Uređivanje podataka' : 'Novi kontakt'}</span>
+      <span className="client-form-eyebrow">{editingClient ? f('Uređivanje podataka') : f('Novi kontakt')}</span>
       <h2 tabIndex={-1}>
-        {editingClient ? 'Uredi klijenta' : 'Novi klijent'}
+        {editingClient ? f('Uredi klijenta') : f('Novi klijent')}
       </h2>
       <p className="client-form-description">
         {editingClient
-          ? <>Uređujete klijenta: <strong>{editingClient.name}</strong>. Promjene potvrdite gumbom „Spremi promjene”.</>
-          : 'Unesite osnovne podatke za novi profil klijenta.'}
+          ? <>{f("Uređujete klijenta:")} <strong>{editingClient.name}</strong>{f(". Promjene potvrdite gumbom „Spremi promjene”.")}</>
+          : f('Unesite osnovne podatke za novi profil klijenta.')}
       </p>
       </div>
 
       <div className="client-form-field">
-        <label htmlFor="client-name">
-          Ime i prezime
-        </label>
+        <label htmlFor="client-name">{f("Ime i prezime")} </label>
 
         <input
           id="client-name"
           type="text"
-          placeholder="Ime i prezime"
+          placeholder={f("Ime i prezime")}
           value={name}
           maxLength={150}
           disabled={isSaving}
@@ -177,14 +180,12 @@ function ClientForm({
         />
 
         <p className="client-form-error">
-          {errors.name || '\u00A0'}
+          {errors.name ? bookingError(language,errors.name) : '\u00A0'}
         </p>
       </div>
 
       <div className="client-form-field">
-        <label htmlFor="client-type">
-          Vrsta klijenta
-        </label>
+        <label htmlFor="client-type">{f("Vrsta klijenta")} </label>
 
         <select
           id="client-type"
@@ -195,19 +196,19 @@ function ClientForm({
             setErrors((current) => ({ ...current, phone: '' }))
           }}
         >
-          <option value="regular">Stalni klijent</option>
-          <option value="occasional">Povremeni klijent</option>
+          <option value="regular">{f("Stalni klijent")}</option>
+          <option value="occasional">{f("Povremeni klijent")}</option>
         </select>
       </div>
 
       <div className="client-form-field">
         <label htmlFor="client-phone">
-          {isOccasional ? 'Telefon (neobavezno)' : 'Telefon'}
+          {isOccasional ? f('Telefon (neobavezno)') : f('Telefon')}
         </label>
 
         <div className="client-phone-field">
           <select
-            aria-label="Pozivni broj države"
+            aria-label={f("Pozivni broj države")}
             value={phoneCountryCode}
             disabled={isSaving}
             onChange={(event) => {
@@ -225,7 +226,7 @@ function ClientForm({
 
             {phoneCountryOptions.map((country) => (
               <option key={country.code} value={country.code}>
-                {country.label} {country.code}
+                {f(country.label)} {country.code}
               </option>
             ))}
           </select>
@@ -242,13 +243,13 @@ function ClientForm({
         </div>
 
         <p className="client-form-error">
-          {errors.phone || '\u00A0'}
+          {errors.phone ? bookingError(language,errors.phone) : '\u00A0'}
         </p>
       </div>
 
       {saveError && (
         <p className="client-form-error" role="alert">
-          {saveError}
+          {bookingError(language,saveError)}
         </p>
       )}
 
@@ -259,10 +260,10 @@ function ClientForm({
           disabled={isSaving}
         >
           {isSaving
-            ? 'Spremanje...'
+            ? f('Spremanje...')
             : editingClient
-              ? 'Spremi promjene'
-              : 'Dodaj klijenta'}
+              ? f('Spremi promjene')
+              : f('Dodaj klijenta')}
         </button>
 
         {editingClient && (
@@ -270,9 +271,7 @@ function ClientForm({
             type="button"
             onClick={onCancelEdit}
             disabled={isSaving}
-          >
-            Odustani
-          </button>
+          >{f("Odustani")} </button>
         )}
       </div>
     </div>

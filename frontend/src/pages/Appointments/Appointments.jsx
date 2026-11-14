@@ -1,3 +1,5 @@
+import {useLanguage} from '../../components/Language/LanguageProvider'
+import {bookingText,bookingError} from '../../components/Language/bookingText.js'
 import { appointmentRecipientApi } from '../../api/appointmentRecipientApi.js'
 import { recipientSummary, recipientChanged, recipientUpdate } from '../../api/appointmentRecipientView.js'
 import { appointmentServicesApi } from '../../api/appointmentServicesApi.js'
@@ -63,6 +65,11 @@ function Appointments({
   appointmentsLoading,
   appointmentsLoadError,
 }) {
+  const {language}=useLanguage()
+  const f=source=>bookingText(language,source)
+  const languageRef=useRef(language)
+  languageRef.current=language
+
 
   const [formInitialDate] = useState(
     initialAppointmentDate || ''
@@ -172,10 +179,7 @@ function Appointments({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Termin nije moguće označiti kao završen.'
-      )
+      window.alert(bookingError(languageRef.current,error || 'Termin nije moguće označiti kao završen.'))
     } finally {
       setUpdatingAppointmentId(null)
     }
@@ -198,9 +202,7 @@ function Appointments({
     ) {
       return
     }
-    const isConfirmed = window.confirm(
-      'Jeste li sigurni da želite otkazati ovaj termin?'
-    )
+    const isConfirmed = window.confirm(f('Jeste li sigurni da želite otkazati ovaj termin?'))
 
     if (!isConfirmed) {
       return
@@ -248,10 +250,7 @@ function Appointments({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Termin trenutno nije moguće otkazati.'
-      )
+      window.alert(bookingError(languageRef.current,error || 'Termin trenutno nije moguće otkazati.'))
     } finally {
       setUpdatingAppointmentId(null)
     }
@@ -304,13 +303,11 @@ async function quickAddClient(newClient) {
         newAppointment.employeeId
       )
     ) {
-      window.alert('Nemate dopuštenje za dodavanje ovog termina.')
+      window.alert(f('Nemate dopuštenje za dodavanje ovog termina.'))
       return false
     }
     if (!salonId || !salonTimezone) {
-      window.alert(
-        'Podaci salona nisu učitani. Pokušajte ponovno.'
-      )
+      window.alert(f('Podaci salona nisu učitani. Pokušajte ponovno.'))
       return false
     }
 
@@ -396,10 +393,7 @@ async function quickAddClient(newClient) {
         error
       )
 
-      window.alert(
-        error.message ||
-        'Termin trenutno nije moguće kreirati.'
-      )
+      window.alert(bookingError(languageRef.current,error || 'Termin trenutno nije moguće kreirati.'))
 
       return false
     } finally {
@@ -444,7 +438,7 @@ async function updateAppointment(
       editingAppointment.employeeId
     )
   ) {
-    window.alert('Nemate dopuštenje za promjenu klijenta.')
+    window.alert(f('Nemate dopuštenje za promjenu klijenta.'))
     return false
   }
 
@@ -456,16 +450,14 @@ async function updateAppointment(
       editingAppointment.employeeId
     )
   ) {
-    window.alert('Nemate dopuštenje za pomicanje termina.')
+    window.alert(f('Nemate dopuštenje za pomicanje termina.'))
     return false
   }
   if (
     employeeChanged ||
     serviceChanged
   ) {
-    window.alert(
-      'Promjena zaposlenika ili usluge još nije podržana.'
-    )
+    window.alert(f('Promjena zaposlenika ili usluge još nije podržana.'))
 
     return false
   }
@@ -474,9 +466,7 @@ async function updateAppointment(
     clientChanged &&
     scheduleChanged
   ) {
-    window.alert(
-      'Vlasnika/ljubimca i datum/vrijeme termina mijenjajte odvojeno.'
-    )
+    window.alert(f('Vlasnika/ljubimca i datum/vrijeme termina mijenjajte odvojeno.'))
 
     return false
   }
@@ -493,9 +483,7 @@ async function updateAppointment(
     scheduleChanged &&
     !salonTimezone
   ) {
-    window.alert(
-      'Vremenska zona salona nije učitana. Pokušajte ponovno.'
-    )
+    window.alert(f('Vremenska zona salona nije učitana. Pokušajte ponovno.'))
 
     return false
   }
@@ -588,10 +576,7 @@ async function updateAppointment(
       error
     )
 
-    window.alert(
-      error.message ||
-        'Termin trenutno nije moguće ažurirati.'
-    )
+    window.alert(bookingError(languageRef.current,error || 'Termin trenutno nije moguće ažurirati.'))
 
     return false
   } finally {
@@ -748,14 +733,12 @@ async function updateAppointment(
     return (
       <div className="appointments-page">
         <header className="appointments-header">
-        <span className="appointments-eyebrow">Raspored i rezervacije</span>
-        <h1>Termini</h1>
-        <p>Upravljajte terminima, uslugama i rasporedom zaposlenika.</p>
+        <span className="appointments-eyebrow">{f("Raspored i rezervacije")}</span>
+        <h1>{f("Termini")}</h1>
+        <p>{f("Upravljajte terminima, uslugama i rasporedom zaposlenika.")}</p>
       </header>
 
-        <p>
-          Učitavanje termina...
-        </p>
+        <p>{f("Učitavanje termina...")} </p>
       </div>
     )
   }
@@ -764,14 +747,12 @@ async function updateAppointment(
     return (
       <div className="appointments-page">
         <header className="appointments-header">
-        <span className="appointments-eyebrow">Raspored i rezervacije</span>
-        <h1>Termini</h1>
-        <p>Upravljajte terminima, uslugama i rasporedom zaposlenika.</p>
+        <span className="appointments-eyebrow">{f("Raspored i rezervacije")}</span>
+        <h1>{f("Termini")}</h1>
+        <p>{f("Upravljajte terminima, uslugama i rasporedom zaposlenika.")}</p>
       </header>
 
-        <p>
-          Termine trenutno nije moguće učitati.
-        </p>
+        <p>{f("Termine trenutno nije moguće učitati.")} </p>
       </div>
     )
   }
@@ -779,24 +760,24 @@ async function updateAppointment(
   return (
     <div className="appointments-page">
       <header className="appointments-header">
-        <span className="appointments-eyebrow">Raspored i rezervacije</span>
-        <h1>Termini</h1>
-        <p>Upravljajte terminima, uslugama i rasporedom zaposlenika.</p>
+        <span className="appointments-eyebrow">{f("Raspored i rezervacije")}</span>
+        <h1>{f("Termini")}</h1>
+        <p>{f("Upravljajte terminima, uslugama i rasporedom zaposlenika.")}</p>
       </header>
 
       <div className="appointments-summary">
         <div className="appointments-summary-item">
-          <span>Ukupno</span>
+          <span>{f("Ukupno")}</span>
           <strong>{appointmentList.length}</strong>
         </div>
 
         <div className="appointments-summary-item">
-          <span>Zakazano</span>
+          <span>{f("Zakazano")}</span>
           <strong>{scheduledAppointmentsCount}</strong>
         </div>
 
         <div className="appointments-summary-item">
-          <span>Završeno</span>
+          <span>{f("Završeno")}</span>
           <strong>{completedAppointmentsCount}</strong>
         </div>
       </div>
@@ -812,9 +793,7 @@ async function updateAppointment(
           onClick={() =>
             setAppointmentView('upcoming')
           }
-        >
-          Nadolazeći
-          <span>
+        >{f("Nadolazeći")} <span>
             {upcomingAppointments.length}
           </span>
         </button>
@@ -829,9 +808,7 @@ async function updateAppointment(
           onClick={() =>
             setAppointmentView('today')
           }
-        >
-          Danas
-          <span>
+        >{f("Danas")} <span>
             {todayAppointments.length}
           </span>
         </button>
@@ -846,9 +823,7 @@ async function updateAppointment(
           onClick={() =>
             setAppointmentView('history')
           }
-        >
-          Povijest
-          <span>
+        >{f("Povijest")} <span>
             {historyAppointments.length}
           </span>
         </button>
@@ -863,9 +838,7 @@ async function updateAppointment(
           onClick={() =>
             setAppointmentView('all')
           }
-        >
-          Svi
-          <span>
+        >{f("Svi")} <span>
             {appointmentList.length}
           </span>
         </button>
@@ -885,8 +858,8 @@ async function updateAppointment(
           onChange={(event) =>
             setSearchQuery(event.target.value)
           }
-          placeholder="Pretraži termine..."
-          aria-label="Pretraži termine"
+          placeholder={f("Pretraži termine...")}
+          aria-label={f("Pretraži termine")}
         />
 
         {searchQuery && (
@@ -896,7 +869,7 @@ async function updateAppointment(
             onClick={() =>
               setSearchQuery('')
             }
-            aria-label="Očisti pretragu"
+            aria-label={f("Očisti pretragu")}
           >
             ×
           </button>
@@ -936,13 +909,9 @@ async function updateAppointment(
               📅
             </span>
 
-            <h3>
-              Nema termina u ovom prikazu
-            </h3>
+            <h3>{f("Nema termina u ovom prikazu")} </h3>
 
-            <p>
-              Odaberite drugi prikaz ili dodajte novi termin.
-            </p>
+            <p>{f("Odaberite drugi prikaz ili dodajte novi termin.")} </p>
           </div>
         ) : (
           searchedAppointments.map((appointment) => (

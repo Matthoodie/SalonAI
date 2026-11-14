@@ -1,10 +1,12 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {bookingText,bookingError,bookingPrice,bookingEndTime} from '../Language/bookingText.js'
 import PetSelection from './PetSelection.jsx'
 import { appointmentRecipientApi } from '../../api/appointmentRecipientApi.js'
 import { validRecipientId } from '../../api/appointmentRecipientView.js'
 import ServiceSelection from './ServiceSelection.jsx'
 import AppointmentServicesEditor from './AppointmentServicesEditor.jsx'
 import { appointmentServicesApi } from '../../api/appointmentServicesApi.js'
-import { draftItems, sumItems, employeeSupportsServices, formatServicePrice } from '../../api/appointmentItemsView.js'
+import { draftItems, sumItems, employeeSupportsServices } from '../../api/appointmentItemsView.js'
 import { getSalonLocalDateParts } from '../../api/salonDateTime.js'
 import {
   canUseAppointmentPermission,
@@ -88,6 +90,9 @@ function AppointmentForm({
   isCreating = false,
   initialDate = '',
 }) {
+  const {language}=useLanguage()
+  const f=source=>bookingText(language,source)
+
 
   const editingClientName =
     editingAppointment?.clientName || ''
@@ -114,7 +119,7 @@ function AppointmentForm({
     setRecipientContext({key:String(salonId),loading:true,business:null,error:''})
     appointmentRecipientApi.context(salonId,controller.signal).then(d=>{
       if(current)setRecipientContext({key:String(salonId),loading:false,business:d.business_type,error:''})
-    }).catch(e=>{if(current&&!controller.signal.aborted)setRecipientContext({key:String(salonId),loading:false,business:null,error:e.message})})
+    }).catch(e=>{if(current&&!controller.signal.aborted)setRecipientContext({key:String(salonId),loading:false,business:null,error:e})})
     return ()=>{current=false;controller.abort()}
   },[salonId,contextVersion])
   const contextReady=recipientContext.key===String(salonId)&&!recipientContext.loading&&!recipientContext.error
@@ -246,7 +251,7 @@ function AppointmentForm({
       })
     }).catch(error => {
       if (current && !controller.signal.aborted) setAvailability({
-        key: availabilityKey, loading: false, slots: [], error: error.message || 'Dostupnost nije učitana.',
+        key: availabilityKey, loading: false, slots: [], error: error || 'Dostupnost nije učitana.',
       })
     })
     return () => { current = false; controller.abort() }
@@ -392,7 +397,7 @@ function AppointmentForm({
   ) {
     if (hasTimeOffReason) {
       timeOptionsMessage =
-        `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} nije dostupan zbog evidentirane odsutnosti`
+        {kind:'timeOff',name:selectedEmployeeForAvailability?.name}
 
     } else if (hasBlockedTimeReason) {
       timeOptionsMessage =
@@ -400,7 +405,7 @@ function AppointmentForm({
 
     } else if (hasDayOffReason) {
       timeOptionsMessage =
-        `${selectedEmployeeForAvailability?.name || 'Zaposlenik'} ne radi odabranog dana`
+        {kind:'dayOff',name:selectedEmployeeForAvailability?.name}
 
     } else if (hasCollisionReason) {
       timeOptionsMessage =
@@ -672,27 +677,27 @@ function AppointmentForm({
       switch (availabilityResult.reason) {
         case AVAILABILITY_REASONS.DAY_OFF:
           availabilityErrorMessage =
-            `${selectedEmployee.name} ne radi odabranog dana.`
+            {kind:'dayOff',name:selectedEmployee.name}
           break
 
         case AVAILABILITY_REASONS.TIME_OFF:
           availabilityErrorMessage =
-            `${selectedEmployee.name} nije dostupan/na zbog evidentirane odsutnosti.`
+            {kind:'timeOff',name:selectedEmployee.name}
           break
 
         case AVAILABILITY_REASONS.BLOCKED_TIME:
           availabilityErrorMessage =
-            `${selectedEmployee.name} ima blokirano vrijeme koje se preklapa s odabranim terminom.`
+            {kind:'blocked',name:selectedEmployee.name}
           break
 
         case AVAILABILITY_REASONS.OUTSIDE_WORKING_HOURS:
           availabilityErrorMessage =
-            `Odabrano vrijeme je izvan radnog vremena zaposlenika ${selectedEmployee.name}.`
+            {kind:'outside',name:selectedEmployee.name}
           break
 
         case AVAILABILITY_REASONS.APPOINTMENT_COLLISION:
           availabilityErrorMessage =
-            `${selectedEmployee.name} već ima termin koji se preklapa s ovim vremenom.`
+            {kind:'collision',name:selectedEmployee.name}
           break
 
         case AVAILABILITY_REASONS.INVALID_INPUT:
@@ -881,14 +886,12 @@ function AppointmentForm({
       <div className="appointment-form">
         <p role="status">
           {editingAppointment
-            ? 'Nemate dopuštenje za uređivanje ovog termina.'
-            : 'Dodavanje termina nije dostupno za vaš račun.'}
+            ? f('Nemate dopuštenje za uređivanje ovog termina.')
+            : f('Dodavanje termina nije dostupno za vaš račun.')}
         </p>
 
         {editingAppointment && (
-          <button type="button" onClick={onCancelEdit}>
-            Zatvori
-          </button>
+          <button type="button" onClick={onCancelEdit}>{f("Zatvori")} </button>
         )}
       </div>
     )
@@ -898,14 +901,12 @@ function AppointmentForm({
     <div className="appointment-form">
       <h2>
         {editingAppointment
-          ? 'Uredi termin'
-          : 'Novi termin'}
+          ? f('Uredi termin')
+          : f('Novi termin')}
       </h2>
 
       <div className="form-field">
-        <label htmlFor="appointment-date">
-          Datum
-        </label>
+        <label htmlFor="appointment-date">{f("Datum")} </label>
 
         <input
           id="appointment-date"
@@ -928,14 +929,14 @@ function AppointmentForm({
               : 'form-error'
           }
         >
-          {errors.date || '\u00A0'}
+          {errors.date ? bookingError(language,errors.date) : '\u00A0'}
         </p>
       </div>
 
 
       <div className="form-field">
         <label htmlFor="appointment-client">
-          {supportsPets?'Vlasnik / klijent':'Klijent'}
+          {supportsPets?f('Vlasnik / klijent'):f('Klijent')}
         </label>
 
         <input
@@ -965,16 +966,15 @@ function AppointmentForm({
               setIsClientSearchOpen(false)
             }
           }}
-          placeholder="Pretraži po imenu ili telefonu"
-          aria-label="Pretraži klijente po imenu ili telefonu"
+          placeholder={f("Pretraži po imenu ili telefonu")}
+          aria-label={f("Pretraži klijente po imenu ili telefonu")}
           autoComplete="off"
         />
 
         {isLegacyEditingClient &&
           !clientId &&
           clientName === editingClientName && (
-            <p className="appointment-client-legacy">
-              Stari klijent — {editingClientName}
+            <p className="appointment-client-legacy">{f("Stari klijent —")} {editingClientName}
             </p>
           )}
 
@@ -982,7 +982,7 @@ function AppointmentForm({
           <ul className="appointment-client-results">
             {filteredClientList.length === 0 ? (
               <li className="appointment-client-no-results">
-                {clientLookupMessage}
+                {bookingError(language,clientLookupMessage)}
               </li>
             ) : (
               filteredClientList.map((client) => (
@@ -1021,9 +1021,7 @@ function AppointmentForm({
           </ul>
         )}
                 {!editingAppointment && pendingClient && (
-          <p role="status">
-            Novi klijent: {pendingClient.name}.
-            Podaci će se spremiti zajedno s terminom.
+          <p role="status">{f("Novi klijent:")} {pendingClient.name}{f('. Podaci će se spremiti zajedno s terminom.')}
           </p>
         )}
         <div className="appointment-client-quick-add">
@@ -1041,18 +1039,14 @@ function AppointmentForm({
             }}
           >
             {isQuickAddClientOpen
-              ? 'Zatvori dodavanje klijenta'
-              : '+ Novi klijent'}
+              ? f('Zatvori dodavanje klijenta')
+              : f('+ Novi klijent')}
           </button>
 
           {canQuickAddClient && isQuickAddClientOpen && (
             <div className="appointment-client-quick-add-form">
               {!editingAppointment && (
-                <p>
-                  Klikom na „Dodaj klijenta” odabirete ga
-                  za ovaj termin. Klijent će biti spremljen
-                  tek nakon uspješnog spremanja termina.
-                </p>
+                <p>{f("Klikom na „Dodaj klijenta” odabirete ga za ovaj termin. Klijent će biti spremljen tek nakon uspješnog spremanja termina.")} </p>
               )}
 
               <ClientForm
@@ -1066,9 +1060,7 @@ function AppointmentForm({
                 onClick={() =>
                   setIsQuickAddClientOpen(false)
                 }
-              >
-                Odustani
-              </button>
+              >{f("Odustani")} </button>
             </div>
           )}
         </div>
@@ -1079,45 +1071,43 @@ function AppointmentForm({
               : 'form-error'
           }
         >
-          {errors.clientName || '\u00A0'}
+          {errors.clientName ? bookingError(language,errors.clientName) : '\u00A0'}
         </p>
       </div>
 
-      {!contextReady && <div role="status"><p>{recipientContext.error||'Učitavanje vrste salona…'}</p>
-        {recipientContext.error&&<button type="button" onClick={()=>setContextVersion(v=>v+1)}>Ponovi učitavanje</button>}</div>}
+      {!contextReady && <div role="status"><p>{recipientContext.error ? bookingError(language,recipientContext.error) : f('Učitavanje vrste salona…')}</p>
+        {recipientContext.error&&<button type="button" onClick={()=>setContextVersion(v=>v+1)}>{f("Ponovi učitavanje")}</button>}</div>}
       {contextReady && supportsPets && <div className="appointment-recipient">
-        {editingAppointment && !editingAppointment.recipientType && <p>Stari termin nema povezanu životinju. Možete zadržati postojeći termin ili mu dodijeliti ljubimca.</p>}
-        {business==='mixed' && <div className="form-field"><label htmlFor="appointment-recipient-type">Usluga je namijenjena</label>
+        {editingAppointment && !editingAppointment.recipientType && <p>{f("Stari termin nema povezanu životinju. Možete zadržati postojeći termin ili mu dodijeliti ljubimca.")}</p>}
+        {business==='mixed' && <div className="form-field"><label htmlFor="appointment-recipient-type">{f("Usluga je namijenjena")}</label>
           <select id="appointment-recipient-type" value={effectiveType??''} disabled={!canEditClientFields||isUpdating||isCreating} onChange={e=>{setRecipientType(e.target.value||null);setPetId('');setPendingClient(null);setIsQuickAddClientOpen(false)}}>
-            {editingAppointment&&!editingAppointment.recipientType&&<option value="">Zadrži stari zapis</option>}
-            <option value="person">Osobi</option><option value="pet">Ljubimcu</option>
+            {editingAppointment&&!editingAppointment.recipientType&&<option value="">{f("Zadrži stari zapis")}</option>}
+            <option value="person">{f("Osobi")}</option><option value="pet">{f("Ljubimcu")}</option>
           </select></div>}
-        {business==='grooming'&&editingAppointment&&!effectiveType&&canEditClientFields&&<button type="button" disabled={isUpdating||isCreating} onClick={()=>setRecipientType('pet')}>Poveži ljubimca s terminom</button>}
+        {business==='grooming'&&editingAppointment&&!effectiveType&&canEditClientFields&&<button type="button" disabled={isUpdating||isCreating} onClick={()=>setRecipientType('pet')}>{f("Poveži ljubimca s terminom")}</button>}
         {effectiveType==='pet'&&<PetSelection key={[salonId,clientId,editingAppointment?.id??''].join(':')} salonId={salonId} clientId={clientId} appointmentId={editingAppointment?.id} value={petId}
           savedPet={petUnchanged&&editingAppointment.petId?editingAppointment:null}
           disabled={!canEditClientFields||isUpdating||isCreating} error={errors.pet}
           onChange={id=>{setPetId(id);setErrors(e=>({...e,pet:''}))}} />}
-        {effectiveType==='pet'&&!clientId&&<p>Za novog vlasnika najprije otvorite Klijenti, dodajte vlasnika i njegovog ljubimca. Zatim ih odaberite u terminu.</p>}
+        {effectiveType==='pet'&&!clientId&&<p>{f("Za novog vlasnika najprije otvorite Klijenti, dodajte vlasnika i njegovog ljubimca. Zatim ih odaberite u terminu.")}</p>}
       </div>}
 
       <div ref={serviceInputRef} tabIndex={-1}>
         {editingAppointment ? (
           <div className="appointment-saved-services">
-            <h3>Usluge termina</h3>
+            <h3>{f("Usluge termina")}</h3>
             <ol>{editingAppointment.items?.map(item => <li key={item.service_id}>
-              {item.name} — {item.duration_minutes} min · {formatServicePrice(item.price_cents)}
+              {item.name} — {item.duration_minutes} min · {bookingPrice(language,item.price_cents)}
             </li>)}</ol>
-            <strong>Ukupno: {selectedServiceDuration} min · {formatServicePrice(editingAppointment.priceCents)}</strong>
+            <strong>{f("Ukupno:")} {selectedServiceDuration} min · {bookingPrice(language,editingAppointment.priceCents)}</strong>
           </div>
         ) : <ServiceSelection ids={selectedServiceIds} onChange={handleServicesChange}
             services={serviceList} disabled={!canCreate || isCreating} />}
-        {errors.service && <p className="form-error form-error-visible" role="alert">{errors.service}</p>}
+        {errors.service && <p className="form-error form-error-visible" role="alert">{bookingError(language,errors.service)}</p>}
       </div>
 
       <div className="form-field">
-        <label htmlFor="appointment-employee">
-          Zaposlenik
-        </label>
+        <label htmlFor="appointment-employee">{f("Zaposlenik")} </label>
 
         <select
           id="appointment-employee"
@@ -1147,10 +1137,10 @@ function AppointmentForm({
         >
           <option value="">
             {!selectedServiceForEmployee
-              ? 'Prvo odaberite uslugu'
+              ? f('Prvo odaberite uslugu')
               : availableEmployees.length === 0
-                ? 'Nema dostupnih zaposlenika'
-                : 'Odaberite zaposlenika'}
+                ? f('Nema dostupnih zaposlenika')
+                : f('Odaberite zaposlenika')}
           </option>
 
           {availableEmployees.map(
@@ -1172,15 +1162,13 @@ function AppointmentForm({
               : 'form-error'
           }
         >
-          {errors.employee || '\u00A0'}
+          {errors.employee ? bookingError(language,errors.employee) : '\u00A0'}
         </p>
       </div>
 
 
       <div className="form-field">
-        <label htmlFor="appointment-time">
-          Vrijeme
-        </label>
+        <label htmlFor="appointment-time">{f("Vrijeme")} </label>
 
         <select
           id="appointment-time"
@@ -1200,11 +1188,11 @@ function AppointmentForm({
           }
         >
           <option value="">
-            {timeOptionsMessage}
+            {bookingError(language,timeOptionsMessage)}
           </option>
 
           {editingAppointment && !availableTimeOptions.includes(time) && time && (
-            <option value={time}>{time} — spremljeno vrijeme</option>
+            <option value={time}>{time} {f('— spremljeno vrijeme')}</option>
           )}
           {availableTimeOptions.map(
             (timeOption) => (
@@ -1224,29 +1212,26 @@ function AppointmentForm({
               : 'form-error'
           }
         >
-          {errors.time || '\u00A0'}
+          {errors.time ? bookingError(language,errors.time) : '\u00A0'}
         </p>
       </div>
 
       {!editingAppointment && availability.error && availability.key === availabilityKey && (
         <div role="alert">
-          <p>{availability.error}</p>
-          <button type="button" onClick={() => { setTime(''); setAvailabilityVersion(value => value + 1) }}>Ponovi provjeru dostupnosti</button>
+          <p>{bookingError(language,availability.error)}</p>
+          <button type="button" onClick={() => { setTime(''); setAvailabilityVersion(value => value + 1) }}>{f("Ponovi provjeru dostupnosti")}</button>
         </div>
       )}
 
       {appointmentEndTime && (
         <div className="appointment-duration-preview">
-          <span>
-            Predviđeni završetak
-          </span>
+          <span>{f("Predviđeni završetak")} </span>
 
           <strong>
-            {appointmentEndTime}
+            {bookingEndTime(language,appointmentEndTime)}
           </strong>
 
-          <small>
-            Trajanje: {selectedServiceDuration} min
+          <small>{f("Trajanje:")} {selectedServiceDuration} min
           </small>
         </div>
       )}
@@ -1263,7 +1248,7 @@ function AppointmentForm({
         />
       )}
 
-      {servicesDirty && <p role="status">Spremite ili poništite odabir usluga prije spremanja ostalih promjena.</p>}
+      {servicesDirty && <p role="status">{f("Spremite ili poništite odabir usluga prije spremanja ostalih promjena.")}</p>}
       <div className="form-actions">
         <button
           type="button"
@@ -1276,10 +1261,10 @@ function AppointmentForm({
           }
         >
           {isUpdating || isCreating
-            ? 'Spremanje...'
+            ? f('Spremanje...')
             : editingAppointment
-              ? 'Spremi promjene'
-              : 'Dodaj termin'}
+              ? f('Spremi promjene')
+              : f('Dodaj termin')}
         </button>
 
         {editingAppointment && (
@@ -1288,9 +1273,7 @@ function AppointmentForm({
             className="secondary-button"
             onClick={onCancelEdit}
             disabled={isUpdating}
-          >
-            Odustani
-          </button>
+          >{f("Odustani")} </button>
         )}
       </div>
     </div>

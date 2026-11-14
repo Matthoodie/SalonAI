@@ -392,3 +392,15 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Next: 1E-B -> 1F Clients/pets -> 1G requests and global locale QA.
 - No migrations/dependencies/config changes. Public salon creation remains controlled.
 - See LANGUAGE_PHASE1EA.md. Bundle optimization and the following product roadmap remain tracked.
+
+## HR/EN — phase 1E-B (ready for local acceptance)
+
+- 1E-A accepted with 259/259 tests and manual checks; edebfe1 pushed to development.
+- 1E-B translates Appointments, booking/recipient/service editors, cards and shared quick ClientForm.
+- Canonical statuses, owner/pet IDs, recipient revisions, service snapshots, permission checks and
+  API/date/time/availability contracts preserved. Locale changes retain drafts and do not retry writes.
+- 267 frontend tests, App JSX compilation, mocked React workflow tests and installer checks passed.
+- User Vite/live-backend/manual acceptance remains pending; see LANGUAGE_PHASE1EB.md.
+- Next: 1F Clients/pets/photos/history -> 1G absence/blocked requests and global HR/EN QA.
+- Seven functional phases / nine planned installation packages. No new dependencies or migrations.
+- Public salon creation remains controlled. Bundle optimization and the wider product roadmap remain tracked.

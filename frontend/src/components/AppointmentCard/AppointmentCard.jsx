@@ -1,10 +1,11 @@
-import { recipientLabel } from '../../api/appointmentRecipientView.js'
-import { formatServicePrice } from '../../api/appointmentItemsView.js'
+import {useLanguage} from '../Language/LanguageProvider'
+import {bookingText,bookingPrice} from '../Language/bookingText.js'
+import {overviewRecipient,overviewStatus,overviewLocale} from '../Language/overviewText.js'
 import './AppointmentCard.css'
 
-function formatAppointmentDate(date) {
+function formatAppointmentDate(date,language) {
   if (!date) {
-    return 'Datum nije naveden'
+    return bookingText(language,'Datum nije naveden')
   }
 
   const [year, month, day] = date.split('-')
@@ -15,7 +16,7 @@ function formatAppointmentDate(date) {
     Number(day)
   )
 
-  return new Intl.DateTimeFormat('hr-HR', {
+  return new Intl.DateTimeFormat(overviewLocale(language), {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -31,6 +32,9 @@ function AppointmentCard({
   canEdit = false,
   canChangeStatus = false,
 }) {
+  const {language}=useLanguage()
+  const f=source=>bookingText(language,source)
+
   const isCompleted =
     appointment.statusCode === 'completed'
 
@@ -56,19 +60,15 @@ function AppointmentCard({
       <div className="appointment-card-header">
         <div className="appointment-schedule">
           <div className="appointment-date">
-            <span className="appointment-date-label">
-              Datum
-            </span>
+            <span className="appointment-date-label">{f("Datum")} </span>
 
             <strong>
-              {formatAppointmentDate(appointment.date)}
+              {formatAppointmentDate(appointment.date,language)}
             </strong>
           </div>
 
           <div className="appointment-time">
-            <span className="appointment-time-label">
-              Vrijeme
-            </span>
+            <span className="appointment-time-label">{f("Vrijeme")} </span>
 
             <strong>{appointment.time}</strong>
           </div>
@@ -84,39 +84,35 @@ function AppointmentCard({
                 : 'appointment-status-scheduled',
           ].join(' ')}
         >
-          {isCompleted ? '✓ Završen' : appointment.status}
+          {(isCompleted ? '✓ ' : '') + overviewStatus(language,appointment)}
         </span>
       </div>
 
       <div className="appointment-info">
         <div className="appointment-detail">
           <span className="appointment-detail-label">
-            {appointment.petId?'Ljubimac i vlasnik':'Klijent'}
+            {appointment.petId?f('Ljubimac i vlasnik'):f('Klijent')}
           </span>
 
-          <h3>{recipientLabel(appointment)}</h3>
+          <h3>{overviewRecipient(language,appointment)}</h3>
         </div>
 
         <div className="appointment-detail">
-          <span className="appointment-detail-label">
-            Usluga
-          </span>
+          <span className="appointment-detail-label">{f("Usluga")} </span>
 
           {appointment.items?.length ? (
             <ul className="appointment-item-list">{appointment.items.map(item => (
-              <li key={item.service_id}><span>{item.name}</span><small>{item.duration_minutes} min · {formatServicePrice(item.price_cents)}</small></li>
+              <li key={item.service_id}><span>{item.name}</span><small>{item.duration_minutes} min · {bookingPrice(language,item.price_cents)}</small></li>
             ))}</ul>
-          ) : <p>{appointment.serviceName || appointment.service || 'Nepoznata usluga'}</p>}
-          <p><strong>Ukupno: {appointment.durationMinutes} min · {formatServicePrice(appointment.priceCents)}</strong></p>
+          ) : <p>{appointment.serviceName || appointment.service || f('Nepoznata usluga')}</p>}
+          <p><strong>{f("Ukupno:")} {appointment.durationMinutes} min · {bookingPrice(language,appointment.priceCents)}</strong></p>
         </div>
         <div className="appointment-detail">
-          <span className="appointment-detail-label">
-            Zaposlenik
-          </span>
+          <span className="appointment-detail-label">{f("Zaposlenik")} </span>
 
           <p>
             {appointment.employeeName ||
-              'Nije dodijeljen'}
+              f('Nije dodijeljen')}
           </p>
         </div>
       </div>
@@ -129,7 +125,7 @@ function AppointmentCard({
               onClick={() => onComplete(appointment.id)}
               disabled={isUpdating}
             >
-              {isUpdating ? 'Ažuriranje...' : 'Označi kao završen'}
+              {isUpdating ? f('Ažuriranje...') : f('Označi kao završen')}
             </button>
           )}
 
@@ -139,9 +135,7 @@ function AppointmentCard({
               className="appointment-button appointment-button-edit"
               onClick={() => onEdit(appointment)}
               disabled={isUpdating}
-            >
-              Uredi
-            </button>
+            >{f("Uredi")} </button>
           )}
 
           {canCancel && (
@@ -151,7 +145,7 @@ function AppointmentCard({
               onClick={() => onCancel(appointment.id)}
               disabled={isUpdating}
             >
-              {isUpdating ? 'Ažuriranje...' : 'Otkaži termin'}
+              {isUpdating ? f('Ažuriranje...') : f('Otkaži termin')}
             </button>
           )}
         </div>
