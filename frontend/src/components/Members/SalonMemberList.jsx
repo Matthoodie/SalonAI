@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {teamText,teamError,teamMemberQuestion} from '../Language/teamText.js'
 import SalonMemberHistory from './SalonMemberHistory'
 
 import { useEffect, useRef, useState } from 'react'
@@ -26,6 +28,9 @@ function SalonMemberList({
   refreshToken = 0,
   managementContext = null,
 }) {
+  const {language}=useLanguage()
+  const f=source=>teamText(language,source)
+
   const [members, setMembers] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
@@ -148,14 +153,7 @@ function SalonMemberList({
       member.role === 'employee' ? 'admin' : 'employee'
     const nextActive = !member.membership_active
 
-    const question =
-      action === 'role'
-        ? nextRole === 'admin'
-          ? `Dodijeliti administratorsku ulogu korisniku ${name}? Dobit će administratorski pristup ovom salonu.`
-          : `Vratiti korisnika ${name} u ulogu zaposlenika? Izgubit će administratorske ovlasti u ovom salonu.`
-        : nextActive
-          ? `Ponovno aktivirati članstvo korisnika ${name}? Status njegova korisničkog računa i profila zaposlenika ostaje nepromijenjen.`
-          : `Deaktivirati članstvo korisnika ${name}? Izgubit će pristup ovom salonu. Profil zaposlenika i postojeći termini ostaju sačuvani.`
+    const question = teamMemberQuestion(language, name, action, nextRole, nextActive)
 
     if (!window.confirm(question)) {
       return
@@ -201,7 +199,7 @@ function SalonMemberList({
 
   return (
     <section className="team-panel team-members">
-      <div className="team-section-heading"><h2>Članovi salona</h2>
+      <div className="team-section-heading"><h2>{f("Članovi salona")}</h2>
 
       <button
         type="button"
@@ -210,17 +208,15 @@ function SalonMemberList({
           setNotice('')
           setReloadToken((value) => value + 1)
         }}
-      >
-        Osvježi članove
-      </button></div>
+      >{f("Osvježi članove")} </button></div>
 
-      {error && <p role="alert">{error}</p>}
-      {notice && <p role="status">{notice}</p>}
+      {error && <p role="alert">{teamError(language,error)}</p>}
+      {notice && <p role="status">{f(notice)}</p>}
 
       {isLoading ? (
-        <p role="status">Učitavanje članova…</p>
+        <p role="status">{f("Učitavanje članova…")}</p>
       ) : members.length === 0 ? (
-        !error && <p>Nema članova za prikaz.</p>
+        !error && <p>{f("Nema članova za prikaz.")}</p>
       ) : (
         <div>
           <table className="team-table" role="table"
@@ -237,7 +233,7 @@ function SalonMemberList({
                   'Radnje',
                 ].map((label) => (
                   <th role="columnheader" key={label} scope="col">
-                    {label}
+                    {f(label)}
                   </th>
                 ))}
               </tr>
@@ -250,7 +246,7 @@ function SalonMemberList({
 
                 return (
                   <tr role="row" key={member.id}>
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Korisnički račun</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Korisnički račun")}</span>
                       {member.display_name && (
                         <div>
                           <strong>{member.display_name}</strong>
@@ -260,44 +256,44 @@ function SalonMemberList({
                       <div>{member.email}</div>
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Uloga</span>
-                      {roleLabels[member.role] || member.role}
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Uloga")}</span>
+                      {f(roleLabels[member.role] || member.role)}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Profil zaposlenika</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Profil zaposlenika")}</span>
                       {member.employee_id == null ? (
-                        'Bez profila zaposlenika'
+                        f('Bez profila zaposlenika')
                       ) : (
                         <>
                           <div>{member.employee_name}</div>
                           <small>
                             {member.employee_active
-                              ? 'Aktivan profil'
-                              : 'Neaktivan profil'}
+                              ? f('Aktivan profil')
+                              : f('Neaktivan profil')}
                           </small>
                         </>
                       )}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Članstvo</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Članstvo")}</span>
                       {member.membership_active
-                        ? 'Aktivno'
-                        : 'Neaktivno'}
+                        ? f('Aktivno')
+                        : f('Neaktivno')}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Status računa</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Status računa")}</span>
                       {member.user_active
-                        ? 'Aktivan'
-                        : 'Neaktivan'}
+                        ? f('Aktivan')
+                        : f('Neaktivan')}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Član od</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Član od")}</span>
                       {new Date(
                         member.created_at
-                      ).toLocaleDateString('hr-HR')}
+                      ).toLocaleDateString(language === 'en' ? 'en-GB' : 'hr-HR')}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Radnje</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Radnje")}</span>
                       <div>
                         {actions.canChangeRole && (
                           <button
@@ -306,8 +302,8 @@ function SalonMemberList({
                             onClick={() => changeMember(member, 'role')}
                           >
                             {member.role === 'employee'
-                              ? 'Dodijeli admin ulogu'
-                              : 'Vrati u zaposlenika'}
+                              ? f('Dodijeli admin ulogu')
+                              : f('Vrati u zaposlenika')}
                           </button>
                         )}
 
@@ -318,8 +314,8 @@ function SalonMemberList({
                             onClick={() => changeMember(member, 'active')}
                           >
                             {member.membership_active
-                              ? 'Deaktiviraj članstvo'
-                              : 'Aktiviraj članstvo'}
+                              ? f('Deaktiviraj članstvo')
+                              : f('Aktiviraj članstvo')}
                           </button>
                         )}
 
@@ -331,14 +327,11 @@ function SalonMemberList({
                           member.role === 'admin' &&
                           member.employee_id == null &&
                           String(member.user_id) !== String(currentUserId) && (
-                            <small>
-                              Za promjenu u zaposlenika potreban je
-                              povezan profil zaposlenika.
-                            </small>
+                            <small>{f("Za promjenu u zaposlenika potreban je povezan profil zaposlenika.")} </small>
                           )}
 
                         {isBusy && (
-                          <small role="status">Spremanje…</small>
+                          <small role="status">{f("Spremanje…")}</small>
                         )}
                       </div>
                     </td>
@@ -350,11 +343,7 @@ function SalonMemberList({
         </div>
       )}
 
-      <p>
-        Članstvo određuje pristup ovom salonu. Korisnički račun
-        i profil zaposlenika imaju zasebne statuse.
-        Deaktivacija članstva ne briše postojeće termine.
-      </p>
+      <p>{f("Članstvo određuje pristup ovom salonu. Korisnički račun i profil zaposlenika imaju zasebne statuse. Deaktivacija članstva ne briše postojeće termine.")} </p>
       <SalonMemberHistory
         refreshToken={`${refreshToken}:${reloadToken}`}
       />

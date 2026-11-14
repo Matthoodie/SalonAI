@@ -1,3 +1,5 @@
+import {useLanguage} from '../../components/Language/LanguageProvider'
+import {teamText,teamError} from '../../components/Language/teamText.js'
 import {
   useEffect,
   useRef,
@@ -37,6 +39,9 @@ function Employees({
   isLoading = false,
   loadError = null,
 }) {
+  const {language}=useLanguage()
+  const f=source=>teamText(language,source)
+
   const [invitationsRevision, setInvitationsRevision] =
     useState(0)
 
@@ -149,10 +154,7 @@ function Employees({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Zaposlenika trenutno nije moguće dodati.'
-      )
+      window.alert(teamError(language,error || 'Zaposlenika trenutno nije moguće dodati.'))
 
       return false
     }
@@ -210,10 +212,7 @@ function Employees({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Zaposlenika trenutno nije moguće urediti.'
-      )
+      window.alert(teamError(language,error || 'Zaposlenika trenutno nije moguće urediti.'))
 
       return false
     }
@@ -290,10 +289,7 @@ function Employees({
         error
       )
 
-      window.alert(
-        error.message ||
-        'Status zaposlenika trenutno nije moguće promijeniti.'
-      )
+      window.alert(teamError(language,error || 'Status zaposlenika trenutno nije moguće promijeniti.'))
 
       return false
     }
@@ -304,17 +300,17 @@ function Employees({
       <div className="employees-header">
         <div>
           <span className="employees-eyebrow">
-            {canManageEmployees ? 'Tim' : 'Profil'}
+            {canManageEmployees ? f('Tim') : f('Profil')}
           </span>
 
           <h1>
-            {canManageEmployees ? 'Zaposlenici' : 'Moj profil'}
+            {canManageEmployees ? f('Zaposlenici') : f('Moj profil')}
           </h1>
 
           <p>
             {canManageEmployees
-              ? 'Upravljajte zaposlenicima salona i njihovim statusom.'
-              : 'Pregled vašeg profila i redovnog radnog vremena.'}
+              ? f('Upravljajte zaposlenicima salona i njihovim statusom.')
+              : f('Pregled vašeg profila i redovnog radnog vremena.')}
           </p>
         </div>
 
@@ -325,13 +321,11 @@ function Employees({
               className="employees-add-button"
               onClick={openAddEmployeeForm}
               disabled={isLoading || Boolean(loadError)}
-            >
-              + Novi zaposlenik
-            </button>
+            >{f("+ Novi zaposlenik")} </button>
 
             {!isLoading && !loadError && (
               <div className="employees-count">
-                <span>Aktivni zaposlenici</span>
+                <span>{f("Aktivni zaposlenici")}</span>
                 <strong>{activeEmployees.length}</strong>
               </div>
             )}
@@ -341,17 +335,14 @@ function Employees({
 
       {loadError ? (
         <div className="employees-placeholder" role="alert">
-          <h2>Podatke nije moguće učitati</h2>
+          <h2>{f("Podatke nije moguće učitati")}</h2>
           <p>
-            {typeof loadError === 'string'
-              ? loadError
-              : loadError.message ||
-                'Pokušajte ponovno osvježiti stranicu.'}
+            {teamError(language,loadError)}
           </p>
         </div>
       ) : isLoading ? (
         <div className="employees-placeholder" role="status">
-          <p>Učitavanje podataka…</p>
+          <p>{f("Učitavanje podataka…")}</p>
         </div>
       ) : (
         <>
@@ -399,14 +390,14 @@ function Employees({
             <div className="employees-placeholder">
               <h2>
                 {canManageEmployees
-                  ? 'Još nema zaposlenika'
-                  : 'Profil zaposlenika nije dostupan'}
+                  ? f('Još nema zaposlenika')
+                  : f('Profil zaposlenika nije dostupan')}
               </h2>
 
               <p>
                 {canManageEmployees
-                  ? 'Dodajte prvog zaposlenika kako biste počeli graditi tim salona.'
-                  : 'Obratite se administratoru salona radi provjere svojeg profila.'}
+                  ? f('Dodajte prvog zaposlenika kako biste počeli graditi tim salona.')
+                  : f('Obratite se administratoru salona radi provjere svojeg profila.')}
               </p>
 
               {canManageEmployees && (
@@ -414,9 +405,7 @@ function Employees({
                   type="button"
                   className="employees-add-button"
                   onClick={openAddEmployeeForm}
-                >
-                  + Dodaj prvog zaposlenika
-                </button>
+                >{f("+ Dodaj prvog zaposlenika")} </button>
               )}
             </div>
           ) : (

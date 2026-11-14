@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {teamText} from '../Language/teamText.js'
 import './EmployeeCard.css'
 
 function getEmployeeInitials(name) {
@@ -43,10 +45,11 @@ const weekDays = [
 ]
 
 function getEmployeeScheduleSummary(
-  workingHours
+  workingHours, language
 ) {
+  const f=source=>teamText(language,source)
   if (!workingHours) {
-    return 'Radno vrijeme nije definirano'
+    return f('Radno vrijeme nije definirano')
   }
 
   const enabledDays =
@@ -56,7 +59,7 @@ function getEmployeeScheduleSummary(
     )
 
   if (enabledDays.length === 0) {
-    return 'Nema radnih dana'
+    return f('Nema radnih dana')
   }
 
   const groupedSchedules = []
@@ -77,12 +80,12 @@ function getEmployeeScheduleSummary(
 
     if (existingGroup) {
       existingGroup.days.push(
-        day.shortLabel
+        f(day.shortLabel)
       )
     } else {
       groupedSchedules.push({
         scheduleKey,
-        days: [day.shortLabel],
+        days: [f(day.shortLabel)],
         startTime:
           schedule.startTime,
         endTime:
@@ -114,6 +117,9 @@ function EmployeeCard({
   onToggleActive,
   canManageEmployees = false,
 }) {
+  const {language}=useLanguage()
+  const f=source=>teamText(language,source)
+
   const employeeServices =
     serviceList.filter((service) =>
       employee.serviceIds?.includes(
@@ -123,7 +129,7 @@ function EmployeeCard({
 
    const scheduleSummary =
   getEmployeeScheduleSummary(
-    employee.workingHours
+    employee.workingHours, language
   )
 
   return (
@@ -146,8 +152,8 @@ function EmployeeCard({
             }
           >
             {employee.active
-              ? 'Aktivan'
-              : 'Neaktivan'}
+              ? f('Aktivan')
+              : f('Neaktivan')}
           </span>
 
           <p className="employee-schedule-summary">
@@ -157,9 +163,7 @@ function EmployeeCard({
       </div>
 
       <div className="employee-card-services">
-        <span className="employee-card-label">
-          Usluge
-        </span>
+        <span className="employee-card-label">{f("Usluge")} </span>
 
         <strong>
           {employeeServices.length}
@@ -171,9 +175,7 @@ function EmployeeCard({
             type="button"
             className="employee-edit-button"
             onClick={() => onEdit(employee)}
-          >
-            Uredi
-          </button>
+          >{f("Uredi")} </button>
 
           <button
             type="button"
@@ -184,7 +186,7 @@ function EmployeeCard({
             }
             onClick={() => onToggleActive(employee.id)}
           >
-            {employee.active ? 'Deaktiviraj' : 'Aktiviraj'}
+            {employee.active ? f('Deaktiviraj') : f('Aktiviraj')}
           </button>
         </div>
       )}

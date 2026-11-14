@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {teamText,teamError} from '../Language/teamText.js'
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -18,29 +20,33 @@ function wasCancelled(error) {
   )
 }
 
-function personLabel(name, email, userId) {
+function personLabel(name, email, userId, language) {
   if (name && email) {
     return `${name} (${email})`
   }
 
-  return name || email || `Korisnik #${userId}`
+  return name || email || `${language==='en'?'User':'Korisnik'} #${userId}`
 }
 
-function describeChange(change) {
+function describeChange(change, language) {
+  const f=source=>teamText(language,source)
   if (change.action === 'role') {
     const before = roleLabels[change.old_role] || change.old_role
     const after = roleLabels[change.new_role] || change.new_role
 
-    return `${before} → ${after}`
+    return `${f(before)} → ${f(after)}`
   }
 
   const before = change.old_active ? 'Aktivno' : 'Neaktivno'
   const after = change.new_active ? 'Aktivno' : 'Neaktivno'
 
-  return `${before} → ${after}`
+  return `${f(before)} → ${f(after)}`
 }
 
 function SalonMemberHistory({ refreshToken = 0 }) {
+  const {language}=useLanguage()
+  const f=source=>teamText(language,source)
+
   const [isOpen, setIsOpen] = useState(false)
   const [changes, setChanges] = useState([])
   const [nextBeforeId, setNextBeforeId] = useState(null)
@@ -189,16 +195,11 @@ function SalonMemberHistory({ refreshToken = 0 }) {
         setIsOpen(event.currentTarget.open)
       }}
     >
-      <summary>
-        Povijest promjena članstava
-      </summary>
+      <summary>{f("Povijest promjena članstava")} </summary>
 
       {isOpen && (
         <div>
-          <p>
-            Evidencija promjena uloga i aktivnosti članstava.
-            Najnovije promjene prikazane su prve.
-          </p>
+          <p>{f("Evidencija promjena uloga i aktivnosti članstava. Najnovije promjene prikazane su prve.")} </p>
 
           <button
             type="button"
@@ -206,16 +207,14 @@ function SalonMemberHistory({ refreshToken = 0 }) {
             onClick={() => {
               setReloadToken((value) => value + 1)
             }}
-          >
-            Osvježi povijest
-          </button>
+          >{f("Osvježi povijest")} </button>
 
-          {error && <p role="alert">{error}</p>}
+          {error && <p role="alert">{teamError(language,error)}</p>}
 
           {isLoading ? (
-            <p role="status">Učitavanje povijesti…</p>
+            <p role="status">{f("Učitavanje povijesti…")}</p>
           ) : changes.length === 0 ? (
-            !error && <p>Još nema zabilježenih promjena članstava.</p>
+            !error && <p>{f("Još nema zabilježenih promjena članstava.")}</p>
           ) : (
             <>
               <div
@@ -236,7 +235,7 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                           scope="col"
 
                         >
-                          {label}
+                          {f(label)}
                         </th>
                       ))}
                     </tr>
@@ -245,46 +244,44 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                   <tbody role="rowgroup">
                     {changes.map((change) => (
                       <tr role="row" key={change.id}>
-                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Vrijeme</span>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Vrijeme")}</span>
                           {new Date(
                             change.created_at
-                          ).toLocaleString('hr-HR', {
+                          ).toLocaleString(language === 'en' ? 'en-GB' : 'hr-HR', {
                             timeZone: 'Europe/Zagreb',
                           })}
                         </td>
 
-                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Izvršitelj</span>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Izvršitelj")}</span>
                           <div>
                             {personLabel(
                               change.actor_display_name,
                               change.actor_email,
-                              change.actor_user_id
+                              change.actor_user_id, language
                             )}
                           </div>
 
-                          <small>
-                            Uloga pri promjeni:{' '}
-                            {roleLabels[change.actor_role] ||
-                              change.actor_role}
+                          <small>{f("Uloga pri promjeni:")}{' '}
+                            {f(roleLabels[change.actor_role] || change.actor_role)}
                           </small>
                         </td>
 
-                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Član</span>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Član")}</span>
                           {personLabel(
                             change.target_display_name,
                             change.target_email,
-                            change.target_user_id
+                            change.target_user_id, language
                           )}
                         </td>
 
-                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Radnja</span>
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Radnja")}</span>
                           {change.action === 'role'
-                            ? 'Promjena uloge'
-                            : 'Promjena aktivnosti članstva'}
+                            ? f('Promjena uloge')
+                            : f('Promjena aktivnosti članstva')}
                         </td>
 
-                        <td role="cell"><span className="team-cell-label" aria-hidden="true">Promjena</span>
-                          {describeChange(change)}
+                        <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Promjena")}</span>
+                          {describeChange(change, language)}
                         </td>
                       </tr>
                     ))}
@@ -299,19 +296,14 @@ function SalonMemberHistory({ refreshToken = 0 }) {
                   onClick={loadMore}
                 >
                   {isLoadingMore
-                    ? 'Učitavanje…'
-                    : 'Učitaj starije promjene'}
+                    ? f('Učitavanje…')
+                    : f('Učitaj starije promjene')}
                 </button>
               )}
             </>
           )}
 
-          <p>
-            Vrijeme je prikazano za Europe/Zagreb.
-            Imena i e-mail adrese odgovaraju trenutačnim podacima
-            računa; uloga izvršitelja i promjena stanja zabilježene
-            su u trenutku radnje.
-          </p>
+          <p>{f("Vrijeme je prikazano za Europe/Zagreb. Imena i e-mail adrese odgovaraju trenutačnim podacima računa; uloga izvršitelja i promjena stanja zabilježene su u trenutku radnje.")} </p>
         </div>
       )}
     </details>

@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {teamText,teamError} from '../Language/teamText.js'
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -12,6 +14,9 @@ function InvitationManager({
   refreshToken = 0,
   canManageAdminInvitations = false,
 }) {
+  const {language}=useLanguage()
+  const f=source=>teamText(language,source)
+
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('employee')
   const [employeeId, setEmployeeId] = useState('')
@@ -120,9 +125,7 @@ function InvitationManager({
 
     if (
       role === 'admin' &&
-      !window.confirm(
-        'Pozvana osoba dobit će administratorske ovlasti u ovom salonu. Nastaviti?'
-      )
+      !window.confirm(f('Pozvana osoba dobit će administratorske ovlasti u ovom salonu. Nastaviti?'))
     ) {
       return
     }
@@ -176,7 +179,7 @@ function InvitationManager({
       return
     }
 
-    if (!window.confirm('Opozvati ovu pozivnicu?')) {
+    if (!window.confirm(f('Opozvati ovu pozivnicu?'))) {
       return
     }
 
@@ -231,9 +234,7 @@ function InvitationManager({
 
   function startAnother() {
     if (
-      !window.confirm(
-        'Kod trenutačne pozivnice više neće biti prikazan. Pozivnica ostaje važeća. Jeste li kopirali kod?'
-      )
+      !window.confirm(f('Kod trenutačne pozivnice više neće biti prikazan. Pozivnica ostaje važeća. Jeste li kopirali kod?'))
     ) {
       return
     }
@@ -248,42 +249,35 @@ function InvitationManager({
 
   return (
     <details className="team-panel team-invite">
-      <summary>
-        Pozovi korisnika u salon
-      </summary>
+      <summary>{f("Pozovi korisnika u salon")} </summary>
 
       <div className="team-invite-content">
-        <h2>Pozivnica za pristup salonu</h2>
+        <h2>{f("Pozivnica za pristup salonu")}</h2>
 
-        {error && <p role="alert">{error}</p>}
-        {notice && <p role="status">{notice}</p>}
+        {error && <p role="alert">{teamError(language,error)}</p>}
+        {notice && <p role="status">{f(notice)}</p>}
 
         {created ? (
           <div>
-            <p>
-              Pozivnica je kreirana za{' '}
+            <p>{f("Pozivnica je kreirana za")}{' '}
               <strong>{created.invitation.email_normalized}</strong>.
             </p>
 
-            <p>
-              Uloga:{' '}
+            <p>{f("Uloga:")}{' '}
               <strong>
                 {created.invitation.role === 'admin'
-                  ? 'Administrator'
-                  : 'Zaposlenik'}
+                  ? f('Administrator')
+                  : f('Zaposlenik')}
               </strong>
             </p>
 
-            <p>
-              Vrijedi do:{' '}
+            <p>{f("Vrijedi do:")}{' '}
               {new Date(
                 created.invitation.expires_at
-              ).toLocaleString('hr-HR')}
+              ).toLocaleString(language === 'en' ? 'en-GB' : 'hr-HR')}
             </p>
 
-            <label htmlFor="created-invitation-token">
-              Kod za primatelja
-            </label>
+            <label htmlFor="created-invitation-token">{f("Kod za primatelja")} </label>
 
             <textarea
               id="created-invitation-token"
@@ -294,20 +288,13 @@ function InvitationManager({
               onFocus={(event) => event.target.select()}
             />
 
-            <p>
-              E-mail nije automatski poslan. Kopirajte kod i
-              dostavite ga primatelju. Kod se prikazuje samo
-              dok je ovaj obrazac otvoren; osvježavanje stranice
-              ili promjena salona uklonit će ga iz prikaza.
-            </p>
+            <p>{f("E-mail nije automatski poslan. Kopirajte kod i dostavite ga primatelju. Kod se prikazuje samo dok je ovaj obrazac otvoren; osvježavanje stranice ili promjena salona uklonit će ga iz prikaza.")} </p>
 
             <button
               type="button"
               onClick={copyToken}
               disabled={isBusy}
-            >
-              Kopiraj kod
-            </button>
+            >{f("Kopiraj kod")} </button>
 
             {(
               created.invitation.role === 'employee' ||
@@ -318,7 +305,7 @@ function InvitationManager({
                 onClick={handleRevoke}
                 disabled={isBusy}
               >
-                {isBusy ? 'Opozivanje…' : 'Opozovi pozivnicu'}
+                {isBusy ? f('Opozivanje…') : f('Opozovi pozivnicu')}
               </button>
             )}
 
@@ -326,17 +313,13 @@ function InvitationManager({
               type="button"
               onClick={startAnother}
               disabled={isBusy}
-            >
-              Pripremi drugu pozivnicu
-            </button>
+            >{f("Pripremi drugu pozivnicu")} </button>
           </div>
         ) : (
           <form className="team-invite-form"
             onSubmit={handleCreate}
           >
-            <label htmlFor="invitation-email">
-              E-mail primatelja
-            </label>
+            <label htmlFor="invitation-email">{f("E-mail primatelja")} </label>
 
             <input
               id="invitation-email"
@@ -348,9 +331,7 @@ function InvitationManager({
               disabled={isBusy}
             />
 
-            <label htmlFor="invitation-role">
-              Uloga
-            </label>
+            <label htmlFor="invitation-role">{f("Uloga")} </label>
 
             <select
               id="invitation-role"
@@ -358,20 +339,14 @@ function InvitationManager({
               onChange={(event) => setRole(event.target.value)}
               disabled={isBusy}
             >
-              <option value="employee">
-                Zaposlenik
-              </option>
+              <option value="employee">{f("Zaposlenik")} </option>
 
               {canManageAdminInvitations && (
-                <option value="admin">
-                  Administrator
-                </option>
+                <option value="admin">{f("Administrator")} </option>
               )}
             </select>
 
-            <label htmlFor="invitation-employee">
-              Profil zaposlenika
-              {role === 'admin' ? ' — neobavezno' : ''}
+            <label htmlFor="invitation-employee">{f("Profil zaposlenika")} {role === 'admin' ? f(' — neobavezno') : ''}
             </label>
 
             <select
@@ -383,10 +358,10 @@ function InvitationManager({
             >
               <option value="">
                 {profilesLoading
-                  ? 'Učitavanje profila…'
+                  ? f('Učitavanje profila…')
                   : role === 'admin'
-                    ? 'Bez profila zaposlenika'
-                    : 'Odaberite zaposlenika'}
+                    ? f('Bez profila zaposlenika')
+                    : f('Odaberite zaposlenika')}
               </option>
 
               {eligibleEmployees.map((employee) => (
@@ -400,18 +375,14 @@ function InvitationManager({
             </select>
 
             {profilesError && (
-              <p role="alert">{profilesError}</p>
+              <p role="alert">{teamError(language,profilesError)}</p>
             )}
 
             {!profilesLoading &&
               !profilesError &&
               eligibleEmployees.length === 0 && (
-                <p>
-                  Nema slobodnih aktivnih profila zaposlenika.
-                  Dodajte novi profil ili opozovite postojeću
-                  otvorenu pozivnicu za željeni profil.
-                  {canManageAdminInvitations && (
-                    <> Administratora možete pozvati bez profila.</>
+                <p>{f("Nema slobodnih aktivnih profila zaposlenika. Dodajte novi profil ili opozovite postojeću otvorenu pozivnicu za željeni profil.")} {canManageAdminInvitations && (
+                    <>{f("Administratora možete pozvati bez profila.")}</>
                   )}
                 </p>
               )}
@@ -422,14 +393,9 @@ function InvitationManager({
               onClick={() =>
                 setProfilesRevision((value) => value + 1)
               }
-            >
-              Osvježi slobodne profile
-            </button>
+            >{f("Osvježi slobodne profile")} </button>
 
-            <p>
-              Prikazani su aktivni profili bez povezanog računa
-              i bez otvorene pozivnice.
-            </p>
+            <p>{f("Prikazani su aktivni profili bez povezanog računa i bez otvorene pozivnice.")} </p>
 
             <button
               type="submit"
@@ -440,7 +406,7 @@ function InvitationManager({
                 (role === 'employee' && !employeeId)
               }
             >
-              {isBusy ? 'Kreiranje…' : 'Kreiraj pozivnicu'}
+              {isBusy ? f('Kreiranje…') : f('Kreiraj pozivnicu')}
             </button>
           </form>
         )}

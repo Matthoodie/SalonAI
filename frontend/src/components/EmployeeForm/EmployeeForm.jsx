@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {teamText,teamValidationText,teamCalendarDate} from '../Language/teamText.js'
 import {
   useEffect,
   useState,
@@ -147,14 +149,15 @@ for (let hour = 0; hour < 24; hour++) {
   }
 }
 
-function getWorkingHoursSummary(workingHours) {
+function getWorkingHoursSummary(workingHours, language) {
+  const f=source=>teamText(language,source)
   const enabledDays = weekDays.filter(
     (day) =>
       workingHours[day.key]?.enabled
   )
 
   if (enabledDays.length === 0) {
-    return 'Nema definiranih radnih dana'
+    return f('Nema definiranih radnih dana')
   }
 
   const groupedSchedules = []
@@ -175,12 +178,12 @@ function getWorkingHoursSummary(workingHours) {
 
     if (existingGroup) {
       existingGroup.days.push(
-        day.label
+        f(day.label)
       )
     } else {
       groupedSchedules.push({
         scheduleKey,
-        days: [day.label],
+        days: [f(day.label)],
         startTime:
           schedule.startTime,
         endTime:
@@ -521,6 +524,9 @@ function EmployeeForm({
   onCancelEdit,
   editingEmployee,
 }) {
+  const {language}=useLanguage()
+  const f=source=>teamText(language,source)
+
   const [serviceQuery, setServiceQuery] = useState('')
   useEffect(() => { setServiceQuery('') }, [editingEmployee])
   const matchesService = (service) => `${service.name} ${service.category ?? ''}`.toLocaleLowerCase('hr-HR').includes(serviceQuery.trim().toLocaleLowerCase('hr-HR'))
@@ -659,17 +665,13 @@ setBlockedTimes(
 
 function addDateOverride() {
   if (!overrideDate) {
-    window.alert(
-      'Odaberite datum posebnog rasporeda.'
-    )
+    window.alert(f('Odaberite datum posebnog rasporeda.'))
 
     return
   }
 
   if (overrideDate < getTodayDate()) {
-  window.alert(
-    'Posebni raspored nije moguće dodati za datum u prošlosti.'
-  )
+  window.alert(f('Posebni raspored nije moguće dodati za datum u prošlosti.'))
 
   return
 }
@@ -681,9 +683,7 @@ function addDateOverride() {
     )
 
   if (alreadyExists) {
-    window.alert(
-      'Za odabrani datum već postoji poseban raspored.'
-    )
+    window.alert(f('Za odabrani datum već postoji poseban raspored.'))
 
     return
   }
@@ -700,9 +700,7 @@ function addDateOverride() {
       endMinutes === null ||
       startMinutes >= endMinutes
     ) {
-      window.alert(
-        'Početak posebnog radnog vremena mora biti prije kraja.'
-      )
+      window.alert(f('Početak posebnog radnog vremena mora biti prije kraja.'))
 
       return
     }
@@ -740,9 +738,7 @@ function addTimeOff() {
     !timeOffStartDate ||
     !timeOffEndDate
   ) {
-    window.alert(
-      'Odaberite početni i završni datum odsutnosti.'
-    )
+    window.alert(f('Odaberite početni i završni datum odsutnosti.'))
 
     return
   }
@@ -751,9 +747,7 @@ function addTimeOff() {
     timeOffStartDate >
     timeOffEndDate
   ) {
-    window.alert(
-      'Početni datum odsutnosti mora biti prije ili jednak završnom datumu.'
-    )
+    window.alert(f('Početni datum odsutnosti mora biti prije ili jednak završnom datumu.'))
 
     return
   }
@@ -769,9 +763,7 @@ function addTimeOff() {
     })
 
   if (hasOverlap) {
-    window.alert(
-      'Odabrani period preklapa se s postojećom odsutnošću.'
-    )
+    window.alert(f('Odabrani period preklapa se s postojećom odsutnošću.'))
 
     return
   }
@@ -875,9 +867,7 @@ function addBlockedTime() {
     !blockedTimeStartTime ||
     !blockedTimeEndTime
   ) {
-    window.alert(
-      'Odaberite datum, početak i kraj blokiranog vremena.'
-    )
+    window.alert(f('Odaberite datum, početak i kraj blokiranog vremena.'))
 
     return
   }
@@ -897,9 +887,7 @@ function addBlockedTime() {
     endMinutes === null ||
     startMinutes >= endMinutes
   ) {
-    window.alert(
-      'Početak blokiranog vremena mora biti prije kraja.'
-    )
+    window.alert(f('Početak blokiranog vremena mora biti prije kraja.'))
 
     return
   }
@@ -926,9 +914,7 @@ const blockedTimesError =
   )
 
 if (blockedTimesError) {
-  window.alert(
-    blockedTimesError
-  )
+  window.alert(teamValidationText(language,blockedTimesError))
 
   return
 }
@@ -994,9 +980,7 @@ async function handleSubmit(event) {
   if (workingHoursError) {
     setIsWorkingHoursOpen(true)
 
-    window.alert(
-      workingHoursError
-    )
+    window.alert(teamValidationText(language,workingHoursError))
 
     return
   }
@@ -1009,9 +993,7 @@ async function handleSubmit(event) {
 if (dateOverridesError) {
   setIsDateOverridesOpen(true)
 
-  window.alert(
-    dateOverridesError
-  )
+  window.alert(teamValidationText(language,dateOverridesError))
 
   return
 }
@@ -1024,9 +1006,7 @@ const timeOffError =
 if (timeOffError) {
   setIsTimeOffOpen(true)
 
-  window.alert(
-    timeOffError
-  )
+  window.alert(teamValidationText(language,timeOffError))
 
   return
 }
@@ -1039,9 +1019,7 @@ const blockedTimesError =
 if (blockedTimesError) {
   setIsBlockedTimesOpen(true)
 
-  window.alert(
-    blockedTimesError
-  )
+  window.alert(teamValidationText(language,blockedTimesError))
 
   return
 }
@@ -1104,28 +1082,26 @@ else {
         <div>
           <span className="employee-form-eyebrow">
   {editingEmployee
-    ? 'Uređivanje zaposlenika'
-    : 'Novi član tima'}
+    ? f('Uređivanje zaposlenika')
+    : f('Novi član tima')}
  </span>
 
  <h2 tabIndex={-1}>
   {editingEmployee
-    ? 'Uredi zaposlenika'
-    : 'Dodaj zaposlenika'}
+    ? f('Uredi zaposlenika')
+    : f('Dodaj zaposlenika')}
 </h2>
 
 <p>
   {editingEmployee
-    ? `Uređujete: ${editingEmployee.name}. Promjene potvrdite gumbom „Spremi promjene”.`
-    : 'Dodajte zaposlenika i odaberite usluge koje može obavljati.'}
+    ? (language==='en' ? `Editing: ${editingEmployee.name}. Confirm changes with “Save changes”.` : `Uređujete: ${editingEmployee.name}. Promjene potvrdite gumbom „Spremi promjene”.`)
+    : f('Dodajte zaposlenika i odaberite usluge koje može obavljati.')}
 </p>
         </div>
       </div>
 
       <div className="employee-form-field">
-        <label htmlFor="employee-name">
-          Ime i prezime
-        </label>
+        <label htmlFor="employee-name">{f("Ime i prezime")} </label>
 
         <input
           id="employee-name"
@@ -1134,7 +1110,7 @@ else {
           aria-describedby={nameError?"employee-name-error":undefined}
           type="text"
           value={name}
-          placeholder="npr. Ivana Horvat"
+          placeholder={f("npr. Ivana Horvat")}
           onChange={(event) => {
             setName(event.target.value)
             setNameError('')
@@ -1142,21 +1118,17 @@ else {
         />
       </div>
 
-      {nameError&&<p id="employee-name-error" role="alert" className="employee-name-error">{nameError}</p>}
+      {nameError&&<p id="employee-name-error" role="alert" className="employee-name-error">{f(nameError)}</p>}
       <fieldset className="employee-services-fieldset">
-        <legend>Usluge zaposlenika</legend>
-        <label className="employee-service-search" htmlFor="employee-service-search">
-          Pretraži usluge
-          <input id="employee-service-search" type="search" value={serviceQuery}
-            placeholder="Naziv ili kategorija" onChange={(event) => setServiceQuery(event.target.value)} />
+        <legend>{f("Usluge zaposlenika")}</legend>
+        <label className="employee-service-search" htmlFor="employee-service-search">{f("Pretraži usluge")} <input id="employee-service-search" type="search" value={serviceQuery}
+            placeholder={f("Naziv ili kategorija")} onChange={(event) => setServiceQuery(event.target.value)} />
         </label>
-        <p className="employee-selection-count" role="status">Odabrano usluga: {selectedServiceIds.length}. Pretraga ne mijenja odabir.</p>
-        {serviceList.length > 0 && !serviceList.some(matchesService) && <p>Nema usluga koje odgovaraju pretrazi.</p>}
+        <p className="employee-selection-count" role="status">{f("Odabrano usluga:")} {selectedServiceIds.length}. Pretraga ne mijenja odabir.</p>
+        {serviceList.length > 0 && !serviceList.some(matchesService) && <p>{f("Nema usluga koje odgovaraju pretrazi.")}</p>}
 
         {serviceList.length === 0 ? (
-          <p className="employee-services-empty">
-            Trenutno nema dostupnih usluga.
-          </p>
+          <p className="employee-services-empty">{f("Trenutno nema dostupnih usluga.")} </p>
         ) : (
           <div className="employee-service-options">
             {serviceList.map((service) => (
@@ -1189,11 +1161,9 @@ else {
          <fieldset className="employee-working-hours-fieldset">
   <div className="employee-working-hours-header">
     <div>
-      <legend>Radno vrijeme</legend>
+      <legend>{f("Radno vrijeme")}</legend>
 
-      <p className="employee-working-hours-description">
-        Odredite dane i radno vrijeme zaposlenika.
-      </p>
+      <p className="employee-working-hours-description">{f("Odredite dane i radno vrijeme zaposlenika.")} </p>
     </div>
 
     <button
@@ -1207,15 +1177,15 @@ else {
       aria-expanded={isWorkingHoursOpen}
     >
       {isWorkingHoursOpen
-        ? 'Sakrij raspored'
-        : 'Uredi radno vrijeme'}
+        ? f('Sakrij raspored')
+        : f('Uredi radno vrijeme')}
     </button>
   </div>
 
   {!isWorkingHoursOpen && (
     <div className="employee-working-hours-summary">
       {getWorkingHoursSummary(
-  workingHours
+  workingHours, language
 )}
     </div>
   )}
@@ -1233,7 +1203,7 @@ else {
           >
             <div className="employee-working-hours-day">
               <strong>
-                {day.label}
+                {f(day.label)}
               </strong>
             </div>
 
@@ -1250,8 +1220,8 @@ else {
 
               <span>
                 {daySchedule.enabled
-                  ? 'Radi'
-                  : 'Ne radi'}
+                  ? f('Radi')
+                  : f('Ne radi')}
               </span>
             </label>
 
@@ -1259,7 +1229,7 @@ else {
               <div className="employee-working-hours-times">
 
                 <select
-  aria-label={`${day.label} početak radnog vremena`}
+  aria-label={`${f(day.label)} ${language==='en'?'working hours start':'početak radnog vremena'}`}
   value={daySchedule.startTime}
   onChange={(event) =>
     updateWorkingTime(
@@ -1286,7 +1256,7 @@ else {
                 </span>
 
                <select
-  aria-label={`${day.label} kraj radnog vremena`}
+  aria-label={`${f(day.label)} ${language==='en'?'working hours end':'kraj radnog vremena'}`}
   value={daySchedule.endTime}
   onChange={(event) =>
     updateWorkingTime(
@@ -1309,9 +1279,7 @@ else {
 </select>
               </div>
             ) : (
-              <div className="employee-working-hours-off">
-                Slobodan dan
-              </div>
+              <div className="employee-working-hours-off">{f("Slobodan dan")} </div>
             )}
           </div>
         )
@@ -1324,9 +1292,7 @@ else {
   <div className="employee-date-overrides-header">
     <div>
       <div className="employee-date-overrides-title-row">
-        <legend>
-          Posebni datumi
-        </legend>
+        <legend>{f("Posebni datumi")} </legend>
 
         {dateOverrides.length > 0 && (
           <span className="employee-date-overrides-count">
@@ -1335,10 +1301,7 @@ else {
         )}
       </div>
 
-      <p className="employee-date-overrides-description">
-        Posebni rasporedi koji odstupaju od
-        standardnog radnog vremena.
-      </p>
+      <p className="employee-date-overrides-description">{f("Posebni rasporedi koji odstupaju od standardnog radnog vremena.")} </p>
     </div>
 
     <button
@@ -1352,19 +1315,19 @@ else {
       aria-expanded={isDateOverridesOpen}
     >
       {isDateOverridesOpen
-        ? 'Sakrij posebne datume'
-        : 'Uredi posebne datume'}
+        ? f('Sakrij posebne datume')
+        : f('Uredi posebne datume')}
     </button>
   </div>
 
   {!isDateOverridesOpen && (
     <div className="employee-date-overrides-summary">
       {dateOverrides.length === 0
-        ? 'Nema posebnih datuma'
+        ? f('Nema posebnih datuma')
         : `${dateOverrides.length} ${
             dateOverrides.length === 1
-              ? 'poseban datum'
-              : 'posebna datuma'
+              ? f('poseban datum')
+              : f('posebna datuma')
           }`}
     </div>
   )}
@@ -1390,15 +1353,13 @@ else {
               >
                 <div className="employee-date-override-info">
                   <strong>
-                    {formatDate(
-                      override.date
-                    )}
+                    {teamCalendarDate(language,override.date)}
                   </strong>
 
                   <span>
                     {override.enabled
                       ? `${override.startTime}–${override.endTime}`
-                      : 'Ne radi'}
+                      : f('Ne radi')}
                   </span>
                 </div>
 
@@ -1410,9 +1371,7 @@ else {
                       override.id
                     )
                   }
-                >
-                  Obriši
-                </button>
+                >{f("Obriši")} </button>
               </div>
             ))}
         </div>
@@ -1427,7 +1386,7 @@ else {
               event.target.value
             )
           }
-          aria-label="Datum posebnog rasporeda"
+          aria-label={f("Datum posebnog rasporeda")}
         />
 
         <label className="employee-date-override-toggle">
@@ -1443,8 +1402,8 @@ else {
 
           <span>
             {overrideEnabled
-              ? 'Radi'
-              : 'Ne radi'}
+              ? f('Radi')
+              : f('Ne radi')}
           </span>
         </label>
 
@@ -1457,7 +1416,7 @@ else {
                   event.target.value
                 )
               }
-              aria-label="Početak posebnog radnog vremena"
+              aria-label={f("Početak posebnog radnog vremena")}
             >
               {workingTimeOptions.map(
                 (timeOption) => (
@@ -1480,7 +1439,7 @@ else {
                   event.target.value
                 )
               }
-              aria-label="Kraj posebnog radnog vremena"
+              aria-label={f("Kraj posebnog radnog vremena")}
             >
               {workingTimeOptions.map(
                 (timeOption) => (
@@ -1500,9 +1459,7 @@ else {
           type="button"
           onClick={addDateOverride}
           className="employee-date-override-add"
-        >
-          + Dodaj posebni datum
-        </button>
+        >{f("+ Dodaj posebni datum")} </button>
       </div>
     </div>
   )}
@@ -1511,14 +1468,9 @@ else {
 <fieldset className="employee-time-off-fieldset">
   <div className="employee-time-off-header">
     <div>
-      <legend>
-        Odsutnosti
-      </legend>
+      <legend>{f("Odsutnosti")} </legend>
 
-      <p className="employee-time-off-description">
-        Dodajte godišnji odmor, bolovanje ili
-        drugi period odsutnosti zaposlenika.
-      </p>
+      <p className="employee-time-off-description">{f("Dodajte godišnji odmor, bolovanje ili drugi period odsutnosti zaposlenika.")} </p>
     </div>
 
     <button
@@ -1532,19 +1484,19 @@ else {
       aria-expanded={isTimeOffOpen}
     >
       {isTimeOffOpen
-        ? 'Sakrij odsutnosti'
-        : 'Uredi odsutnosti'}
+        ? f('Sakrij odsutnosti')
+        : f('Uredi odsutnosti')}
     </button>
   </div>
 
   {!isTimeOffOpen && (
     <div className="employee-time-off-summary">
       {timeOff.length === 0
-        ? 'Nema evidentiranih odsutnosti'
+        ? f('Nema evidentiranih odsutnosti')
         : `${timeOff.length} ${
             timeOff.length === 1
-              ? 'evidentirana odsutnost'
-              : 'evidentirane odsutnosti'
+              ? f('evidentirana odsutnost')
+              : f('evidentirane odsutnosti')
           }`}
     </div>
   )}
@@ -1553,9 +1505,7 @@ else {
     <>
       <div className="employee-time-off-form">
         <div className="employee-time-off-field">
-          <label htmlFor="time-off-start-date">
-            Od
-          </label>
+          <label htmlFor="time-off-start-date">{f("Od")} </label>
 
           <input
             id="time-off-start-date"
@@ -1570,9 +1520,7 @@ else {
         </div>
 
         <div className="employee-time-off-field">
-          <label htmlFor="time-off-end-date">
-            Do
-          </label>
+          <label htmlFor="time-off-end-date">{f("Do")} </label>
 
           <input
             id="time-off-end-date"
@@ -1587,9 +1535,7 @@ else {
         </div>
 
         <div className="employee-time-off-field">
-          <label htmlFor="time-off-type">
-            Vrsta odsutnosti
-          </label>
+          <label htmlFor="time-off-type">{f("Vrsta odsutnosti")} </label>
 
           <select
             id="time-off-type"
@@ -1606,7 +1552,7 @@ else {
                   key={typeOption.value}
                   value={typeOption.value}
                 >
-                  {typeOption.label}
+                  {f(typeOption.label)}
                 </option>
               )
             )}
@@ -1614,15 +1560,13 @@ else {
         </div>
 
         <div className="employee-time-off-field employee-time-off-note-field">
-          <label htmlFor="time-off-note">
-            Napomena
-          </label>
+          <label htmlFor="time-off-note">{f("Napomena")} </label>
 
           <input
             id="time-off-note"
             type="text"
             value={timeOffNote}
-            placeholder="Opcionalno..."
+            placeholder={f("Opcionalno...")}
             onChange={(event) =>
               setTimeOffNote(
                 event.target.value
@@ -1635,9 +1579,7 @@ else {
           type="button"
           className="employee-time-off-add"
           onClick={addTimeOff}
-        >
-          + Dodaj odsutnost
-        </button>
+        >{f("+ Dodaj odsutnost")} </button>
       </div>
 
       {timeOff.length > 0 && (
@@ -1659,21 +1601,17 @@ else {
               >
                 <div className="employee-time-off-info">
                   <strong>
-                    {formatDate(
-                      timeOffItem.startDate
-                    )}
+                    {teamCalendarDate(language,timeOffItem.startDate)}
 
                     {' — '}
 
-                    {formatDate(
-                      timeOffItem.endDate
-                    )}
+                    {teamCalendarDate(language,timeOffItem.endDate)}
                   </strong>
 
                   <span>
-                    {getTimeOffTypeLabel(
+                    {f(getTimeOffTypeLabel(
                       timeOffItem.type
-                    )}
+                    ))}
                   </span>
 
                   {timeOffItem.note && (
@@ -1691,9 +1629,7 @@ else {
                       timeOffItem.id
                     )
                   }
-                >
-                  Obriši
-                </button>
+                >{f("Obriši")} </button>
               </div>
             ))}
         </div>
@@ -1705,14 +1641,9 @@ else {
 <fieldset className="employee-blocked-times-fieldset">
   <div className="employee-blocked-times-header">
     <div>
-      <legend>
-        Blokirano vrijeme
-      </legend>
+      <legend>{f("Blokirano vrijeme")} </legend>
 
-      <p className="employee-blocked-times-description">
-        Blokirajte dio radnog dana za pauzu,
-        sastanak, edukaciju ili drugu obvezu.
-      </p>
+      <p className="employee-blocked-times-description">{f("Blokirajte dio radnog dana za pauzu, sastanak, edukaciju ili drugu obvezu.")} </p>
     </div>
 
     <button
@@ -1726,19 +1657,19 @@ else {
       aria-expanded={isBlockedTimesOpen}
     >
       {isBlockedTimesOpen
-        ? 'Sakrij blokirano vrijeme'
-        : 'Uredi blokirano vrijeme'}
+        ? f('Sakrij blokirano vrijeme')
+        : f('Uredi blokirano vrijeme')}
     </button>
   </div>
 
   {!isBlockedTimesOpen && (
     <div className="employee-blocked-times-summary">
       {blockedTimes.length === 0
-        ? 'Nema evidentiranog blokiranog vremena'
+        ? f('Nema evidentiranog blokiranog vremena')
         : `${blockedTimes.length} ${
             blockedTimes.length === 1
-              ? 'evidentirana blokada'
-              : 'evidentirane blokade'
+              ? f('evidentirana blokada')
+              : f('evidentirane blokade')
           }`}
     </div>
   )}
@@ -1747,9 +1678,7 @@ else {
     <>
       <div className="employee-blocked-time-form">
         <div className="employee-blocked-time-field">
-          <label htmlFor="blocked-time-date">
-            Datum
-          </label>
+          <label htmlFor="blocked-time-date">{f("Datum")} </label>
 
           <input
             id="blocked-time-date"
@@ -1764,9 +1693,7 @@ else {
         </div>
 
         <div className="employee-blocked-time-field">
-          <label htmlFor="blocked-time-start">
-            Od
-          </label>
+          <label htmlFor="blocked-time-start">{f("Od")} </label>
 
           <select
             id="blocked-time-start"
@@ -1791,9 +1718,7 @@ else {
         </div>
 
         <div className="employee-blocked-time-field">
-          <label htmlFor="blocked-time-end">
-            Do
-          </label>
+          <label htmlFor="blocked-time-end">{f("Do")} </label>
 
           <select
             id="blocked-time-end"
@@ -1818,9 +1743,7 @@ else {
         </div>
 
         <div className="employee-blocked-time-field">
-          <label htmlFor="blocked-time-type">
-            Vrsta
-          </label>
+          <label htmlFor="blocked-time-type">{f("Vrsta")} </label>
 
           <select
             id="blocked-time-type"
@@ -1837,7 +1760,7 @@ else {
                   key={typeOption.value}
                   value={typeOption.value}
                 >
-                  {typeOption.label}
+                  {f(typeOption.label)}
                 </option>
               )
             )}
@@ -1845,15 +1768,13 @@ else {
         </div>
 
         <div className="employee-blocked-time-field employee-blocked-time-note-field">
-          <label htmlFor="blocked-time-note">
-            Napomena
-          </label>
+          <label htmlFor="blocked-time-note">{f("Napomena")} </label>
 
           <input
             id="blocked-time-note"
             type="text"
             value={blockedTimeNote}
-            placeholder="Opcionalno..."
+            placeholder={f("Opcionalno...")}
             onChange={(event) =>
               setBlockedTimeNote(
                 event.target.value
@@ -1866,9 +1787,7 @@ else {
           type="button"
           className="employee-blocked-time-add"
           onClick={addBlockedTime}
-        >
-          + Dodaj blokirano vrijeme
-        </button>
+        >{f("+ Dodaj blokirano vrijeme")} </button>
       </div>
 
       {blockedTimes.length > 0 && (
@@ -1900,19 +1819,17 @@ else {
               >
                 <div className="employee-blocked-time-info">
                   <strong>
-                    {formatDate(
-                      blockedTime.date
-                    )}
+                    {teamCalendarDate(language,blockedTime.date)}
                   </strong>
 
                   <span>
                     {blockedTime.startTime}
                     {'–'}
-                    {blockedTime.endDate && blockedTime.endDate !== blockedTime.date ? `${formatDate(blockedTime.endDate)} ` : ''}{blockedTime.endTime}
+                    {blockedTime.endDate && blockedTime.endDate !== blockedTime.date ? `${teamCalendarDate(language,blockedTime.endDate)} ` : ''}{blockedTime.endTime}
                     {' · '}
-                    {getBlockedTimeTypeLabel(
+                    {f(getBlockedTimeTypeLabel(
                       blockedTime.type
-                    )}
+                    ))}
                   </span>
 
                   {blockedTime.note && (
@@ -1923,7 +1840,7 @@ else {
                 </div>
 
                 {blockedTime.sourceRequestId != null ? (
-                  <small>Odobreno zahtjevom #{blockedTime.sourceRequestId}. Otkazivanje je dostupno na stranici „Zahtjevi za blokirano vrijeme”.</small>
+                  <small>{f("Odobreno zahtjevom #")}{blockedTime.sourceRequestId}. Otkazivanje je dostupno na stranici „Zahtjevi za blokirano vrijeme”.</small>
                 ) : <button
                   type="button"
                   className="employee-blocked-time-remove"
@@ -1932,9 +1849,7 @@ else {
                       blockedTime.id
                     )
                   }
-                >
-                  Obriši
-                </button>}
+                >{f("Obriši")} </button>}
               </div>
             ))}
         </div>
@@ -1949,17 +1864,15 @@ else {
     className="employee-form-submit"
   >
     {editingEmployee
-      ? 'Spremi promjene'
-      : 'Dodaj zaposlenika'}
+      ? f('Spremi promjene')
+      : f('Dodaj zaposlenika')}
   </button>
 
   <button
   type="button"
   className="employee-form-cancel"
   onClick={onCancelEdit}
->
-  Odustani
-</button>
+>{f("Odustani")} </button>
 </div>
     </form>
   )

@@ -1,3 +1,5 @@
+import {useLanguage} from '../Language/LanguageProvider'
+import {teamText,teamError} from '../Language/teamText.js'
 import { useEffect, useRef, useState } from 'react'
 
 import {
@@ -12,9 +14,9 @@ const statusLabels = {
   revoked: 'Opozvana',
 }
 
-function formatDate(value) {
+function formatDate(value, language) {
   return value
-    ? new Date(value).toLocaleString('hr-HR')
+    ? new Date(value).toLocaleString(language === 'en' ? 'en-GB' : 'hr-HR')
     : '—'
 }
 
@@ -30,6 +32,9 @@ function InvitationList({
   onChanged,
   canManageAdminInvitations = false,
 }) {
+  const {language}=useLanguage()
+  const f=source=>teamText(language,source)
+
   const [invitations, setInvitations] = useState([])
   const [nextBeforeId, setNextBeforeId] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -182,7 +187,7 @@ function InvitationList({
     }
 
     if (!window.confirm(
-      `Opozvati pozivnicu za ${invitation.email_normalized}?`
+      (language==='en' ? `Revoke the invitation for ${invitation.email_normalized}?` : `Opozvati pozivnicu za ${invitation.email_normalized}?`)
     )) {
       return
     }
@@ -227,7 +232,7 @@ function InvitationList({
       aria-labelledby="invitation-list-title"
     >
       <div className="team-section-heading">
-        <h2 id="invitation-list-title">Pozivnice</h2>
+        <h2 id="invitation-list-title">{f("Pozivnice")}</h2>
 
         <button
           type="button"
@@ -236,18 +241,16 @@ function InvitationList({
             setNotice('')
             setReloadToken((value) => value + 1)
           }}
-        >
-          Osvježi popis
-        </button>
+        >{f("Osvježi popis")} </button>
       </div>
 
-      {error && <p role="alert">{error}</p>}
-      {notice && <p role="status">{notice}</p>}
+      {error && <p role="alert">{teamError(language,error)}</p>}
+      {notice && <p role="status">{f(notice)}</p>}
 
-      {isLoading && <p role="status">Učitavanje pozivnica…</p>}
+      {isLoading && <p role="status">{f("Učitavanje pozivnica…")}</p>}
 
       {!isLoading && !error && invitations.length === 0 && (
-        <p>U ovom salonu još nema pozivnica.</p>
+        <p>{f("U ovom salonu još nema pozivnica.")}</p>
       )}
 
       {invitations.length > 0 && (
@@ -268,7 +271,7 @@ function InvitationList({
                     key={label}
                     scope="col"
                   >
-                    {label}
+                    {f(label)}
                   </th>
                 ))}
               </tr>
@@ -288,51 +291,50 @@ function InvitationList({
 
                 return (
                   <tr role="row" key={invitation.id}>
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Primatelj</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Primatelj")}</span>
                       {invitation.email_normalized}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Uloga / profil</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Uloga / profil")}</span>
                       <div>
                         {invitation.role === 'admin'
-                          ? 'Administrator'
-                          : 'Zaposlenik'}
+                          ? f('Administrator')
+                          : f('Zaposlenik')}
                       </div>
 
                       <small>
                         {invitation.employee_name ||
-                          'Bez profila zaposlenika'}
+                          f('Bez profila zaposlenika')}
                       </small>
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Status</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Status")}</span>
                       <div className={`team-badge team-badge-${invitation.status}`}>
-                        {statusLabels[invitation.status] ||
-                          invitation.status}
+                        {f(statusLabels[invitation.status] || invitation.status)}
                       </div>
 
                       {invitation.accepted_at && (
                         <small>
-                          {formatDate(invitation.accepted_at)}
+                          {formatDate(invitation.accepted_at, language)}
                         </small>
                       )}
 
                       {invitation.revoked_at && (
                         <small>
-                          {formatDate(invitation.revoked_at)}
+                          {formatDate(invitation.revoked_at, language)}
                         </small>
                       )}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Kreirana</span>
-                      {formatDate(invitation.created_at)}
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Kreirana")}</span>
+                      {formatDate(invitation.created_at, language)}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Vrijedi do</span>
-                      {formatDate(invitation.expires_at)}
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Vrijedi do")}</span>
+                      {formatDate(invitation.expires_at, language)}
                     </td>
 
-                    <td role="cell"><span className="team-cell-label" aria-hidden="true">Radnja</span>
+                    <td role="cell"><span className="team-cell-label" aria-hidden="true">{f("Radnja")}</span>
                       {canRevoke ? (
                         <button
                           type="button"
@@ -344,8 +346,8 @@ function InvitationList({
                         >
                           {String(revokingId) ===
                           String(invitation.id)
-                            ? 'Opozivanje…'
-                            : 'Opozovi'}
+                            ? f('Opozivanje…')
+                            : f('Opozovi')}
                         </button>
                       ) : (
                         '—'
@@ -364,16 +366,10 @@ function InvitationList({
           type="button"
           onClick={loadMore}
           disabled={isLoading || revokingId !== null}
-        >
-          Učitaj starije pozivnice
-        </button>
+        >{f("Učitaj starije pozivnice")} </button>
       )}
 
-      <p>
-        Ako je kod izgubljen ili je pozivnica istekla,
-        opozovite je i kreirajte novu. Opozivanje pozivnice
-        ne uklanja već prihvaćeno članstvo.
-      </p>
+      <p>{f("Ako je kod izgubljen ili je pozivnica istekla, opozovite je i kreirajte novu. Opozivanje pozivnice ne uklanja već prihvaćeno članstvo.")} </p>
     </section>
   )
 }

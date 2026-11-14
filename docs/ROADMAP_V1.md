@@ -367,3 +367,14 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Remaining: 1D-B -> 1E Appointments/Calendar/Dashboard -> 1F Clients/pets -> 1G requests/global locale audit.
 - Track bundle optimization before production: phase 1C main chunk warning at 501.68 kB.
 - No new migration/dependency/configuration change. Following product roadmap remains unchanged.
+
+## HR/EN — phase 1D-B (ready for local acceptance)
+
+- 1D-A accepted: 243/243 tests, manual checks; commit a6db864 pushed to development.
+- 1D-B translates Employees, employee schedules, invitations and memberships/history.
+- User content, permission guards, request payloads and protected UTC intervals preserved.
+- 251 frontend tests, App JSX compilation and mocked React/UI regression passed before delivery.
+- Installed Vite build and user manual acceptance pending; see LANGUAGE_PHASE1DB.md.
+- No migrations, dependencies or configuration changes.
+- Next: 1E Appointments/Calendar/Dashboard -> 1F Clients/pets -> 1G requests/global HR/EN audit.
+- Public salon creation remains intentionally disabled. Product roadmap and bundle optimization unchanged.
