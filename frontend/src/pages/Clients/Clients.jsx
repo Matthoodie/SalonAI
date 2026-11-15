@@ -1,4 +1,6 @@
-import { recipientLabel } from '../../api/appointmentRecipientView.js'
+import { useLanguage } from '../../components/Language/LanguageProvider'
+import { clientText, clientError, clientDynamic, clientMoney, clientCount } from '../../components/Language/clientText.js'
+import { overviewLocale, overviewRecipient, overviewStatus } from '../../components/Language/overviewText.js'
 import {
   useEffect,
   useRef,
@@ -19,7 +21,7 @@ import {
   mapClientToPayload,
 } from '../../api/clientMapper'
 
-function formatClientAppointmentDate(date) {
+function formatClientAppointmentDate(date, language) {
   if (!date) {
     return ''
   }
@@ -34,7 +36,7 @@ function formatClientAppointmentDate(date) {
   )
 
   return new Intl.DateTimeFormat(
-    'hr-HR',
+    overviewLocale(language),
     {
       day: 'numeric',
       month: 'numeric',
@@ -49,6 +51,11 @@ function Clients({
   appointmentList = [],
   salonId,
 }) {
+  const {language}=useLanguage()
+  const f=source=>clientText(language,source)
+  const languageRef=useRef(language)
+  languageRef.current=language
+
   const [editingClient, setEditingClient] =
     useState(null)
 
@@ -170,7 +177,7 @@ useEffect(() => {
 
     if (!nextActive) {
       const confirmed = window.confirm(
-        `Arhivirati klijenta "${client.name}"?`
+        clientDynamic(language,'archiveClient',client.name)
       )
 
       if (!confirmed) {
@@ -201,8 +208,7 @@ useEffect(() => {
       )
 
       window.alert(
-        error.message ||
-        'Status klijenta nije moguće promijeniti.'
+        clientError(languageRef.current,error)
       )
     }
   }
@@ -328,7 +334,7 @@ const clientsWithMetrics = clientList.map(
           const serviceName =
             appointment.serviceName ||
             appointment.service ||
-            'Nepoznata usluga'
+            f('Nepoznata usluga')
 
           usage[serviceName] =
             (usage[serviceName] || 0) +
@@ -407,14 +413,14 @@ const filteredAndSortedClients = [
   if (sortOption === 'name-asc') {
     return firstClient.name.localeCompare(
       secondClient.name,
-      'hr'
+      language === 'en' ? 'en' : 'hr'
     )
   }
 
   if (sortOption === 'name-desc') {
     return secondClient.name.localeCompare(
       firstClient.name,
-      'hr'
+      language === 'en' ? 'en' : 'hr'
     )
   }
 
@@ -519,16 +525,13 @@ const selectedClientUpcomingAppointments =
             CRM
           </span>
 
-          <h1>Klijenti</h1>
+          <h1>{f("Klijenti")}</h1>
 
-          <p>
-            Upravljajte klijentima i njihovim
-            kontakt podacima.
-          </p>
+          <p>{f("Upravljajte klijentima i njihovim kontakt podacima.")} </p>
         </div>
 
         <div className="clients-count">
-          <span>Ukupno klijenata</span>
+          <span>{f("Ukupno klijenata")}</span>
 
           <strong>
             {clientList.length}
@@ -564,19 +567,17 @@ const selectedClientUpcomingAppointments =
 >
      <div className="client-detail-header">
        <div>
-        <span className="client-detail-eyebrow">
-          Profil klijenta
-        </span>
+        <span className="client-detail-eyebrow">{f("Profil klijenta")} </span>
 
         <h2 id="client-detail-title">
   {selectedClient.name}
 </h2>
 
-        <p>{selectedClient.phone || 'Telefon nije unesen'}</p>
+        <p>{selectedClient.phone || f('Telefon nije unesen')}</p>
 <p>
   {selectedClient.isOccasional
-    ? 'Povremeni klijent'
-    : 'Stalni klijent'}
+    ? f('Povremeni klijent')
+    : f('Stalni klijent')}
 </p>
        </div>
 
@@ -585,69 +586,63 @@ const selectedClientUpcomingAppointments =
   className="client-detail-close-button"
   disabled={petBusy}
   onClick={() => { if (!petBusy) setSelectedClientId(null) }}
-  aria-label="Zatvori profil klijenta"
->
-  Zatvori
-</button>
+  aria-label={f("Zatvori profil klijenta")}
+>{f("Zatvori")} </button>
     </div>
 
     <ClientPets key={`${salonId}:${selectedClient.id}`} salonId={salonId} client={selectedClient} onBusyChange={setPetBusy} />
 
     <div className="client-detail-metrics">
       <div className="client-detail-metric">
-        <span>Ukupno posjeta</span>
+        <span>{f("Ukupno posjeta")}</span>
         <strong>
           {selectedClient.visits}
         </strong>
       </div>
 
       <div className="client-detail-metric">
-        <span>Ukupno potrošeno</span>
+        <span>{f("Ukupno potrošeno")}</span>
         <strong>
-          {selectedClient.totalSpent.toFixed(2)} €
+          {clientMoney(language,selectedClient.totalSpent)}
         </strong>
       </div>
 
       <div className="client-detail-metric">
-        <span>Prosječna vrijednost</span>
+        <span>{f("Prosječna vrijednost")}</span>
         <strong>
-          {selectedClient.averageAppointmentValue.toFixed(2)} €
+          {clientMoney(language,selectedClient.averageAppointmentValue)}
         </strong>
       </div>
 
       <div className="client-detail-metric">
-        <span>Najčešća usluga</span>
+        <span>{f("Najčešća usluga")}</span>
         <strong>
           {selectedClient.favoriteService ||
-            'Nema podataka'}
+            f('Nema podataka')}
         </strong>
       </div>
 
       <div className="client-detail-metric">
-        <span>Zadnji posjet</span>
+        <span>{f("Zadnji posjet")}</span>
 
   <strong>
     {selectedClient.lastVisit
-      ? `${formatClientAppointmentDate(
-          selectedClient.lastVisit.date
-        )} u ${
+      ? `${formatClientAppointmentDate(selectedClient.lastVisit.date, language)} ${language === 'en' ? 'at' : 'u'} ${
           selectedClient.lastVisit.time
         }`
-      : 'Nema posjeta'}
+      : f('Nema posjeta')}
   </strong>
 </div>
 
 <div className="client-detail-metric">
-  <span>Sljedeći termin</span>
+  <span>{f("Sljedeći termin")}</span>
 
   <strong>
     {selectedClient.nextAppointment
-      ? `${formatClientAppointmentDate(
-          selectedClient.nextAppointment.date
-        )} u ${
+      ? `${formatClientAppointmentDate(selectedClient.nextAppointment.date, language)} ${language === 'en' ? 'at' : 'u'} ${
           selectedClient.nextAppointment.time
         }`
-      : 'Nema termina'}
+      : f('Nema termina')}
   </strong>
  </div>
 
@@ -657,26 +652,18 @@ const selectedClientUpcomingAppointments =
 <div className="client-history">
   <div className="client-history-header">
     <div>
-      <span className="client-detail-eyebrow">
-        Povijest
-      </span>
+      <span className="client-detail-eyebrow">{f("Povijest")} </span>
 
-      <h3>Povijest termina</h3>
+      <h3>{f("Povijest termina")}</h3>
     </div>
 
     <strong>
-      {selectedClientHistory.length}
-      {' '}
-      {selectedClientHistory.length === 1
-        ? 'posjet'
-        : 'posjeta'}
+      {clientCount(language,selectedClientHistory.length,'visits')}
     </strong>
   </div>
 
   {selectedClientHistory.length === 0 ? (
-    <div className="client-history-empty">
-      Ovaj klijent još nema završenih termina.
-    </div>
+    <div className="client-history-empty">{f("Ovaj klijent još nema završenih termina.")} </div>
   ) : (
     <div className="client-history-list">
       {selectedClientHistory.map(
@@ -687,9 +674,7 @@ const selectedClientUpcomingAppointments =
           >
             <div className="client-history-date">
               <strong>
-                {formatClientAppointmentDate(
-                  appointment.date
-                )}
+                {formatClientAppointmentDate(appointment.date, language)}
               </strong>
 
               <span>
@@ -698,22 +683,18 @@ const selectedClientUpcomingAppointments =
             </div>
 
             <div className="client-history-service">
-              {appointment.petId && <p>{recipientLabel(appointment)}</p>}
+              {appointment.petId && <p>{overviewRecipient(language,appointment)}</p>}
               <strong>
                 {appointment.serviceName ||
                   appointment.service ||
-                  'Nepoznata usluga'}
+                  f('Nepoznata usluga')}
               </strong>
 
-              <span>
-                Završen termin
-              </span>
+              <span>{f("Završen termin")} </span>
             </div>
 
             <div className="client-history-price">
-              {Number(
-                appointment.servicePrice
-              ).toFixed(2)} €
+              {clientMoney(language,appointment.servicePrice)}
             </div>
           </div>
         )
@@ -725,26 +706,18 @@ const selectedClientUpcomingAppointments =
 <div className="client-upcoming">
   <div className="client-history-header">
     <div>
-      <span className="client-detail-eyebrow">
-        Nadolazeće
-      </span>
+      <span className="client-detail-eyebrow">{f("Nadolazeće")} </span>
 
-      <h3>Nadolazeći termini</h3>
+      <h3>{f("Nadolazeći termini")}</h3>
     </div>
 
     <strong>
-      {selectedClientUpcomingAppointments.length}
-      {' '}
-      {selectedClientUpcomingAppointments.length === 1
-        ? 'termin'
-        : 'termina'}
+      {clientCount(language,selectedClientUpcomingAppointments.length,'appointments')}
     </strong>
   </div>
 
   {selectedClientUpcomingAppointments.length === 0 ? (
-    <div className="client-history-empty">
-      Ovaj klijent nema nadolazećih termina.
-    </div>
+    <div className="client-history-empty">{f("Ovaj klijent nema nadolazećih termina.")} </div>
   ) : (
     <div className="client-history-list">
       {selectedClientUpcomingAppointments.map(
@@ -755,9 +728,7 @@ const selectedClientUpcomingAppointments =
           >
             <div className="client-history-date">
               <strong>
-                {formatClientAppointmentDate(
-                  appointment.date
-                )}
+                {formatClientAppointmentDate(appointment.date, language)}
               </strong>
 
               <span>
@@ -766,23 +737,21 @@ const selectedClientUpcomingAppointments =
             </div>
 
             <div className="client-history-service">
-              {appointment.petId && <p>{recipientLabel(appointment)}</p>}
+              {appointment.petId && <p>{overviewRecipient(language,appointment)}</p>}
               <strong>
                 {appointment.serviceName ||
                   appointment.service ||
-                  'Nepoznata usluga'}
+                  f('Nepoznata usluga')}
               </strong>
 
               <span>
-                {appointment.status}
+                {overviewStatus(language,appointment)}
               </span>
             </div>
 
             <div className="client-history-price">
               {appointment.servicePrice != null
-                ? `${Number(
-                    appointment.servicePrice
-                  ).toFixed(2)} €`
+                ? `${clientMoney(language,appointment.servicePrice)}`
                 : '—'}
             </div>
           </div>
@@ -803,9 +772,7 @@ const selectedClientUpcomingAppointments =
 
   <div className="clients-toolbar">
   <div className="clients-search">
-    <label htmlFor="clients-search">
-      Pretraži klijente
-    </label>
+    <label htmlFor="clients-search">{f("Pretraži klijente")} </label>
 
     <input
       id="clients-search"
@@ -816,13 +783,11 @@ const selectedClientUpcomingAppointments =
           event.target.value
         )
       }
-      placeholder="Ime ili telefon..."
+      placeholder={f("Ime ili telefon...")}
     />
   </div>
 <div className="clients-sort">
-  <label htmlFor="clients-sort">
-    Sortiraj
-  </label>
+  <label htmlFor="clients-sort">{f("Sortiraj")} </label>
 
   <select
     id="clients-sort"
@@ -831,21 +796,13 @@ const selectedClientUpcomingAppointments =
       setSortOption(event.target.value)
     }
   >
-    <option value="name-asc">
-      Ime A–Ž
-    </option>
+    <option value="name-asc">{f("Ime A–Ž")} </option>
 
-    <option value="name-desc">
-      Ime Ž–A
-    </option>
+    <option value="name-desc">{f("Ime Ž–A")} </option>
 
-    <option value="visits-desc">
-      Najviše posjeta
-    </option>
+    <option value="visits-desc">{f("Najviše posjeta")} </option>
 
-    <option value="visits-asc">
-      Najmanje posjeta
-    </option>
+    <option value="visits-asc">{f("Najmanje posjeta")} </option>
   </select>
  </div>
 </div>
@@ -858,20 +815,17 @@ const selectedClientUpcomingAppointments =
             👥
           </div>
 
-          <h2>Još nema klijenata</h2>
+          <h2>{f("Još nema klijenata")}</h2>
 
-          <p>
-            Dodajte prvog klijenta kako biste
-            počeli graditi bazu klijenata salona.
-          </p>
+          <p>{f("Dodajte prvog klijenta kako biste počeli graditi bazu klijenata salona.")} </p>
         </div>
       ) : (
         <>
           <div className="clients-list-header">
-            <span>Klijent</span>
-            <span>Telefon</span>
-            <span>Posjete</span>
-            <span>Akcije</span>
+            <span>{f("Klijent")}</span>
+            <span>{f("Telefon")}</span>
+            <span>{f("Posjete")}</span>
+            <span>{f("Akcije")}</span>
           </div>
 
           <div className="clients-list">

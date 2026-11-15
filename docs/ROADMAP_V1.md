@@ -404,3 +404,15 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Next: 1F Clients/pets/photos/history -> 1G absence/blocked requests and global HR/EN QA.
 - Seven functional phases / nine planned installation packages. No new dependencies or migrations.
 - Public salon creation remains controlled. Bundle optimization and the wider product roadmap remain tracked.
+
+## HR/EN — phase 1F (ready for local acceptance)
+
+- 1E-B accepted with 267/267 checks and pushed as e6ae5d9; working tree clean.
+- 1F translates Clients, client cards/details, pets, photos, measurements and pet history.
+- Drafts, file selections, literal user content, permission guards, revisions, payloads,
+  pagination and salon timezone preserved; language changes do not retry requests.
+- 275 frontend tests, App compilation, mocked React workflow and installer checks passed.
+- Installed Vite build/live API/manual HR/EN acceptance pending; see LANGUAGE_PHASE1F.md.
+- Next: 1G absence/blocked requests and global locale QA. Nine planned installation packages.
+- No migration/dependency/config changes. Public creation remains controlled.
+- Bundle optimization, WhatsApp/agreed AI, mobile/PWA/store/production, pilot and billing remain tracked.

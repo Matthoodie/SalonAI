@@ -1,3 +1,5 @@
+import { useLanguage } from '../Language/LanguageProvider'
+import { clientText } from '../Language/clientText.js'
 import './ClientCard.css'
 
 function getInitials(name) {
@@ -18,6 +20,9 @@ function ClientCard({
   onSelect,
   onToggleActive,
 }) {
+  const {language}=useLanguage()
+  const f=source=>clientText(language,source)
+
   const isArchived = client.active === false
 
   return (
@@ -33,32 +38,28 @@ function ClientCard({
 
         <div className="client-card-name">
           <h3>{client.name}</h3>
-          {isEditing && <span className="client-editing-label">Uređivanje u tijeku</span>}
+          {isEditing && <span className="client-editing-label">{f("Uređivanje u tijeku")}</span>}
 
           <span>
             {isArchived
-  ? 'Arhiviran'
+  ? f('Arhiviran')
   : client.isOccasional
-    ? 'Povremeni klijent'
-    : 'Stalni klijent'}
+    ? f('Povremeni klijent')
+    : f('Stalni klijent')}
           </span>
         </div>
       </div>
 
       <div className="client-card-phone">
-        <span className="client-mobile-label">
-          Telefon
-        </span>
+        <span className="client-mobile-label">{f("Telefon")} </span>
 
         <strong>
-         {client.phone || 'Telefon nije unesen'}
+         {client.phone || f('Telefon nije unesen')}
         </strong>
       </div>
 
       <div className="client-card-visits">
-        <span className="client-mobile-label">
-          Posjete
-        </span>
+        <span className="client-mobile-label">{f("Posjete")} </span>
 
         <strong>
           {client.visits}
@@ -70,17 +71,13 @@ function ClientCard({
           type="button"
           className="client-details-button"
           onClick={() => onSelect(client.id)}
-        >
-          Detalji
-        </button>
+        >{f("Detalji")} </button>
 
         <button
           type="button"
           className="client-edit-button"
           onClick={() => onEdit(client)}
-        >
-          Uredi
-        </button>
+        >{f("Uredi")} </button>
 
         <button
           type="button"
@@ -92,8 +89,8 @@ function ClientCard({
           onClick={() => onToggleActive(client)}
         >
           {isArchived
-            ? 'Ponovno aktiviraj'
-            : 'Arhiviraj'}
+            ? f('Ponovno aktiviraj')
+            : f('Arhiviraj')}
         </button>
       </div>
     </div>
