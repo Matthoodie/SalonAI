@@ -1,15 +1,21 @@
+import { useLanguage } from '../../components/Language/LanguageProvider.jsx'
+import { requestText, requestError, requestNotice, requestDate, requestTimestamp, requestConfirmation } from '../../components/Language/requestText.js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { timeOffRequestApi, wasTimeOffRequestCancelled } from '../../api/timeOffRequestApi.js'
 import {
   canCancelRequest, validateCancellationNote,
-  timeOffTypes, requestStatuses, validateRequestDraft, formatRequestDate,
-  formatRequestTimestamp, requestActions, assertRequestPage, appendRequestPage,
+  timeOffTypes, requestStatuses, validateRequestDraft,
+  requestActions, assertRequestPage, appendRequestPage,
 } from './timeOffRequestView.js'
 import './TimeOffRequests.css'
 
 const emptyDraft = () => ({ startDate: '', endDate: '', type: 'vacation', note: '' })
 
 function TimeOffRequests({ authContext, employeeList, onApproved }) {
+  const { language } = useLanguage()
+  const tx = source => requestText(language, source)
+  const formatRequestDate = value => requestDate(language, value)
+  const formatRequestTimestamp = (value, zone) => requestTimestamp(language, value, zone)
   const [data, setData] = useState(null)
   const [status, setStatus] = useState('pending')
   const [loading, setLoading] = useState(true)
@@ -78,7 +84,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
       if (mounted.current && loadVersion.current === version && !wasTimeOffRequestCancelled(requestError)) {
         currentData.current = null
         setData(null)
-        setError(requestError.message)
+        setError(requestError)
       }
       return false
     } finally {
@@ -118,7 +124,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
       if (scheduleChanged) {
         try { await onApproved() } catch (refreshError) {
           if (mounted.current && !wasTimeOffRequestCancelled(refreshError)) {
-            setNotice(`${successMessage} Profil zaposlenika nije osvježen. Osvježite aplikaciju prije uređivanja njegova rasporeda.`)
+            setNotice([successMessage, 'Profil zaposlenika nije osvježen. Osvježite aplikaciju prije uređivanja njegova rasporeda.'])
           }
         }
       }
@@ -126,7 +132,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
     } catch (requestError) {
       if (!mounted.current || wasTimeOffRequestCancelled(requestError)) return
       if (created && ['SALON_PERMISSION_DENIED', 'TIME_OFF_EMPLOYEE_REQUIRED', 'TIME_OFF_EMPLOYEE_UNAVAILABLE'].includes(requestError.code)) {
-        setSubmissionBlocked(requestError.message)
+        setSubmissionBlocked(requestError)
       }
       if (requestError.statusCode === 403 || requestError.statusCode === 404 || requestError.statusCode === 409) {
         await loadPage()
@@ -138,7 +144,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
       } else if (['TIME_OFF_NETWORK_ERROR', 'TIME_OFF_RESPONSE_INVALID'].includes(requestError.code) || requestError.statusCode >= 500) {
         setUncertain(true)
       }
-      if (mounted.current) setError(requestError.message)
+      if (mounted.current) setError(requestError)
     } finally {
       busyRef.current = false
       if (mounted.current) setBusy(false)
@@ -154,15 +160,14 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
 
   function withdrawRequest(row) {
     if (!requestActions(row, data?.scope, authContext).withdraw) return
-    if (!window.confirm(`Povući zahtjev za ${formatRequestDate(row.start_date)} – ${formatRequestDate(row.end_date)}?`)) return
+    if (!window.confirm(requestConfirmation(language, 'withdraw', 'absence', row.employee_name, formatRequestDate(row.start_date), formatRequestDate(row.end_date)))) return
     runChange(signal => timeOffRequestApi.withdraw(row.id, { signal }), 'Zahtjev je povučen.')
   }
 
   function decideRequest(row, decision) {
     if (!requestActions(row, data?.scope, authContext).review) return
     if ([...decisionNote].length > 500) { setError('Napomena uz odluku može imati najviše 500 znakova.'); return }
-    const action = decision === 'approved' ? 'Odobriti' : 'Odbiti'
-    if (!window.confirm(`${action} zahtjev zaposlenika ${row.employee_name || 'za odabranu odsutnost'} za ${formatRequestDate(row.start_date)} – ${formatRequestDate(row.end_date)}?`)) return
+    if (!window.confirm(requestConfirmation(language, decision, 'absence', row.employee_name, formatRequestDate(row.start_date), formatRequestDate(row.end_date)))) return
     runChange(
       signal => timeOffRequestApi.decide(row.id, decision, decisionNote, { signal }),
       decision === 'approved' ? 'Zahtjev je odobren. Odsutnost je spremljena u raspored.' : 'Zahtjev je odbijen.',
@@ -174,7 +179,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
     if (!canCancelRequest(row, data?.scope, authContext)) return
     const validation = validateCancellationNote(decisionNote)
     if (validation) { setError(validation); return }
-    if (!window.confirm(`Otkazati odobrenu odsutnost zaposlenika ${row.employee_name || ''} za ${formatRequestDate(row.start_date)} – ${formatRequestDate(row.end_date)}? Odsutnost će biti uklonjena iz rasporeda, a povijest ostaje spremljena.`)) return
+    if (!window.confirm(requestConfirmation(language, 'cancel', 'absence', row.employee_name, formatRequestDate(row.start_date), formatRequestDate(row.end_date)))) return
     runChange(signal => timeOffRequestApi.cancel(row.id, decisionNote, { signal }),
       'Odobrena odsutnost je otkazana i uklonjena iz rasporeda.', { scheduleChanged: true })
   }
@@ -186,100 +191,100 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
     <section className="time-off-page" aria-labelledby="time-off-title">
       <header className="time-off-header">
         <div>
-          <p className="time-off-eyebrow">{salon.name || 'Odabrani salon'}</p>
-          <h1 id="time-off-title">Zahtjevi za odsutnost</h1>
-          <p>Zahtjev na čekanju ne blokira termine. Odsutnost ulazi u raspored nakon odobrenja.</p>
+          <p className="time-off-eyebrow">{salon.name || tx("Odabrani salon")}</p>
+          <h1 id="time-off-title">{tx("Zahtjevi za odsutnost")}</h1>
+          <p>{tx("Zahtjev na čekanju ne blokira termine. Odsutnost ulazi u raspored nakon odobrenja.")}</p>
         </div>
         <div className="time-off-actions">
           <button type="button" disabled={loading || busy} onClick={async () => {
             setNotice('')
             const loaded = await loadPage()
             if (loaded) setSubmissionBlocked('')
-          }}>Osvježi popis</button>
-          {hasEmployee && <button type="button" className="time-off-primary" disabled={disabled} onClick={() => setFormOpen(true)}>Novi zahtjev</button>}
+          }}>{tx("Osvježi popis")}</button>
+          {hasEmployee && <button type="button" className="time-off-primary" disabled={disabled} onClick={() => setFormOpen(true)}>{tx("Novi zahtjev")}</button>}
         </div>
       </header>
 
-      {!hasEmployee && <p className="time-off-help">Slanje vlastitog zahtjeva dostupno je računima povezanima s aktivnim profilom zaposlenika.</p>}
-      {notice && <p role="status" className="time-off-notice">{notice}</p>}
-      {error && <p role="alert" className="time-off-error">{error}</p>}
-      {uncertain && <p className="time-off-help">Prije nove radnje kliknite „Osvježi popis” i provjerite je li prethodna promjena spremljena.</p>}
-      {busy && <p role="status">Spremanje promjene…</p>}
+      {!hasEmployee && <p className="time-off-help">{tx("Slanje vlastitog zahtjeva dostupno je računima povezanima s aktivnim profilom zaposlenika.")}</p>}
+      {notice && <p role="status" className="time-off-notice">{requestNotice(language, notice)}</p>}
+      {error && <p role="alert" className="time-off-error">{requestError(language, error)}</p>}
+      {uncertain && <p className="time-off-help">{tx("Prije nove radnje kliknite „Osvježi popis” i provjerite je li prethodna promjena spremljena.")}</p>}
+      {busy && <p role="status">{tx("Spremanje promjene…")}</p>}
 
       {formOpen && hasEmployee && (
         <form className="time-off-panel" onSubmit={sendRequest}>
-          <h2 ref={formHeading} tabIndex={-1}>Novi zahtjev za {ownEmployee.name}</h2>
-          {submissionBlocked && <p role="alert" className="time-off-error">{submissionBlocked}</p>}
+          <h2 ref={formHeading} tabIndex={-1}>{tx("Novi zahtjev za")} {ownEmployee.name}</h2>
+          {submissionBlocked && <p role="alert" className="time-off-error">{requestError(language, submissionBlocked)}</p>}
           <fieldset disabled={disabled || Boolean(submissionBlocked)}>
-            <legend className="time-off-sr-only">Podaci zahtjeva</legend>
+            <legend className="time-off-sr-only">{tx("Podaci zahtjeva")}</legend>
             <div className="time-off-form-grid">
-              <label>Od datuma<input type="date" required value={draft.startDate} onChange={event => setDraft(current => ({ ...current, startDate: event.target.value }))} /></label>
-              <label>Do datuma<input type="date" required min={draft.startDate || undefined} value={draft.endDate} onChange={event => setDraft(current => ({ ...current, endDate: event.target.value }))} /></label>
-              <label>Vrsta odsutnosti<select value={draft.type} onChange={event => setDraft(current => ({ ...current, type: event.target.value }))}>
-                {Object.entries(timeOffTypes).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              <label>{tx("Od datuma")}<input type="date" required value={draft.startDate} onChange={event => setDraft(current => ({ ...current, startDate: event.target.value }))} /></label>
+              <label>{tx("Do datuma")}<input type="date" required min={draft.startDate || undefined} value={draft.endDate} onChange={event => setDraft(current => ({ ...current, endDate: event.target.value }))} /></label>
+              <label>{tx("Vrsta odsutnosti")}<select value={draft.type} onChange={event => setDraft(current => ({ ...current, type: event.target.value }))}>
+                {Object.entries(timeOffTypes).map(([value, label]) => <option key={value} value={value}>{tx(label)}</option>)}
               </select></label>
             </div>
-            <label>Napomena (neobavezno)<textarea rows={3} maxLength={500} value={draft.note} onChange={event => setDraft(current => ({ ...current, note: event.target.value }))} /></label>
-            <p className="time-off-help">Oba datuma uključena su u odsutnost. Ne unosite medicinske nalaze ni druge nepotrebne osjetljive podatke.</p>
-            <button type="submit" className="time-off-primary">Pošalji zahtjev</button>
+            <label>{tx("Napomena (neobavezno)")}<textarea rows={3} maxLength={500} value={draft.note} onChange={event => setDraft(current => ({ ...current, note: event.target.value }))} /></label>
+            <p className="time-off-help">{tx("Oba datuma uključena su u odsutnost. Ne unosite medicinske nalaze ni druge nepotrebne osjetljive podatke.")}</p>
+            <button type="submit" className="time-off-primary">{tx("Pošalji zahtjev")}</button>
           </fieldset>
           <button type="button" disabled={busy} onClick={() => {
             const changed = draft.startDate || draft.endDate || draft.note || draft.type !== 'vacation'
-            if (changed && !window.confirm('Odbaciti nespremljeni zahtjev?')) return
+            if (changed && !window.confirm(tx('Odbaciti nespremljeni zahtjev?'))) return
             setDraft(emptyDraft()); setFormOpen(false)
-          }}>Zatvori obrazac</button>
+          }}>{tx("Zatvori obrazac")}</button>
         </form>
       )}
 
       <div className="time-off-toolbar">
         <div>
-          <h2>{data?.scope === 'salon' ? 'Zahtjevi salona' : 'Moji zahtjevi'}</h2>
-          <p className="time-off-help">{data?.scope === 'salon' ? 'Pregled i odluke za zaposlenike odabranog salona.' : 'Zahtjevi koje ste poslali u odabranom salonu.'}</p>
+          <h2>{data?.scope === 'salon' ? tx("Zahtjevi salona") : tx("Moji zahtjevi")}</h2>
+          <p className="time-off-help">{data?.scope === 'salon' ? tx("Pregled i odluke za zaposlenike odabranog salona.") : tx("Zahtjevi koje ste poslali u odabranom salonu.")}</p>
         </div>
-        <label>Status<select value={status} disabled={loading || busy} onChange={event => {
+        <label>{tx("Status")}<select value={status} disabled={loading || busy} onChange={event => {
           setStatus(event.target.value); setReviewId(null); setDecisionNote('')
         }}>
-          <option value="">Svi statusi</option>
-          {Object.entries(requestStatuses).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          <option value="">{tx("Svi statusi")}</option>
+          {Object.entries(requestStatuses).map(([value, label]) => <option key={value} value={value}>{tx(label)}</option>)}
         </select></label>
       </div>
 
-      {loading && <p role="status">Učitavanje zahtjeva…</p>}
+      {loading && <p role="status">{tx("Učitavanje zahtjeva…")}</p>}
       {!loading && data && (
         <>
-          {data.requests.length === 0 && <div className="time-off-empty">Nema zahtjeva za odabrani status.</div>}
+          {data.requests.length === 0 && <div className="time-off-empty">{tx("Nema zahtjeva za odabrani status.")}</div>}
           <div className="time-off-list">
             {data.requests.map(row => {
               const actions = requestActions(row, data.scope, authContext)
               const canCancel = canCancelRequest(row, data.scope, authContext)
               return (
-                <article key={row.id} className="time-off-panel" aria-label={`Zahtjev ${row.id}`}>
+                <article key={row.id} className="time-off-panel" aria-label={`${tx("Zahtjev")} ${row.id}`}>
                   <div className="time-off-card-heading">
-                    <div><h3>{row.employee_name || 'Zaposlenik'} · {timeOffTypes[row.type]}</h3><p>{formatRequestDate(row.start_date)} – {formatRequestDate(row.end_date)}</p></div>
-                    <span className={`time-off-status time-off-status-${row.status}`}>{requestStatuses[row.status]}</span>
+                    <div><h3>{row.employee_name || tx("Zaposlenik")} · {tx(timeOffTypes[row.type])}</h3><p>{formatRequestDate(row.start_date)} – {formatRequestDate(row.end_date)}</p></div>
+                    <span className={`time-off-status time-off-status-${row.status}`}>{tx(requestStatuses[row.status])}</span>
                   </div>
-                  <p className="time-off-help">Zahtjev #{row.id} · Poslano {formatRequestTimestamp(row.created_at, timezone)}</p>
-                  {row.note && <p className="time-off-note"><strong>Napomena:</strong> {row.note}</p>}
-                  {row.decided_at && <p className="time-off-help">Odluka: {formatRequestTimestamp(row.decided_at, timezone)}</p>}
-                  {row.decision_note && <p className="time-off-note"><strong>Napomena uz odluku:</strong> {row.decision_note}</p>}
-                  {row.cancelled_at && <p className="time-off-help">Otkazano: {formatRequestTimestamp(row.cancelled_at, timezone)} · {row.cancellation_actor_role === 'owner' ? 'Vlasnik' : 'Administrator'} (korisnik #{row.cancelled_by_user_id})</p>}
-                  {row.cancellation_note && <p className="time-off-note"><strong>Razlog otkazivanja:</strong> {row.cancellation_note}</p>}
-                  {row.withdrawn_at && <p className="time-off-help">Povučeno: {formatRequestTimestamp(row.withdrawn_at, timezone)}</p>}
+                  <p className="time-off-help">{tx("Zahtjev")} #{row.id} · {tx("Poslano")} {formatRequestTimestamp(row.created_at, timezone)}</p>
+                  {row.note && <p className="time-off-note"><strong>{tx("Napomena:")}</strong> {row.note}</p>}
+                  {row.decided_at && <p className="time-off-help">{tx("Odluka:")} {formatRequestTimestamp(row.decided_at, timezone)}</p>}
+                  {row.decision_note && <p className="time-off-note"><strong>{tx("Napomena uz odluku:")}</strong> {row.decision_note}</p>}
+                  {row.cancelled_at && <p className="time-off-help">{tx("Otkazano:")} {formatRequestTimestamp(row.cancelled_at, timezone)} · {row.cancellation_actor_role === 'owner' ? tx("Vlasnik") : tx("Administrator")} ({tx("korisnik")} #{row.cancelled_by_user_id})</p>}
+                  {row.cancellation_note && <p className="time-off-note"><strong>{tx("Razlog otkazivanja:")}</strong> {row.cancellation_note}</p>}
+                  {row.withdrawn_at && <p className="time-off-help">{tx("Povučeno:")} {formatRequestTimestamp(row.withdrawn_at, timezone)}</p>}
                   <div className="time-off-actions">
-                    {actions.withdraw && <button type="button" disabled={disabled} onClick={() => withdrawRequest(row)}>Povuci zahtjev</button>}
+                    {actions.withdraw && <button type="button" disabled={disabled} onClick={() => withdrawRequest(row)}>{tx("Povuci zahtjev")}</button>}
                     {(actions.review || canCancel) && String(reviewId) !== String(row.id) && <button type="button" disabled={disabled} onClick={() => {
-                      if (decisionNote && !window.confirm('Odbaciti napomenu uz prethodnu odluku?')) return
+                      if (decisionNote && !window.confirm(tx('Odbaciti napomenu uz prethodnu odluku?'))) return
                       setReviewId(row.id); setDecisionNote('')
-                    }}>{canCancel ? 'Otkaži odobrenu odsutnost' : 'Pregledaj i odluči'}</button>}
+                    }}>{canCancel ? tx("Otkaži odobrenu odsutnost") : tx("Pregledaj i odluči")}</button>}
                   </div>
                   {(actions.review || canCancel) && String(reviewId) === String(row.id) && (
                     <div className="time-off-review">
-                      <label>{canCancel ? 'Razlog otkazivanja (obavezno)' : 'Napomena uz odluku (neobavezno)'}<textarea required={canCancel} ref={reviewField} rows={3} maxLength={500} disabled={disabled} value={decisionNote} onChange={event => setDecisionNote(event.target.value)} /></label>
+                      <label>{canCancel ? tx("Razlog otkazivanja (obavezno)") : tx("Napomena uz odluku (neobavezno)")}<textarea required={canCancel} ref={reviewField} rows={3} maxLength={500} disabled={disabled} value={decisionNote} onChange={event => setDecisionNote(event.target.value)} /></label>
                       <div className="time-off-actions">
-                        {canCancel ? <button type="button" className="time-off-reject" disabled={disabled} onClick={() => cancelRequest(row)}>Potvrdi otkazivanje</button> : <>
-                        <button type="button" className="time-off-primary" disabled={disabled} onClick={() => decideRequest(row, 'approved')}>Odobri</button>
-                        <button type="button" className="time-off-reject" disabled={disabled} onClick={() => decideRequest(row, 'rejected')}>Odbij</button></>}
-                        <button type="button" disabled={busy} onClick={() => { setReviewId(null); setDecisionNote('') }}>Odustani</button>
+                        {canCancel ? <button type="button" className="time-off-reject" disabled={disabled} onClick={() => cancelRequest(row)}>{tx("Potvrdi otkazivanje")}</button> : <>
+                        <button type="button" className="time-off-primary" disabled={disabled} onClick={() => decideRequest(row, 'approved')}>{tx("Odobri")}</button>
+                        <button type="button" className="time-off-reject" disabled={disabled} onClick={() => decideRequest(row, 'rejected')}>{tx("Odbij")}</button></>}
+                        <button type="button" disabled={busy} onClick={() => { setReviewId(null); setDecisionNote('') }}>{tx("Odustani")}</button>
                       </div>
                     </div>
                   )}
@@ -287,7 +292,7 @@ function TimeOffRequests({ authContext, employeeList, onApproved }) {
               )
             })}
           </div>
-          {data.nextBeforeId !== null && <button type="button" disabled={disabled} onClick={() => loadPage({ append: true, beforeId: data.nextBeforeId })}>Učitaj starije zahtjeve</button>}
+          {data.nextBeforeId !== null && <button type="button" disabled={disabled} onClick={() => loadPage({ append: true, beforeId: data.nextBeforeId })}>{tx("Učitaj starije zahtjeve")}</button>}
         </>
       )}
     </section>

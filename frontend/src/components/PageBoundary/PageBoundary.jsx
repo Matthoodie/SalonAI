@@ -1,3 +1,5 @@
+import { useLanguage } from '../Language/LanguageProvider.jsx'
+import { requestText } from '../Language/requestText.js'
 import { Component, Suspense } from 'react'
 import { useLocation } from 'react-router-dom'
 
@@ -21,6 +23,7 @@ class PageErrorBoundary extends Component {
   }
 
   render() {
+    const tx = source => requestText(this.props.language, source)
     if (this.state.hasError) {
       return (
         <section
@@ -28,25 +31,22 @@ class PageErrorBoundary extends Component {
           style={{ padding: '20px 0' }}
         >
           <h2 id="page-error-title">
-            Stranicu nije moguće prikazati
+            {tx("Stranicu nije moguće prikazati")}
           </h2>
 
           <p role="alert">
-            Provjerite internetsku vezu pa ponovno učitajte
-            aplikaciju. Možete pokušati otvoriti i drugu
-            stranicu putem bočnog izbornika.
+            {tx("Provjerite internetsku vezu pa ponovno učitajte aplikaciju. Možete pokušati otvoriti i drugu stranicu putem bočnog izbornika.")}
           </p>
 
           <p>
-            Ponovno učitavanje aplikacije odbacit će
-            nespremljene unose.
+            {tx("Ponovno učitavanje aplikacije odbacit će nespremljene unose.")}
           </p>
 
           <button
             type="button"
             onClick={() => window.location.reload()}
           >
-            Ponovno učitaj aplikaciju
+            {tx("Ponovno učitaj aplikaciju")}
           </button>
         </section>
       )
@@ -58,9 +58,10 @@ class PageErrorBoundary extends Component {
 
 function PageBoundary({ children }) {
   const location = useLocation()
+  const { language } = useLanguage()
 
   return (
-    <PageErrorBoundary key={location.pathname}>
+    <PageErrorBoundary key={location.pathname} language={language}>
       <Suspense
         fallback={
           <div
@@ -68,7 +69,7 @@ function PageBoundary({ children }) {
             aria-live="polite"
             style={{ padding: '20px 0' }}
           >
-            Učitavanje stranice…
+            {requestText(language, 'Učitavanje stranice…')}
           </div>
         }
       >

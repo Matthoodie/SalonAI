@@ -27,7 +27,7 @@ function SignedInSalonApp() {
   if (!isLoaded) {
     return (
       <p role="status">
-        Učitavanje korisničkog računa…
+        <span lang="hr">Učitavanje korisničkog računa…</span> / <span lang="en">Loading your account…</span>
       </p>
     )
   }

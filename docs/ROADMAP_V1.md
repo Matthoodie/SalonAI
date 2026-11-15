@@ -416,3 +416,20 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Next: 1G absence/blocked requests and global locale QA. Nine planned installation packages.
 - No migration/dependency/config changes. Public creation remains controlled.
 - Bundle optimization, WhatsApp/agreed AI, mobile/PWA/store/production, pilot and billing remain tracked.
+
+## HR/EN — phase 1G (ready for local acceptance)
+
+- 1F accepted with 275/275 tests and manual checks; 63d3cfb pushed, working tree clean.
+- 1G translates absence/blocked-time requests, validation, conflict/uncertainty messages,
+  confirmations and audit metadata; retains canonical payloads and salon-zone semantics.
+- Global source audit addresses salon loading/access/switching, page error/loading UI,
+  bilingual pre-identity loading and obsolete onboarding translation-progress notices.
+- 283 frontend tests, full App JSX compilation, mocked React request/error-boundary
+  scenarios and installer safety checks passed. User Vite/live/manual acceptance pending.
+- See LANGUAGE_PHASE1G.md. No migration, new dependency or configuration change.
+- Nine planned installation packages delivered through 1G; final cross-page acceptance
+  still required before declaring the HR/EN phase closed. Browser-native dialogs and
+  Clerk authentication UI remain distinct; user-entered content is not translated.
+- Next: close HR/EN regression findings, then continue the main product roadmap.
+- Bundle optimization, WhatsApp/agreed AI, mobile/PWA/store/production, free pilot and
+  billing remain tracked. Public salon creation remains controlled.

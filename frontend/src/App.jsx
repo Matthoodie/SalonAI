@@ -1,3 +1,5 @@
+import { useLanguage } from './components/Language/LanguageProvider.jsx'
+import { requestText, requestError } from './components/Language/requestText.js'
 import WorkspaceSelector from './components/Header/WorkspaceSelector'
 import {
   lazy,
@@ -151,6 +153,7 @@ function isCancelledRequest(error) {
 }
 
 function SalonWorkspace({ authContext, onInvitationAccepted }) {
+  const { language } = useLanguage()
   const salonId = authContext.current_salon.id
   const salonTimezone = authContext.current_salon.timezone
 
@@ -327,7 +330,7 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
   if (isLoading) {
     return (
       <p role="status">
-        Učitavanje podataka salona…
+        {requestText(language, 'Učitavanje podataka salona…')}
       </p>
     )
   }
@@ -335,13 +338,13 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
   if (loadError) {
     return (
       <div>
-        <p role="alert">{loadError}</p>
+        <p role="alert">{requestError(language, loadError)}</p>
 
         <button
           type="button"
           onClick={() => setReloadToken((value) => value + 1)}
         >
-          Pokušaj ponovno
+          {requestText(language, 'Pokušaj ponovno')}
         </button>
       </div>
     )
@@ -412,8 +415,7 @@ function SalonWorkspace({ authContext, onInvitationAccepted }) {
               />
             ) : (
               <p role="alert">
-                Nemate pristup bazi klijenata.
-                Klijenta možete pronaći pri dodavanju termina.
+                {requestText(language, 'Nemate pristup bazi klijenata. Klijenta možete pronaći pri dodavanju termina.')}
               </p>
             )
           }
@@ -648,7 +650,7 @@ function App() {
     if (
       authContext &&
       !window.confirm(
-        'Promjenom salona zatvaraju se otvoreni obrasci. Nespremljeni unosi neće se prenijeti. Nastaviti?'
+        requestText(document.documentElement.lang, 'Promjenom salona zatvaraju se otvoreni obrasci. Nespremljeni unosi neće se prenijeti. Nastaviti?')
       )
     ) {
       return
