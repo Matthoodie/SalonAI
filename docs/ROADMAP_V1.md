@@ -433,3 +433,19 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Next: close HR/EN regression findings, then continue the main product roadmap.
 - Bundle optimization, WhatsApp/agreed AI, mobile/PWA/store/production, free pilot and
   billing remain tracked. Public salon creation remains controlled.
+
+## Accepted HR/EN and pre-WhatsApp sequence — 2026-11-15
+
+- 1G accepted by user: 283/283 tests, full manual HR/EN checks; 29033f4 pushed cleanly.
+- A: shared localised file picker for pricelist and pet photos; ready for local acceptance.
+  See FILE_PICKER_V1.md. Native OS dialog language is outside application translations.
+- B: rebrand visible product to ZRIHTAN; preserve internal keys and identifiers unless
+  explicitly migrated. Use original logo assets and update public branding systematically.
+- C: dashboard completed service value, future bookings value, averages, trends and
+  top services. Use stored snapshots; distinguish service value from actual payments.
+- D: capacity/utilisation and heatmap; confirm historical schedule availability first.
+- E: deterministic business insights with clear definitions and sufficient data.
+- Later statistics may use earlier stored facts; do not reconstruct missing historical
+  schedules as fact or display unavailable metrics as zero.
+- Then WhatsApp and remaining production/mobile/pilot/billing roadmap items.
+- Public salon creation remains controlled. Package A has no migration or dependencies.

@@ -1,3 +1,4 @@
+import FilePicker from '../FilePicker/FilePicker.jsx'
 import { useLanguage } from '../Language/LanguageProvider'
 import { clientText, clientError, clientDynamic } from '../Language/clientText.js'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -34,7 +35,7 @@ export function PetPhotoEditor({ pet, ownerActive, busy, onUpload, onRemove, onC
   const [confirm, setConfirm] = useState(false), [previewReady, setPreviewReady] = useState(false)
   const editorRef = useRef(null)
   useEffect(() => {
-    editorRef.current?.querySelector('input,button')?.focus({ preventScroll: true })
+    editorRef.current?.querySelector('button')?.focus({ preventScroll: true })
     editorRef.current?.scrollIntoView?.({ block: 'nearest', behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
   }, [])
   const id = useId(), canUpload = ownerActive && pet.active
@@ -47,13 +48,13 @@ export function PetPhotoEditor({ pet, ownerActive, busy, onUpload, onRemove, onC
   return <div ref={editorRef} className="pet-photo-editor" role="group" aria-labelledby={`${id}-title`}>
     <h4 id={`${id}-title`}>{f("Fotografija:")} {pet.name}</h4>
     <p>{f("JPEG ili PNG do 8 MB i 24 megapiksela. Fotografiju ćemo smanjiti za prikaz profila i ukloniti podatke o lokaciji.")}</p>
-    {canUpload ? <label htmlFor={id}>{f("Odaberi fotografiju")}<input id={id} type="file" accept="image/jpeg,image/png" disabled={busy}
-      aria-invalid={error ? 'true' : undefined} aria-describedby={error ? `${id}-error` : undefined}
-      onChange={event => {
-        const selected = event.target.files?.[0], message = photoFileError(selected)
-        setPreviewReady(false); setError(message); setConfirm(false); setFile(message ? null : selected)
-        event.target.value = ''
-      }} /></label> : <p>{f("Za dodavanje ili zamjenu fotografije vlasnik i ljubimac moraju biti aktivni.")}</p>}
+    {canUpload ? <FilePicker id={id} label={f("Odaberi fotografiju")} file={file} accept="image/jpeg,image/png" disabled={busy}
+      invalid={Boolean(error)} describedBy={error ? `${id}-error` : undefined}
+      onSelect={selected => {
+        const message = photoFileError(selected)
+        if (message || selected !== file) setPreviewReady(false)
+        setError(message); setConfirm(false); setFile(message ? null : selected)
+      }} /> : <p>{f("Za dodavanje ili zamjenu fotografije vlasnik i ljubimac moraju biti aktivni.")}</p>}
     {error && <p className="pets-field-error" id={`${id}-error`} role="alert">{clientError(language,error)}</p>}
     {file && preview?.file === file && <figure className="pet-photo-preview"><img src={preview.url} alt={clientDynamic(language,'previewAlt',pet.name)}
       onLoad={event => {

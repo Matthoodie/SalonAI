@@ -1,3 +1,4 @@
+import FilePicker from '../FilePicker/FilePicker.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {serviceText,serviceError} from '../Language/serviceText.js'
 import { useEffect, useRef, useState } from 'react'
@@ -24,8 +25,8 @@ export default function PricelistRecognition({salonId,disabled,onBusyChange,onAp
     <h3 id="pricelist-recognition-title">{f("Prepoznaj cjenik s fotografije ili PDF-a")}</h3>
     <p>{f("JPEG ili PNG do 24 megapiksela, ili PDF do 5 stranica. Najviše 8 MB po datoteci. Dokument se šalje OpenAI servisu tek kada kliknete „Prepoznaj cjenik”. Obrada troši API kredite.")}</p>
     <p>{f("AI može pogriješiti. Provjerite cijene, varijante i trajanja prije potvrde uvoza. Ne šaljite dokumente s osobnim podacima klijenata.")}</p>
-    <label>{f("Datoteka cjenika")}<input type="file" accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" disabled={disabled||working}
-      onChange={e=>{const next=e.target.files?.[0];setResult(null);setMessage('');setFile(null);if(next){if(next.size>MAX_RECOGNITION_BYTES||!next.size){setMessage('Datoteka mora biti neprazna i manja od 8 MB.');e.target.value=''}else setFile(next)}}} /></label>
+    <FilePicker label={f("Datoteka cjenika")} file={file} accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf" disabled={disabled||working}
+      onSelect={next=>{setResult(null);setMessage('');setFile(null);if(next.size>MAX_RECOGNITION_BYTES||!next.size)setMessage('Datoteka mora biti neprazna i manja od 8 MB.');else setFile(next)}} />
     <button type="button" disabled={disabled||working||!file} onClick={recognize}>{working?f('Prepoznavanje…'):f('Prepoznaj cjenik')}</button>
     {working && <p role="status">{f("Obrada može trajati do 90 sekundi. Nemojte ponovno slati isti dokument.")}</p>}
     {message && <p role="alert" className="service-import-alert">{serviceError(language,message)}</p>}

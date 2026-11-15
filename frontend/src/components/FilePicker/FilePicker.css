@@ -1,0 +1,11 @@
+.app-file-picker { min-width:0; margin:16px 0; text-align:left; }
+.app-file-picker .app-file-picker-label { display:block; margin-bottom:8px; font-weight:600; color:var(--ui-text); }
+.app-file-picker .app-file-picker-control { display:flex; align-items:center; gap:12px; min-width:0; padding:12px; border:1px solid var(--ui-line); border-radius:12px; background:var(--ui-surface); }
+.app-file-picker .app-file-picker-control > button { flex:0 0 auto; margin:0; padding:10px 14px; min-height:44px; border:1px solid var(--ui-accent-line); border-radius:8px; background:var(--ui-accent-soft); color:var(--ui-accent); font:inherit; font-size:14px; font-weight:700; line-height:1.4; box-shadow:none; cursor:pointer; }
+.app-file-picker .app-file-picker-control > button:hover:not(:disabled) { border-color:var(--ui-accent); background:var(--ui-accent-soft); }
+.app-file-picker .app-file-picker-control > button:focus-visible { outline:3px solid var(--ui-accent); outline-offset:3px; }
+.app-file-picker .app-file-picker-control > button:disabled { cursor:not-allowed; opacity:.6; }
+.app-file-picker .app-file-picker-name { min-width:0; color:var(--ui-text); font-size:.95rem; line-height:1.5; overflow-wrap:anywhere; }
+.app-file-picker .app-file-picker-control[data-invalid] { border-color:var(--ui-danger, #dc2626); }
+.app-file-picker input[hidden] { display:none; }
+@media(max-width:480px) { .app-file-picker .app-file-picker-control { align-items:flex-start; flex-direction:column; } .app-file-picker .app-file-picker-control > button { max-width:100%; white-space:normal; } }
