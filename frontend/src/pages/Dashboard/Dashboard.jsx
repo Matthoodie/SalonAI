@@ -1,3 +1,4 @@
+import BusinessOverview from './BusinessOverview.jsx'
 import {useLanguage} from '../../components/Language/LanguageProvider'
 import {overviewText,overviewError,overviewLocale,overviewCount,overviewMoney,overviewDate,overviewStatus,overviewRecipient,overviewMissingPrices} from '../../components/Language/overviewText.js'
 import { useEffect, useState } from 'react'
@@ -88,10 +89,10 @@ export default function Dashboard({ appointmentList = [], clientList = [], salon
           : <p className="dashboard-period-note">{language==='en' ? (period==='custom' ? 'Choose a date, then click “Show period”.' : 'Choose the start and end dates, then click “Show period”.') : (period==='custom' ? 'Odaberite datum pa kliknite „Prikaži razdoblje”.' : 'Odaberite početni i završni datum pa kliknite „Prikaži razdoblje”.')}</p>}
       </section>
       {stats && <>
-        <section className="dashboard-metrics" aria-label={f("Statistika odabranog razdoblja")}>
+        {canManage ? <><BusinessOverview rows={appointmentList} range={range} timeZone={salonTimezone} now={now} /><div className="dashboard-status-counts">{cards.filter((_,i)=>[0,2,4,5].includes(i)).map(([title,value])=><span key={title}>{title}: <strong>{value}</strong></span>)}</div></> : <section className="dashboard-metrics" aria-label={f("Statistika odabranog razdoblja")}>
           {cards.map(([title, value, note], index) => <article className="dashboard-metric" key={index}><h2>{title}</h2><strong>{value}</strong><p>{note}</p></article>)}
-        </section>
-        {stats.missingPrices > 0 && <p className="dashboard-error" role="alert">{overviewMissingPrices(language,stats.missingPrices)}</p>}
+        </section>}
+        {!canManage && stats.missingPrices > 0 && <p className="dashboard-error" role="alert">{overviewMissingPrices(language,stats.missingPrices)}</p>}
         {stats.total === 0 && <p className="dashboard-empty-period">{f("U odabranom razdoblju nema evidentiranih termina.")}</p>}
       </>}
       {canManage && <p className="dashboard-client-summary">{f("Klijenti u učitanom popisu salona:")} <strong>{clientList.length}</strong>{f(". Ovaj broj ne ovisi o odabranom razdoblju.")}</p>}

@@ -1,8 +1,8 @@
 # ZRIHTAN — završni roadmap prve javne verzije
 
-Ažurirano: 15. studenoga 2026.
-Potvrđena polazna verzija: 9d7a6c2 (ujednačen HR/EN odabir datoteka).
-Aktualni paket: B — rebrand na ZRIHTAN; lokalni build i vizualno prihvaćanje slijede.
+Ažurirano: 16. studenoga 2026.
+Potvrđena polazna verzija: 2c4358b (rebrand na ZRIHTAN).
+Aktualni paket: C — poslovni dashboard; lokalni build i vizualno prihvaćanje slijede.
 
 ## Cilj prve verzije
 
@@ -459,3 +459,16 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - External Clerk/domain/email branding tracked separately in ZRIHTAN_REBRAND_V1.md.
 - Next C: dashboard values/trends/top services; D: capacity/heatmap; E: rule-based
   insights; then WhatsApp and remaining production/mobile/pilot/billing roadmap.
+
+## Business dashboard — package C
+
+- B accepted: 283/283, rebrand committed/pushed as 2c4358b; clean development branch.
+- C: completed value, future 30-calendar-date booking value, average completed value,
+  count, equal-length previous period, bounded trend with exact table, top-five services.
+- Owner/admin only new business overview; employee scope and existing schedules retained.
+- Uses existing full authorised appointment list and saved prices/items. See
+  DASHBOARD_BUSINESS_V1.md for exact definitions, incomplete data handling and limits.
+- 300/300 frontend tests and React/compilation checks passed; local Vite/visual acceptance next.
+- Move aggregates server-side before introducing pagination or materially larger datasets.
+- D capacity/heatmap requires a historical schedule review; E rule-based insights;
+  then WhatsApp and remaining production/mobile/pilot/billing roadmap.
