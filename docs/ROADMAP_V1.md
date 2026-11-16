@@ -1,8 +1,8 @@
-# SalonAI — završni roadmap prve javne verzije
+# ZRIHTAN — završni roadmap prve javne verzije
 
-Ažurirano: 12. studenoga 2026.
-Potvrđena polazna verzija: e5db279 (povijest termina ljubimca).
-Aktualni paket: Grooming 6 — neobavezna veličina i težina; lokalne korisničke provjere još slijede.
+Ažurirano: 15. studenoga 2026.
+Potvrđena polazna verzija: 9d7a6c2 (ujednačen HR/EN odabir datoteka).
+Aktualni paket: B — rebrand na ZRIHTAN; lokalni build i vizualno prihvaćanje slijede.
 
 ## Cilj prve verzije
 
@@ -449,3 +449,13 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
   schedules as fact or display unavailable metrics as zero.
 - Then WhatsApp and remaining production/mobile/pilot/billing roadmap items.
 - Public salon creation remains controlled. Package A has no migration or dependencies.
+
+## ZRIHTAN rebrand — package B
+
+- A accepted with 283/283 tests and manual checks; 9d7a6c2 pushed cleanly.
+- B adds the supplied logo and consistent ZRIHTAN wordmark to application entry,
+  welcome, onboarding, sidebar and mobile header; updates browser title/favicon.
+- Existing data, personal preferences, auth identity and controlled creation retained.
+- External Clerk/domain/email branding tracked separately in ZRIHTAN_REBRAND_V1.md.
+- Next C: dashboard values/trends/top services; D: capacity/heatmap; E: rule-based
+  insights; then WhatsApp and remaining production/mobile/pilot/billing roadmap.

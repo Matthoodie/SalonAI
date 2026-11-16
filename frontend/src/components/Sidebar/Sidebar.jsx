@@ -1,3 +1,4 @@
+import Brand from '../Brand/Brand.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {shellText} from '../Language/shellText.js'
 import { NavLink } from 'react-router-dom'
@@ -28,7 +29,7 @@ function Sidebar({
 >
   ×
 </button>
-      <h1>SalonAI</h1>
+      <h1><Brand /></h1>
 
       <nav>
         <ul>

@@ -1,3 +1,4 @@
+import Brand from '../Brand/Brand.jsx'
 import { useState } from 'react'
 import { LanguageProvider, useLanguage } from '../Language/LanguageProvider'
 import LanguageSelector from '../Language/LanguageSelector'
@@ -24,7 +25,7 @@ function WelcomeScreenContent({ user, workspaces, busy, error, onRetry, onSelect
   return (
     <div className="salon-welcome">
       <header className="salon-welcome-header">
-        <span className="salon-welcome-brand">SalonAI</span>
+        <span className="salon-welcome-brand"><Brand /></span>
         {user && <LanguageSelector />}
         <button type="button" className="salon-welcome-secondary" onClick={signOut} disabled={signingOut}>
           {signingOut ? t('welcome.signingOut') : t('welcome.signOut')}

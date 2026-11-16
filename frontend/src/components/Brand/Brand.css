@@ -1,0 +1,7 @@
+.zrihtan-brand.zrihtan-brand { display:inline-flex; align-items:center; justify-content:flex-start; gap:10px; flex:0 0 auto; min-width:0; max-width:100%; vertical-align:middle; color:inherit; line-height:1; }
+.zrihtan-brand .zrihtan-brand-mark { display:block; flex:0 0 auto; width:36px; height:36px; max-width:none; object-fit:contain; border-radius:10px; }
+.zrihtan-brand .zrihtan-brand-name { display:block; flex:0 0 auto; min-width:0; font-family:inherit; font-size:24px; font-weight:750; letter-spacing:.035em; line-height:1.2; white-space:nowrap; color:inherit; }
+.zrihtan-brand[data-compact] .zrihtan-brand-mark { width:26px; height:26px; border-radius:7px; }
+.zrihtan-brand[data-compact] .zrihtan-brand-name { font-size:19px; }
+.app-sidebar h1:has(.zrihtan-brand) { padding-left:10px; }
+@media (max-width:760px) { .app-sidebar h1:has(.zrihtan-brand) { padding-left:0; padding-right:36px; } .app-sidebar .zrihtan-brand { gap:8px; } .app-sidebar .zrihtan-brand-mark { width:30px; height:30px; } .app-sidebar .zrihtan-brand-name { font-size:22px; } }

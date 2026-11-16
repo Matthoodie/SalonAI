@@ -1,3 +1,4 @@
+import Brand from '../Brand/Brand.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {flowText,flowError,flowStepTitle} from '../Language/flowText.js'
 import {LanguageProvider} from '../Language/LanguageProvider'
@@ -71,7 +72,7 @@ function OnboardingWizardContent({authContext,onRefresh,workspaces=[],onSelect,a
  const hint=key=>fieldErrors[key]&&<span id={'onboarding-'+key+'-error'} className="onboarding-field-error">{f(fieldErrors[key])}</span>
  const examples=serviceExamples(draft?.business_type)
 
- return <div className="salon-onboarding"><header className="onboarding-header"><strong>SalonAI</strong><LanguageSelector /><span>{salon.name}</span>{workspaces.length>1&&<label>{f("Salon")}<select aria-label={f("Odabrani salon")} disabled={busy} value={String(salon.id)} onChange={e=>onSelect(e.target.value)}>{workspaces.map(w=><option key={w.salon.id} value={String(w.salon.id)}>{w.salon.name}</option>)}</select></label>}<button type="button" onClick={signOut} disabled={busy}>{f("Odjavi se")}</button></header>
+ return <div className="salon-onboarding"><header className="onboarding-header"><strong><Brand /></strong><LanguageSelector /><span>{salon.name}</span>{workspaces.length>1&&<label>{f("Salon")}<select aria-label={f("Odabrani salon")} disabled={busy} value={String(salon.id)} onChange={e=>onSelect(e.target.value)}>{workspaces.map(w=><option key={w.salon.id} value={String(w.salon.id)}>{w.salon.name}</option>)}</select></label>}<button type="button" onClick={signOut} disabled={busy}>{f("Odjavi se")}</button></header>
  <main className="onboarding-main"><p className="onboarding-eyebrow">{f("POSTAVLJANJE SALONA")}</p>
  <h1 ref={heading} tabIndex={-1}>{finished?f('Vaš salon je spreman'):owner?flowStepTitle(language,labels[steps.indexOf(step)],steps.indexOf(step)+1,5):f('Salon se priprema za rad')}</h1>
  {error&&<p className="onboarding-error" role="alert">{flowError(language,error)}</p>}

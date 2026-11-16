@@ -1,3 +1,4 @@
+import Brand from './components/Brand/Brand.jsx'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -52,7 +53,10 @@ function SalonAIAuthGate() {
             padding: '24px',
           }}
         >
-          <SignIn routing="hash" />
+          <div style={{ display: 'grid', gap: '24px', justifyItems: 'center', maxWidth: '100%' }}>
+            <Brand />
+            <SignIn routing="hash" />
+          </div>
         </main>
       }
     >

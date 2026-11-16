@@ -1,3 +1,4 @@
+import Brand from '../Brand/Brand.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {shellText} from '../Language/shellText.js'
 import {LanguageProvider} from '../Language/LanguageProvider'
@@ -44,7 +45,7 @@ function LayoutContent({
 
     <main className="app-main">
       <div className="mobile-topbar">
-        <strong>SalonAI</strong>
+        <strong><Brand compact /></strong>
 
         <button
           type="button"
