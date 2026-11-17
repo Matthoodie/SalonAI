@@ -1,8 +1,8 @@
 # ZRIHTAN — završni roadmap prve javne verzije
 
 Ažurirano: 16. studenoga 2026.
-Potvrđena polazna verzija: 2c4358b (rebrand na ZRIHTAN).
-Aktualni paket: C — poslovni dashboard; lokalni build i vizualno prihvaćanje slijede.
+Potvrđena polazna verzija: 8387838 (poslovni dashboard).
+Aktualni paket: D1 — temelj izračuna planirane popunjenosti; bez API-ja i UI-ja.
 
 ## Cilj prve verzije
 
@@ -472,3 +472,15 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - Move aggregates server-side before introducing pagination or materially larger datasets.
 - D capacity/heatmap requires a historical schedule review; E rule-based insights;
   then WhatsApp and remaining production/mobile/pilot/billing roadmap.
+
+## Kapacitet — D1, temelj planirane popunjenosti
+
+- C prihvaćen: 300/300 frontend testova, uspješan ručni pregled, commit/push 8387838.
+- Pregled zamjene rasporeda ne potvrđuje dostupnost povijesnih verzija radnog vremena.
+- D1 dodaje čisti intervalni izračun kapaciteta, zauzeća, slobodnog vremena i anomalija.
+- 30 novih backend testova; bez baze, migracija, API-ja, novih ovisnosti i UI promjena.
+- D1 još nije integriran u aplikaciju. Upute i ugovor: DASHBOARD_CAPACITY_PHASE1.md.
+- D2 slijedi: autorizirano čitanje baze, lokalni raspored → UTC, API/DB/DST testovi,
+  HR/EN prikaz planirane popunjenosti i toplinska mapa s tabličnom alternativom.
+- E: deterministički poslovni uvidi; zatim WhatsApp i ostali produkcijski/pilot/billing/mobile koraci.
+- Povijesnu popunjenost ne izvoditi iz današnjeg rasporeda; javno kreiranje ostaje kontrolirano.
