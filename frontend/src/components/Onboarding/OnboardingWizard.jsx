@@ -1,3 +1,4 @@
+import BusinessTypeSelect from '../BusinessType/BusinessTypeSelect.jsx'
 import Brand from '../Brand/Brand.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {flowText,flowError,flowStepTitle} from '../Language/flowText.js'
@@ -81,7 +82,7 @@ function OnboardingWizardContent({authContext,onRefresh,workspaces=[],onSelect,a
  {(locked||!data)&&<section className="onboarding-panel">{busy?<p role="status">{f("Učitavanje postavljanja…")}</p>:<button type="button" onClick={()=>setReload(v=>v+1)}>{f("Učitaj spremljeno postavljanje")}</button>}</section>}
  {data&&!locked&&<>
  <section className="onboarding-panel">
- {step==='salon'&&<div className="onboarding-fields"><h2>{salon.name}</h2><p>{f("Vremenska zona:")} {salon.timezone}{f('. Naziv i zona potvrđeni su pri kreiranju salona.')}</p><label>{f("Djelatnost (obavezno)")}<select {...invalid('business_type')} disabled={busy} value={draft.business_type||''} onChange={e=>field('business_type',e.target.value)}><option value="">{f("Odaberite")}</option><option value="hair">{f("Frizerski salon")}</option><option value="grooming">{f("Njega ljubimaca — grooming")}</option><option value="mixed">{f("Više djelatnosti")}</option><option value="other">{f("Drugo")}</option></select>{hint('business_type')}</label><label>{f("Lokacija (neobavezno)")}<input disabled={busy} maxLength={250} value={draft.location} onChange={e=>field('location',e.target.value)}/></label></div>}
+ {step==='salon'&&<div className="onboarding-fields"><h2>{salon.name}</h2><p>{f("Vremenska zona:")} {salon.timezone}{f('. Naziv i zona potvrđeni su pri kreiranju salona.')}</p><label>{f("Djelatnost (obavezno)")}<BusinessTypeSelect {...invalid('business_type')} disabled={busy} value={draft.business_type||''} onChange={e=>field('business_type',e.target.value)}/>{hint('business_type')}</label><label>{f("Lokacija (neobavezno)")}<input disabled={busy} maxLength={250} value={draft.location} onChange={e=>field('location',e.target.value)}/></label></div>}
  {step==='team'&&<div className="onboarding-fields"><h2>{f("Postavite svoj tim")}</h2><p>{f("Najprije odaberite kako radite, zatim dodajte osobe koje će izvoditi usluge.")}</p>
  <div className="onboarding-team-choices">
  <label>{f("Način rada (obavezno)")}<select {...invalid('team_mode')} disabled={busy} value={draft.team_mode||''} onChange={e=>field('team_mode',e.target.value||null)}><option value="">{f("Odaberite")}</option><option value="solo">{f("Radim samostalno")}</option><option value="team">{f("Radimo kao tim")}</option></select>{hint('team_mode')}<small>{f("Samostalno: jedan izvođač. Tim: jedna ili više osoba, uz vlasnika koji može samo upravljati salonom.")}</small></label>

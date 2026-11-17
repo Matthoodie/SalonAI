@@ -1,8 +1,8 @@
 # ZRIHTAN — završni roadmap prve javne verzije
 
-Ažurirano: 16. studenoga 2026.
-Potvrđena polazna verzija: 8387838 (poslovni dashboard).
-Aktualni paket: D1 — temelj izračuna planirane popunjenosti; bez API-ja i UI-ja.
+Ažurirano: 17. studenoga 2026.
+Potvrđena polazna verzija: 9b0eb66 (temelj kapaciteta D1).
+Aktualni paket: D2 vizualna dorada i dvije djelatnosti; lokalni prihvat dorade slijedi.
 
 ## Cilj prve verzije
 
@@ -484,3 +484,31 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
   HR/EN prikaz planirane popunjenosti i toplinska mapa s tabličnom alternativom.
 - E: deterministički poslovni uvidi; zatim WhatsApp i ostali produkcijski/pilot/billing/mobile koraci.
 - Povijesnu popunjenost ne izvoditi iz današnjeg rasporeda; javno kreiranje ostaje kontrolirano.
+
+## Kapacitet — D2, integracija planirane popunjenosti
+
+- D1 prihvaćen: 30/30, commit/push 9b0eb66; čista grana development.
+- D2 povezuje efektivne rasporede, iznimke, odsutnosti, blokade i rezervacije u
+  autoriziranom, konzistentnom read-only snimku baze; bez nove migracije.
+- Owner/admin pregled za 7/14/30 lokalnih datuma od sada: sati, postoci, zaposlenici,
+  toplinska mapa i brojčana tablica; HR/EN, teme, prazna stanja i obrada pogrešaka.
+- 54 ciljane backend unit/API i 310 frontend provjera; 7 novih DB scenarija
+  čeka lokalni PostgreSQL verify zajedno s cijelim backend suiteom i Vite buildom.
+- Ugovor, DST, ograničenja, ovlasti i prihvat: DASHBOARD_CAPACITY_PHASE2.md.
+- Povijesne smjene se ne izmišljaju. Promjene rasporeda vrijede za novi izračun plana.
+- Slijedi E: poslovni uvidi prema pravilima; zatim WhatsApp, produkcija/pilot/billing/mobile.
+- Javno kreiranje salona ostaje u postojećem kontroliranom režimu.
+
+## D2 — prihvaćen izračun, dorada prikaza
+
+- Korisnik potvrdio 54/54, TEST migracije, 7/7 PostgreSQL, 975/975 backend i
+  310/310 frontend; poslovni izračun i ostale kontrole funkcionalni.
+- Dorada: do sedam vidljivih dana, dnevni detalji, sati/minute, kartice na mobitelu,
+  bez vodoravnog klizača; ukupni pokazatelji i dalje pokrivaju 7/14/30 dana.
+- Jednodnevna usporedba prikazuje dva eksplicitna datuma/iznosa bez grafa;
+  višednevni graf ima samo odabrano razdoblje i stvarne datume.
+- Svi wizardi nude hair/grooming: Frizerski salon i brijačnice / Ljubimci.
+  Prethodno spremljeni mixed/other zadržavaju se bez automatskog prepisivanja.
+- 314 frontend testova i React/kompilacijske provjere; lokalni vizualni prihvat
+  i Vite build slijede. Detalji: DASHBOARD_PRESENTATION_V1.md.
+- Zajednički commit D2 + dorada nakon prihvata, potom E i WhatsApp.

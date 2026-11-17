@@ -28,10 +28,10 @@ export default function BusinessOverview({ rows, range, timeZone, now }) {
     [t('Prosječna vrijednost termina','Average appointment value'),a.current.averageCents===null?'—':money(a.current.averageCents),t('Vrijednost završenih termina podijeljena njihovim brojem. Besplatni termini su uključeni.','Completed appointment value divided by appointment count. Free appointments are included.'),null,comparison(a.current.averageCents,a.prior?.averageCents??null)],
     [t('Završeni termini','Completed appointments'),a.current.count,t('Jedan termin broji se jednom, neovisno o broju usluga.','Each appointment counts once, regardless of its service count.'),null,comparison(a.current.count,a.prior?.count??null)],
   ]
-  const max=Math.max(100,...a.buckets.flatMap(b=>[b.current.missing?0:b.current.valueCents,b.previous&&!b.previous.missing?b.previous.valueCents:0]))
+  const max=Math.max(100,...a.buckets.map(b=>b.current.missing?0:b.current.valueCents))
   const x=i=>70+(a.buckets.length===1?300:i*600/(a.buckets.length-1)),y=n=>190-n/max*150
   function series(key){return a.buckets.map((b,i)=>{const v=b[key];return v&&!v.missing?{x:x(i),y:y(v.valueCents),value:v.valueCents}:null})}
-  const currentPoints=series('current'),previousPoints=series('previous')
+  const currentPoints=series('current')
   function line(points){let connected=false;return points.map(p=>{if(!p){connected=false;return ''}const command=connected?'L':'M';connected=true;return `${command}${p.x},${p.y}`}).join(' ')}
   const services=sort==='value'?a.services.byValue:a.services.byCount
   const serviceMax=Math.max(1,...services.map(s=>sort==='value'?s.valueCents:s.count))
@@ -39,21 +39,27 @@ export default function BusinessOverview({ rows, range, timeZone, now }) {
     <div className="dashboard-metrics business-metrics">
       {cards.map(([title,amount,note,warning,change])=><article className="dashboard-metric" key={title}><h2>{title}</h2><strong>{amount}</strong><p>{note}</p>{warning&&<p className="business-warning">{warning}</p>}<p className="business-comparison">{change}</p></article>)}
     </div>
-    <p className="dashboard-section-note">{a.previous?t(`Usporedba s razdobljem ${span(a.previous.from,a.previous.to)} (${a.days} dana).`,`Compared with ${span(a.previous.from,a.previous.to)} (${a.days} days).`):t('Prethodno razdoblje nije dostupno.','Previous period unavailable.')} {t('Postotak se ne računa ako je prethodna vrijednost nula, a nova je veća od nule, ili ako nedostaju cijene.','A percentage is unavailable when the previous value is zero and the new value is positive, or when prices are missing.')}{a.partialCurrent&&` ${t('Odabrano razdoblje još nije završeno.','The selected period has not ended yet.')}`}</p>
-    <section className="dashboard-panel" aria-labelledby={`${id}-trend`}>
-      <h2 id={`${id}-trend`}>{t('Kretanje vrijednosti odrađenih usluga','Completed service value trend')}</h2>
-      <p className="dashboard-section-note">{t('Vrijednost po skupinama dana, bez kumulativnog zbrajanja. Prethodno razdoblje poravnato je po redoslijedu dana.','Value per group of days, not cumulative. The previous period is aligned by day order.')}</p>
-      {!a.current.count&&!a.prior?.count?<p className="dashboard-empty">{t('U oba razdoblja nema završenih termina.','No completed appointments in either period.')}</p>:<>
-        <div className="business-legend"><span className="business-current">{t('Odabrano razdoblje','Selected period')}</span><span className="business-previous">{t('Prethodno razdoblje','Previous period')}</span></div>
-        <div className="business-chart-wrap"><svg className="business-chart" viewBox="0 0 720 230" role="img" aria-labelledby={`${id}-chart-title ${id}-chart-desc`}>
-          <title id={`${id}-chart-title`}>{t('Usporedba vrijednosti završenih termina','Completed appointment value comparison')}</title>
-          <desc id={`${id}-chart-desc`}>{t('Točni datumi i iznosi nalaze se u tablici ispod grafikona. Prekinuta linija označava nedostajuće cijene.','Exact dates and amounts are in the table below. A gap indicates missing prices.')}</desc>
+    <p className="dashboard-section-note">{a.previous?t(`Usporedba s razdobljem ${span(a.previous.from,a.previous.to)} (${a.days} ${a.days===1?'dan':'dana'}).`,`Compared with ${span(a.previous.from,a.previous.to)} (${a.days} days).`):t('Prethodno razdoblje nije dostupno.','Previous period unavailable.')} {t('Postotak se ne računa ako je prethodna vrijednost nula, a nova je veća od nule, ili ako nedostaju cijene.','A percentage is unavailable when the previous value is zero and the new value is positive, or when prices are missing.')}{a.partialCurrent&&` ${t('Odabrano razdoblje još nije završeno.','The selected period has not ended yet.')}`}</p>
+    <section className="dashboard-panel business-trend-panel" aria-labelledby={`${id}-trend`}>
+      <h2 id={`${id}-trend`}>{a.days===1?t('Usporedba dvaju dana','Two-day comparison'):t('Vrijednost odrađenih usluga kroz vrijeme','Completed service value over time')}</h2>
+      <div className="business-period-comparison">
+        <article><span>{t('Odabrano razdoblje','Selected period')}</span><h3>{span(range.from,range.to)}</h3><strong>{value(a.current)}</strong>{coverage(a.current)&&<p className="business-warning">{coverage(a.current)}</p>}</article>
+        <article><span>{t('Prethodno razdoblje','Previous period')}</span><h3>{a.previous?span(a.previous.from,a.previous.to):'—'}</h3><strong>{a.prior?value(a.prior):'—'}</strong>{a.prior&&coverage(a.prior)&&<p className="business-warning">{coverage(a.prior)}</p>}</article>
+      </div>
+      <p className="dashboard-section-note">{a.days===1?t('Uspoređuju se dva različita datuma navedena iznad. Svaki iznos pripada svom danu.','The two different dates shown above are compared. Each amount belongs to its own day.'):t('Usporedba obuhvaća prethodno razdoblje jednake duljine. Grafikon ispod prikazuje samo odabrano razdoblje, prema stvarnim datumima.','The comparison covers the preceding period of equal length. The chart below shows only the selected period, using actual dates.')}</p>
+      {a.days>1&&<>
+        {!a.current.count?<p className="dashboard-empty">{t('U odabranom razdoblju nema završenih termina.','No completed appointments in the selected period.')}</p>:<div className="business-chart-wrap"><svg className="business-chart" viewBox="0 0 720 250" role="img" aria-labelledby={`${id}-chart-title ${id}-chart-desc`}>
+          <title id={`${id}-chart-title`}>{`${t('Vrijednost odrađenih usluga','Completed service value')}: ${span(range.from,range.to)}`}</title>
+          <desc id={`${id}-chart-desc`}>{t('Prikazano je samo odabrano razdoblje. Točni datumi i iznosi dostupni su ispod grafikona. Prekid znači da nedostaju cijene.','Only the selected period is shown. Exact dates and amounts are available below. A gap means prices are missing.')}</desc>
           {[0,max/2,max].map(n=><g key={n}><line x1="70" x2="670" y1={y(n)} y2={y(n)} className="business-grid"/><text x="64" y={y(n)+4} textAnchor="end">{axisMoney(n)}</text></g>)}
-          {[['previous',previousPoints],['current',currentPoints]].map(([key,points])=><g key={key} className={`business-series-${key}`}><path d={line(points)} fill="none"/>{points.map((p,i)=>p&&<circle key={i} cx={p.x} cy={p.y} r="4"><title>{`${i+1}: ${money(p.value)}`}</title></circle>)}</g>)}
-          {a.buckets.map((b,i)=><text key={b.from} x={x(i)} y="214" textAnchor="middle">{i+1}</text>)}
-        </svg></div>
+          <g className="business-series-current"><path d={line(currentPoints)} fill="none"/>{currentPoints.map((p,i)=>p&&<circle key={i} cx={p.x} cy={p.y} r="4"><title>{`${span(a.buckets[i].from,a.buckets[i].to)}: ${money(p.value)}`}</title></circle>)}</g>
+          {a.buckets.map((b,i)=>(i===0||i===a.buckets.length-1||i%Math.ceil(a.buckets.length/4)===0)&&<text key={b.from} x={x(i)} y="218" textAnchor="middle">{new Intl.DateTimeFormat(overviewLocale(language),{timeZone:'UTC',day:'2-digit',month:'2-digit'}).format(new Date(b.from+'T12:00:00Z'))}</text>)}
+        </svg></div>}
+        <ul className="business-mobile-trend">{a.buckets.map(b=><li key={b.from}><span>{span(b.from,b.to)}</span><strong>{value(b.current)}</strong>{b.current.missing>0&&<small>{coverage(b.current)}</small>}</li>)}</ul>
+        <p className="dashboard-section-note">{t('Svaka točka predstavlja vrijednost u pripadajućem danu ili skupini dana; iznosi se ne zbrajaju kumulativno.','Each point represents value for its day or group of days; amounts are not cumulative.')}</p>
+        <details className="business-details"><summary>{t('Prikaži datume i iznose','Show dates and amounts')}</summary><ul className="business-trend-values">{a.buckets.map(b=><li key={b.from}><span>{span(b.from,b.to)}</span><strong>{value(b.current)}</strong>{b.current.missing>0&&<small>{coverage(b.current)}</small>}</li>)}</ul></details>
       </>}
-      <details className="business-details"><summary>{t('Datumi i vrijednosti grafikona','Chart dates and values')}</summary><div className="business-table-wrap"><table><caption>{t('Vrijednost završenih termina po skupinama dana','Completed appointment value by groups of days')}</caption><thead><tr><th scope="col">#</th><th scope="col">{t('Odabrano razdoblje','Selected period')}</th><th scope="col">EUR</th><th scope="col">{t('Prethodno razdoblje','Previous period')}</th><th scope="col">EUR</th></tr></thead><tbody>{a.buckets.map((b,i)=><tr key={b.from}><th scope="row">{i+1}</th><td>{span(b.from,b.to)}</td><td>{value(b.current)}{b.current.missing>0&&<small>{coverage(b.current)}</small>}</td><td>{b.priorFrom?span(b.priorFrom,b.priorTo):'—'}</td><td>{b.previous?value(b.previous):'—'}{b.previous?.missing>0&&<small>{coverage(b.previous)}</small>}</td></tr>)}</tbody></table></div></details>
+
     </section>
     <section className="dashboard-panel" aria-labelledby={`${id}-services`}>
       <h2 id={`${id}-services`}>{t('Najuspješnije usluge','Top services')}</h2>

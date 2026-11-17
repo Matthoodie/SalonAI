@@ -1,3 +1,5 @@
+import {businessTypeLabel} from '../BusinessType/businessTypes.js'
+import BusinessTypeSelect from '../BusinessType/BusinessTypeSelect.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {flowText,flowError} from '../Language/flowText.js'
 import LanguageSelector from '../Language/LanguageSelector'
@@ -7,7 +9,6 @@ import { salonSetupApi, SETUP_STEPS, setupPayload } from '../../api/salonSetupAp
 import './SalonSetupWizard.css'
 
 const labels = ['Djelatnost', 'Salon', 'Tim', 'Usluge', 'Raspored', 'Pregled']
-const businessLabels = { hair: 'Frizerski salon', grooming: 'Grooming — njega ljubimaca', mixed: 'Više djelatnosti', other: 'Drugo' }
 const teamLabels = { solo: 'Radim samostalno', team: 'Radimo kao tim' }
 const boolLabel = value => value === null ? 'Još nije odabrano' : value ? 'Da' : 'Ne'
 const cancelled = error => error?.name === 'AbortError' || error?.code === 'STALE_SALON_CONTEXT'
@@ -117,9 +118,7 @@ export default function SalonSetupWizard({ salonId, api = salonSetupApi }) {
         <fieldset className="setup-fields" disabled={busy || locked}>
           <legend className="setup-sr">{f(labels[index])}</legend>
           {index === 0 && <><label htmlFor="setup-business">{f("Čime se bavite?")}</label>
-            <select id="setup-business" value={draft.business_type ?? ''} onChange={e => select('business_type', e.target.value || null)}>
-              <option value="">{f("Odabrat ću kasnije")}</option>{Object.entries(businessLabels).map(([value, label]) => <option key={value} value={value}>{f(label)}</option>)}
-            </select><p className="setup-help">{f("Izbor opisuje vašu djelatnost. Profili ljubimaca, pasmina i fotografije dolaze u grooming nadogradnji. Podrška za složenije beauty centre planirana je za V2.")}</p></>}
+            <BusinessTypeSelect id="setup-business" value={draft.business_type??''} onChange={e=>select('business_type',e.target.value)}/><p className="setup-help">{language==='en'?'Choose hair salons and barbershops, or pet care. Existing data is retained when you change this choice.':'Odaberite frizerske salone i brijačnice ili njegu ljubimaca. Promjena izbora zadržava postojeće podatke.'}</p></>}
           {index === 1 && <><dl className="setup-summary"><div><dt>{f("Naziv salona")}</dt><dd>{data.salon.name}</dd></div><div><dt>{f("Vremenska zona")}</dt><dd>{data.salon.timezone}</dd></div></dl>
             <label htmlFor="setup-location">{f("Lokacija (neobavezno)")}</label><input id="setup-location" value={draft.location} onChange={e => select('location', e.target.value)} placeholder={f("Grad ili adresa salona")} />
             <p className="setup-help">{f("Do 250 znakova. Naziv i vremenska zona prikazuju trenutačne podatke salona; u ovom koraku uređujete lokaciju.")}</p></>}
@@ -134,7 +133,7 @@ export default function SalonSetupWizard({ salonId, api = salonSetupApi }) {
           {index === 4 && <><p>{f("Za svakog zaposlenika provjerite usluge koje pruža, radno vrijeme, posebne datume, odsutnosti i blokirano vrijeme.")}</p>
             <button type="button" onClick={() => save('schedule', '/employees')}>{f("Spremi i otvori raspored zaposlenika")}</button><p className="setup-help">{f("Raspored uređujete otvaranjem zaposlenika. Wizard ovdje ne mijenja termine ni radno vrijeme.")}</p></>}
           {index === 5 && <><dl className="setup-summary">
-            <div><dt>{f("Djelatnost")}</dt><dd>{f(businessLabels[draft.business_type]) || f('Još nije odabrano')}</dd></div>
+            <div><dt>{f("Djelatnost")}</dt><dd>{businessTypeLabel(draft.business_type,language)}</dd></div>
             <div><dt>{f("Lokacija")}</dt><dd>{draft.location || f('Nije unesena')}</dd></div>
             <div><dt>{f("Način rada")}</dt><dd>{f(teamLabels[draft.team_mode]) || f('Još nije odabrano')}</dd></div>
             <div><dt>{f("Osobno pružate usluge")}</dt><dd>{f(boolLabel(draft.owner_provides_services))}</dd></div>

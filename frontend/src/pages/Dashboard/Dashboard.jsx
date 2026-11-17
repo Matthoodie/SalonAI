@@ -1,3 +1,4 @@
+import CapacityOverview from './CapacityOverview.jsx'
 import BusinessOverview from './BusinessOverview.jsx'
 import {useLanguage} from '../../components/Language/LanguageProvider'
 import {overviewText,overviewError,overviewLocale,overviewCount,overviewMoney,overviewDate,overviewStatus,overviewRecipient,overviewMissingPrices} from '../../components/Language/overviewText.js'
@@ -27,7 +28,7 @@ function AppointmentRow({ appointment, timeZone, showDate = false }) {
   )
 }
 
-export default function Dashboard({ appointmentList = [], clientList = [], salonTimezone, canManage = false }) {
+export default function Dashboard({ appointmentList = [], clientList = [], salonId, salonTimezone, canManage = false }) {
   const {language}=useLanguage()
   const f=source=>overviewText(language,source)
 
@@ -95,6 +96,7 @@ export default function Dashboard({ appointmentList = [], clientList = [], salon
         {!canManage && stats.missingPrices > 0 && <p className="dashboard-error" role="alert">{overviewMissingPrices(language,stats.missingPrices)}</p>}
         {stats.total === 0 && <p className="dashboard-empty-period">{f("U odabranom razdoblju nema evidentiranih termina.")}</p>}
       </>}
+      {canManage && salonId && <CapacityOverview key={`${salonId}:${salonTimezone}`} salonId={salonId} timeZone={salonTimezone} />}
       {canManage && <p className="dashboard-client-summary">{f("Klijenti u učitanom popisu salona:")} <strong>{clientList.length}</strong>{f(". Ovaj broj ne ovisi o odabranom razdoblju.")}</p>}
       <section className="dashboard-panel" aria-labelledby="dashboard-today-heading">
         <div className="dashboard-section-heading"><div><p className="dashboard-eyebrow">{overviewDate(language,today)}</p><h2 id="dashboard-today-heading">{f("Današnji raspored")}</h2></div><span>{overviewCount(language,schedule.today.length)}</span></div>

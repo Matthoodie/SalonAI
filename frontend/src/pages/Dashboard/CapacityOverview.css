@@ -1,0 +1,64 @@
+.capacity-overview { min-width:0; container-type:inline-size; }
+.capacity-heading,.capacity-week-heading { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:16px; }
+.capacity-controls { display:flex; flex-wrap:wrap; align-items:end; gap:10px; }
+.capacity-controls label,.capacity-day-detail label { display:grid; gap:6px; font-size:13px; color:var(--ui-muted); max-width:100%; }
+.capacity-overview select { min-width:0; max-width:100%; padding:10px 12px; border:1px solid var(--ui-line); border-radius:10px; background:var(--ui-surface); color:var(--ui-ink); font:inherit; }
+.capacity-overview button { border:1px solid var(--ui-line); border-radius:10px; background:var(--ui-soft); color:var(--ui-ink); font:inherit; cursor:pointer; }
+.capacity-controls button { padding:10px 14px; }
+.capacity-overview button:disabled { opacity:.45; cursor:default; }
+.capacity-overview :focus-visible { outline:3px solid var(--ui-accent); outline-offset:3px; }
+.dashboard .capacity-overview .capacity-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); margin:18px 0; }
+.capacity-metrics h3 { font-size:13px; color:var(--ui-muted); margin:0 0 10px; }
+.capacity-meta,.capacity-legend { font-size:12px; color:var(--ui-muted); line-height:1.6; }
+.capacity-schedule { margin-top:28px; min-width:0; }
+.capacity-week-heading h3 { margin:0; }
+.capacity-week-nav { display:flex; align-items:center; gap:12px; }
+.capacity-week-nav button { min-width:40px; min-height:40px; }
+.capacity-week-nav span { text-align:center; font-size:14px; font-weight:650; color:var(--ui-ink); }
+.capacity-week-nav small { display:block; font-size:12px; font-weight:400; color:var(--ui-muted); margin-top:3px; }
+.capacity-week-grid { display:grid; grid-template-columns:48px repeat(var(--capacity-days),minmax(0,1fr)); gap:5px; margin:20px 0 12px; }
+.capacity-grid-row { display:contents; }
+.capacity-grid-label { align-self:center; font-size:11px; color:var(--ui-muted); }
+.capacity-overview .capacity-day-heading { padding:8px 2px; border-color:transparent; background:transparent; font-size:12px; min-width:0; }
+.capacity-day-heading span,.capacity-day-heading strong { display:block; }
+.capacity-day-heading span { color:var(--ui-muted); margin-bottom:3px; }
+.capacity-overview .capacity-day-heading[aria-pressed=true] { border-color:var(--ui-accent); background:var(--ui-accent-soft); }
+.capacity-overview .capacity-cell { min-width:0; min-height:39px; padding:8px 1px; border:1px solid transparent; border-radius:7px; font-size:12px; }
+.capacity-overview .capacity-level-none { background:var(--ui-soft); color:var(--ui-muted); border-color:var(--ui-line); }
+.capacity-overview .capacity-level-0 { background:var(--ui-accent-soft); color:var(--ui-accent); }
+.capacity-overview .capacity-level-1 { background:#d3c5f0; color:#30204c; }
+.capacity-overview .capacity-level-2 { background:#b29bdc; color:#251639; }
+.capacity-overview .capacity-level-3 { background:#72529f; color:white; }
+.capacity-overview .capacity-level-4 { background:#4c2a78; color:white; }
+.capacity-mobile-days { display:none; }
+.capacity-day-detail { margin-top:24px; padding-top:24px; border-top:1px solid var(--ui-line); }
+.capacity-day-summary { display:flex; flex-wrap:wrap; gap:8px 18px; font-size:13px; color:var(--ui-muted); }
+.capacity-day-summary strong { color:var(--ui-ink); flex-basis:100%; }
+.capacity-hour-list { list-style:none; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.capacity-hour-list li { display:grid; grid-template-columns:1fr auto; gap:8px; padding:14px; background:var(--ui-soft); border:1px solid var(--ui-line); border-radius:12px; font-size:13px; }
+.capacity-hour-percent { color:var(--ui-accent); font-weight:650; }
+.capacity-hour-bar { grid-column:1/-1; height:5px; border-radius:4px; background:var(--ui-line); overflow:hidden; }
+.capacity-hour-bar span { display:block; height:100%; background:var(--ui-accent); }
+.capacity-hour-list dl { grid-column:1/-1; display:flex; justify-content:space-between; gap:12px; margin:0; }
+.capacity-hour-list dt,.capacity-employee-list dt { font-size:12px; color:var(--ui-muted); }
+.capacity-hour-list dd,.capacity-employee-list dd { margin:4px 0 0; color:var(--ui-ink); }
+.capacity-employee-list { list-style:none; padding:0; display:grid; gap:10px; }
+.capacity-employee-list li { padding:16px; border:1px solid var(--ui-line); border-radius:12px; }
+.capacity-employee-list strong { overflow-wrap:anywhere; }
+.capacity-employee-list dl { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:12px 0 0; }
+@container(max-width:600px) {
+ .capacity-week-grid { display:none; }
+ .capacity-mobile-days { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+ .capacity-mobile-days button { display:grid; gap:8px; text-align:left; padding:12px; min-width:0; }
+ .capacity-mobile-days button[aria-pressed=true] { border-color:var(--ui-accent); background:var(--ui-accent-soft); }
+ .capacity-mobile-days span,.capacity-mobile-days small { font-size:12px; overflow-wrap:anywhere; }
+ .capacity-mobile-days strong { font-size:20px; }
+ .capacity-employee-list dl { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@container(max-width:380px) {
+ .dashboard .capacity-overview .capacity-metrics,.capacity-hour-list,.capacity-mobile-days { grid-template-columns:minmax(0,1fr); }
+ .capacity-controls { width:100%; }
+}
+.capacity-week-nav { width:320px; max-width:100%; gap:8px; }
+.capacity-week-nav span { flex:1; min-width:0; }
+.capacity-week-nav button { flex:0 0 40px; padding:6px; }

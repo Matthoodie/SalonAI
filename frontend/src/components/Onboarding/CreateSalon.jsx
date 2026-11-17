@@ -1,3 +1,4 @@
+import BusinessTypeSelect from '../BusinessType/BusinessTypeSelect.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {flowText,flowError} from '../Language/flowText.js'
 import {useEffect,useRef,useState} from 'react'
@@ -35,7 +36,7 @@ export default function CreateSalon({user,onCreated}){
  return <section className="salon-welcome-panel"><p className="salon-welcome-eyebrow">{f("VAŠ NOVI SALON · KORAK 1 OD 5")}</p><h2>{f("Kreirajte svoj salon")}</h2><p>{f("Nakon stvaranja slijedi postavljanje tima, usluga i rasporeda. Podatke ćete moći nastaviti nakon ponovne prijave.")}</p>
  <form className="onboarding-fields" noValidate onSubmit={submit}><fieldset disabled={busy||!!pending}>
  <label>{f("Naziv salona (obavezno)")}<input {...invalid('name')} required placeholder={draft.business_type==='grooming'?f('npr. Šapica — njega ljubimaca'):f('npr. Studio Aurora')} maxLength={150} value={draft.name} onChange={e=>edit('name',e.target.value)}/>{hint('name')}</label>
- <label>{f("Djelatnost (obavezno)")}<select {...invalid('business_type')} value={draft.business_type} onChange={e=>edit('business_type',e.target.value)}><option value="hair">{f("Frizerski salon")}</option><option value="grooming">{f("Njega ljubimaca — grooming")}</option><option value="mixed">{f("Više djelatnosti")}</option><option value="other">{f("Drugo")}</option></select>{hint('business_type')}</label>
+ <label>{f("Djelatnost (obavezno)")}<BusinessTypeSelect {...invalid('business_type')} value={draft.business_type} onChange={e=>edit('business_type',e.target.value)}/>{hint('business_type')}</label>
  <label>{f("Lokacija (neobavezno)")}<input maxLength={250} value={draft.location} onChange={e=>setDraft({...draft,location:e.target.value})}/></label>
  <label>{f("Vremenska zona (obavezno)")}<input {...invalid('timezone')} required maxLength={100} placeholder="Europe/Zagreb" value={draft.timezone} onChange={e=>edit('timezone',e.target.value)}/>{hint('timezone')}</label><small>{f("Za Hrvatsku: Europe/Zagreb. Zona određuje vrijeme termina.")}</small>
  </fieldset>{pending&&<p>{f("Podaci poslanog zahtjeva su sačuvani. Najprije provjerite postoji li salon pomoću „Osvježi dostupne salone”.")}</p>}{error&&<p role="alert">{flowError(language,error)}</p>}

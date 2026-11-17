@@ -3,7 +3,7 @@
 .dashboard .business-comparison { color:var(--ui-accent); font-weight:650; }
 .dashboard .business-warning { color:var(--ui-danger); font-size:13px; }
 .business-chart-wrap { max-width:100%; overflow-x:auto; }
-.business-chart { min-width:540px; display:block; width:100%; height:auto; min-height:180px; overflow:visible; }
+.business-chart { min-width:0; display:block; width:100%; height:auto; min-height:180px; overflow:visible; }
 .business-chart text { fill:var(--ui-muted); font-family:inherit; font-size:11px; }
 .business-grid { stroke:var(--ui-line); stroke-dasharray:3 4; }
 .business-series-current { stroke:var(--ui-accent); fill:var(--ui-accent); }
@@ -32,3 +32,22 @@
 .business-overview button[aria-pressed=true] { border-color:var(--ui-accent); background:var(--ui-accent-soft); color:var(--ui-accent); }
 .dashboard-status-counts { display:flex; flex-wrap:wrap; gap:8px 18px; margin:0 0 20px; padding:16px; border:1px solid var(--ui-line); border-radius:12px; background:var(--ui-surface); font-size:13px; }
 @media(max-width:600px) { .business-metrics { grid-template-columns:minmax(0,1fr); } .business-services li>div>span { margin-left:0; flex-basis:100%; } }
+
+.business-period-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:20px 0; }
+.business-period-comparison article { padding:18px; border:1px solid var(--ui-line); border-radius:12px; background:var(--ui-soft); }
+.business-period-comparison span { font-size:13px; color:var(--ui-muted); }
+.business-period-comparison h3 { font-size:15px; margin:8px 0 14px; color:var(--ui-ink); }
+.business-period-comparison strong { font-size:26px; color:var(--ui-accent); }
+.business-trend-values { list-style:none; padding:0; display:grid; gap:8px; }
+.business-trend-values li { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; padding:12px; border-bottom:1px solid var(--ui-line); font-size:13px; }
+.business-trend-values small { flex-basis:100%; }
+@media(max-width:600px) { .business-period-comparison { grid-template-columns:1fr; } }
+
+.business-trend-panel { container-type:inline-size; }
+.business-mobile-trend { display:none; }
+@container(max-width:480px) {
+ .business-trend-panel .business-chart-wrap,.business-trend-panel .business-details { display:none; }
+ .business-mobile-trend { display:grid; list-style:none; padding:0; gap:10px; }
+ .business-mobile-trend li { display:grid; gap:6px; padding:12px; background:var(--ui-soft); border-radius:10px; font-size:13px; }
+ .business-period-comparison { grid-template-columns:1fr; }
+}

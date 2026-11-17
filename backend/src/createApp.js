@@ -1,3 +1,4 @@
+import capacityRoutes from './routes/capacityRoutes.js'
 import petRoutes from './routes/petRoutes.js'
 import salonOnboardingRoutes from './routes/salonOnboardingRoutes.js'
 import salonSetupRoutes from './routes/salonSetupRoutes.js'
@@ -107,6 +108,8 @@ export function createApp({
   app.use('/api/blocked-time-requests', ...privateRouteMiddleware, employeeBlockedTimeRequestRoutes)
 
   app.use('/api/salon-setup', ...privateRouteMiddleware, salonSetupRoutes)
+
+  app.use('/api/dashboard/capacity', ...privateRouteMiddleware, capacityRoutes)
 
   app.use(notFoundHandler)
   app.use(errorHandler)
