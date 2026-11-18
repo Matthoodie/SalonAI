@@ -1,0 +1,8 @@
+.business-insights .insight-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:1rem}
+.business-insights .insight-cards article{padding:1.1rem;border:1px solid var(--ui-border);border-radius:16px;background:var(--ui-soft);min-width:0;overflow-wrap:anywhere}
+.business-insights .insight-cards article>strong{font-size:1.6rem;color:var(--ui-text)}
+.business-insights h3{margin-top:0}
+.capacity-insight{margin-block:1.5rem;padding:1rem;border:1px solid var(--ui-border);border-radius:16px;background:var(--ui-soft)}
+.insight-capacity-days{padding-inline-start:1.4rem;display:grid;gap:.75rem}
+.insight-capacity-days li>strong{margin-inline-end:1rem}
+.insight-capacity-days li>span{display:inline-block}

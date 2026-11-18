@@ -512,3 +512,13 @@ Prioriteti se potvrđuju prema iskustvu prvih korisnika.
 - 314 frontend testova i React/kompilacijske provjere; lokalni vizualni prihvat
   i Vite build slijede. Detalji: DASHBOARD_PRESENTATION_V1.md.
 - Zajednički commit D2 + dorada nakon prihvata, potom E i WhatsApp.
+
+### Poslovni uvidi V1 — paket nakon 38e95af
+- Kapacitet i vizualna dorada potvrđeni i spremljeni u 38e95af.
+- Dodani HR/EN deterministički uvidi: vrijednost odrađenih usluga u zatvorenim
+  razdobljima, klijenti s ranijim posjetom u spremljenoj povijesti i tri datuma
+  s najviše slobodnih zaposleničkih sati u planu kapaciteta.
+- Nema novih API poziva, ovisnosti ili migracija. Postojeće ovlasti ostaju iste.
+- Lokalno 326/326 frontend testova i komponentne HR/EN provjere; korisnički
+  Vite build i ručni prihvat prema docs/DASHBOARD_INSIGHTS_V1.md prije commita.
+- Nakon prihvata: preduvjeti WhatsApp integracije; ostali ciljevi roadmapa ostaju.

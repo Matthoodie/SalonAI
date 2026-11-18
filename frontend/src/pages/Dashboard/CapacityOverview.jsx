@@ -1,3 +1,4 @@
+import {CapacityInsight} from './BusinessInsights.jsx'
 import { useEffect,useId,useState } from 'react'
 import { useLanguage } from '../../components/Language/LanguageProvider'
 import { fetchCapacity } from '../../api/capacityApi.js'
@@ -48,6 +49,7 @@ export default function CapacityOverview({salonId,timeZone}) {
       <div className="dashboard-metrics capacity-metrics">{metrics.map(([title,value])=><article className="dashboard-metric" key={title}><h3>{title}</h3><strong>{value}</strong></article>)}</div>
       <p className="dashboard-section-note">{t('Sati su zbroj vremena zaposlenika. Slobodno vrijeme nije broj dostupnih termina: mogućnost rezervacije ovisi o trajanju usluge i kvalifikacijama zaposlenika.','Hours are summed across employees. Free time is not a count of available appointments: booking depends on service duration and employee qualifications.')}</p>
       {(data.totals.outside_capacity_ms>0||data.totals.overlapping_booking_ms>0||data.totals.unusual_status_count>0)&&<p role="alert" className="dashboard-error">{t('Provjerite raspored: ','Check the schedule: ')}{t('izvan kapaciteta','outside capacity')} {hours(data.totals.outside_capacity_ms)}; {t('višestruko rezervirano','overbooked time')} {hours(data.totals.overlapping_booking_ms)}; {t('budući završeni termini ili nedolasci','future completed appointments or no-shows')}: {data.totals.unusual_status_count}. {t('Ove nepravilnosti nisu prikazane kao dodatni raspoloživi sati.','These anomalies are not shown as additional available hours.')}</p>}
+      <CapacityInsight data={data}/>
       <h3>{t('Pregled po zaposleniku','Employee overview')}</h3>
       {!data.active_employee_count?<p>{t('Salon nema aktivnih zaposlenika za ovaj pregled.','This salon has no active employees for this overview.')}</p>:<ul className="capacity-employee-list">{data.employees.map(e=><li key={e.employee_id}><strong>{e.name}</strong><dl>{[[t('Kapacitet','Capacity'),hours(e.capacity_ms)],[t('Rezervirano','Booked'),hours(e.occupied_ms)],[t('Slobodno','Free'),hours(e.free_ms)],[t('Popunjenost','Utilization'),pct(e.utilization_percent)]].map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></li>)}</ul>}
       <CapacitySchedule key={`${data.salon_id}:${data.as_of}:${data.days}`} data={data}/>

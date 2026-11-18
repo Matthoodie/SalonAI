@@ -1,3 +1,4 @@
+import BusinessInsights from './BusinessInsights.jsx'
 import { useId, useMemo, useState } from 'react'
 import { useLanguage } from '../../components/Language/LanguageProvider'
 import { overviewDate, overviewMoney, overviewLocale } from '../../components/Language/overviewText.js'
@@ -40,6 +41,7 @@ export default function BusinessOverview({ rows, range, timeZone, now }) {
       {cards.map(([title,amount,note,warning,change])=><article className="dashboard-metric" key={title}><h2>{title}</h2><strong>{amount}</strong><p>{note}</p>{warning&&<p className="business-warning">{warning}</p>}<p className="business-comparison">{change}</p></article>)}
     </div>
     <p className="dashboard-section-note">{a.previous?t(`Usporedba s razdobljem ${span(a.previous.from,a.previous.to)} (${a.days} ${a.days===1?'dan':'dana'}).`,`Compared with ${span(a.previous.from,a.previous.to)} (${a.days} days).`):t('Prethodno razdoblje nije dostupno.','Previous period unavailable.')} {t('Postotak se ne računa ako je prethodna vrijednost nula, a nova je veća od nule, ili ako nedostaju cijene.','A percentage is unavailable when the previous value is zero and the new value is positive, or when prices are missing.')}{a.partialCurrent&&` ${t('Odabrano razdoblje još nije završeno.','The selected period has not ended yet.')}`}</p>
+    <BusinessInsights rows={rows} range={range} timeZone={timeZone} now={now}/>
     <section className="dashboard-panel business-trend-panel" aria-labelledby={`${id}-trend`}>
       <h2 id={`${id}-trend`}>{a.days===1?t('Usporedba dvaju dana','Two-day comparison'):t('Vrijednost odrađenih usluga kroz vrijeme','Completed service value over time')}</h2>
       <div className="business-period-comparison">
