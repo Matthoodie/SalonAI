@@ -1,8 +1,8 @@
 # ZRIHTAN — roadmap do javne V1
 
 Ažurirano: 18. studenoga 2026.
-Potvrđena polazna verzija: development 4870d09.
-Aktualni paket: Support S1A — ugovor i validacija prijave, 23 nova izolirana testa.
+Potvrđena polazna verzija: development 9623fcf.
+Aktualni paket: Support S1B — baza i korisnički API; lokalno 49 ciljanih provjera, 12 DB scenarija za TEST bazu.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
 
@@ -52,7 +52,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 
 ## 4. Podrška — prvi sljedeći razvojni blok
 
-### S1A — ugovor prijave i validacija (PRIPREMLJENO)
+### S1A — ugovor prijave i validacija (ZAVRŠENO, 9623fcf)
 - Kategorije help/bug/idea, naslov 5–160 i opis 20–5000 Unicode znakova.
 - HR/EN, UUID v4 za sigurno ponavljanje, hash normaliziranog sadržaja.
 - Neobavezan kontekst salona; novi prijavljeni korisnik bez salona također je podržan.
@@ -61,7 +61,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Odbijanje identiteta autora, statusa, uloge i privitaka iz korisničkog zahtjeva.
 - 23 testa. Nema migracije, API rute, UI-ja, slanja poruka niti .env promjene.
 
-### S1B — baza i korisnički API (PLAN)
+### S1B — baza i korisnički API (PRIPREMLJENO; čeka TEST/DEV prihvat)
 - Migracija za prijave i potrebne indekse; status zaprimljeno na serveru.
 - Prijavljeni aktivni račun iz postojeće autentikacije; ne zahtijevati salon.
 - Autor se uzima isključivo sa servera. Za opcionalni salon provjeriti aktivno članstvo.
@@ -72,6 +72,9 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Popis po stabilnom kursoru, najviše 20 rezultata; privatni odgovori bez predmemorije.
 - Testovi izolacije korisnika/salona, dvostrukog i istodobnog slanja, pogrešaka i rollbacka.
 - TEST migracija i DB provjere prije DEV migracije.
+- S1B: 32 KiB JSON, najviše 5 novih prijava/sat i 20/24 sata po računu; ponavljanje postojeće prijave ne troši kvotu.
+- Greške podrške ne bilježe opis prijave ni SQL parametre. Nema UI-ja, privitaka, odgovora ni e-mail slanja u S1B.
+- Autor zadržava pristup svojim prijavama nakon prestanka članstva; novi salonski zahtjev zahtijeva aktivno članstvo.
 
 ### S2 — HR/EN korisničko sučelje (PLAN)
 - Pomoć i podrška u aplikaciji i početnom Welcome zaslonu.
@@ -242,5 +245,5 @@ S1A → S1B → S2 → S3 → I1/L1/L2 → W0/W1/W2/W3 → M1/M2 → R1/R2 → p
 Domena, pravne odluke, landing sadržaj i plan billing-a mogu se pripremati paralelno.
 M3/store distribucija je zasebna grana nakon mobilne provjere i ne blokira web/PWA V1.
 
-Odmah: primijeniti S1A, potvrditi 23/23 i diff, spremiti commit/push.
-Zatim: S1B migracija i autentificirani API; UI se pojavljuje tek u S2, operativni odgovori u S3.
+Odmah: primijeniti S1B, potvrditi ciljane provjere, TEST migraciju, 12 DB scenarija i cijeli backend skup nad TEST bazom; zatim DEV migraciju i commit/push.
+Zatim: S2 HR/EN korisničko sučelje podrške; operativni odgovori i platformne ovlasti dolaze u S3.
