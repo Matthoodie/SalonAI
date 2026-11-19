@@ -1,3 +1,4 @@
+import SupportLauncher from '../Support/SupportLauncher.jsx'
 import Brand from '../Brand/Brand.jsx'
 import { useState } from 'react'
 import { LanguageProvider, useLanguage } from '../Language/LanguageProvider'
@@ -27,6 +28,7 @@ function WelcomeScreenContent({ user, workspaces, busy, error, onRetry, onSelect
       <header className="salon-welcome-header">
         <span className="salon-welcome-brand"><Brand /></span>
         {user && <LanguageSelector />}
+        <SupportLauncher user={user} page="welcome" />
         <button type="button" className="salon-welcome-secondary" onClick={signOut} disabled={signingOut}>
           {signingOut ? t('welcome.signingOut') : t('welcome.signOut')}
         </button>

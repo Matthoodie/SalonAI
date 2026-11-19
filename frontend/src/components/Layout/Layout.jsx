@@ -1,3 +1,4 @@
+import SupportLauncher from '../Support/SupportLauncher.jsx'
 import Brand from '../Brand/Brand.jsx'
 import {useLanguage} from '../Language/LanguageProvider'
 import {shellText} from '../Language/shellText.js'
@@ -12,6 +13,7 @@ import './Layout.css'
 function LayoutContent({
   children,
   currentUser,
+  currentSalon,
   role,
   workspaceControl,
   canAccessFullCrm = false,
@@ -63,6 +65,7 @@ function LayoutContent({
       <Header currentUser={currentUser} role={role} workspaceControl={workspaceControl} />
 
       <div className="app-page-content">
+        <div className="support-toolbar"><SupportLauncher user={currentUser} salon={currentSalon} /></div>
         {children}
       </div>
     </main>

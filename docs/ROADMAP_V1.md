@@ -1,8 +1,8 @@
 # ZRIHTAN — roadmap do javne V1
 
-Ažurirano: 18. studenoga 2026.
-Potvrđena polazna verzija: development 9623fcf.
-Aktualni paket: Support S1B — baza i korisnički API; lokalno 49 ciljanih provjera, 12 DB scenarija za TEST bazu.
+Ažurirano: 19. studenoga 2026.
+Potvrđena polazna verzija: development 1a96b01.
+Aktualni paket: Support S2 — HR/EN obrazac i vlastite prijave; 21 ciljani frontend test i lokalne provjere React sučelja. Čeka prihvat u aplikaciji.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
 
@@ -61,7 +61,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Odbijanje identiteta autora, statusa, uloge i privitaka iz korisničkog zahtjeva.
 - 23 testa. Nema migracije, API rute, UI-ja, slanja poruka niti .env promjene.
 
-### S1B — baza i korisnički API (PRIPREMLJENO; čeka TEST/DEV prihvat)
+### S1B — baza i korisnički API (ZAVRŠENO, 1a96b01)
 - Migracija za prijave i potrebne indekse; status zaprimljeno na serveru.
 - Prijavljeni aktivni račun iz postojeće autentikacije; ne zahtijevati salon.
 - Autor se uzima isključivo sa servera. Za opcionalni salon provjeriti aktivno članstvo.
@@ -76,12 +76,15 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Greške podrške ne bilježe opis prijave ni SQL parametre. Nema UI-ja, privitaka, odgovora ni e-mail slanja u S1B.
 - Autor zadržava pristup svojim prijavama nakon prestanka članstva; novi salonski zahtjev zahtijeva aktivno članstvo.
 
-### S2 — HR/EN korisničko sučelje (PLAN)
+### S2 — HR/EN korisničko sučelje (PRIPREMLJENO; čeka prihvat)
 - Pomoć i podrška u aplikaciji i početnom Welcome zaslonu.
 - Obrazac, objašnjenje da se ne unose lozinke/osjetljivi podaci, potvrda s brojem prijave.
 - Vlastite prijave i statusi; čuvanje istog request_id kod neizvjesnog ishoda.
 - Nema automatskog screenshotanja. Privitci ostaju zasebna kasnija dorada.
 - Teme, mobilni prikaz, promjena jezika, računa i salona te nedostupna mreža.
+- Pristup iz aplikacije, Welcome zaslona i onboardinga u zasebnom dijalogu.
+- Spremljeni pokušaj u sessionStorage odvojen po lokalnom korisniku; isti sadržaj i UUID do potvrde.
+- S2 ne dodaje migracije, ovisnosti, e-mailove ni platformne ovlasti. Detalji: SUPPORT_PHASE2.md.
 
 ### S3 — operativna obrada i odgovor (PLAN; obavezno prije pilota)
 - Posebna platformna ovlast podrške, odvojena od owner/admin salona.
@@ -245,5 +248,5 @@ S1A → S1B → S2 → S3 → I1/L1/L2 → W0/W1/W2/W3 → M1/M2 → R1/R2 → p
 Domena, pravne odluke, landing sadržaj i plan billing-a mogu se pripremati paralelno.
 M3/store distribucija je zasebna grana nakon mobilne provjere i ne blokira web/PWA V1.
 
-Odmah: primijeniti S1B, potvrditi ciljane provjere, TEST migraciju, 12 DB scenarija i cijeli backend skup nad TEST bazom; zatim DEV migraciju i commit/push.
-Zatim: S2 HR/EN korisničko sučelje podrške; operativni odgovori i platformne ovlasti dolaze u S3.
+Odmah: primijeniti S2, pokrenuti sve frontend testove i build, potvrditi ručne scenarije HR/EN, vlastite prijave i ponavljanje slanja; zatim zaseban commit/push.
+Zatim: S3 operativna obrada podrške, platformne ovlasti, audit, odgovori i kontrolirane obavijesti. Potrebno prije pilota.

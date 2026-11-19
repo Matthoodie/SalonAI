@@ -725,6 +725,7 @@ function App() {
   return (
     <Layout
       currentUser={authContext?.user || user}
+      currentSalon={authContext?.current_salon}
       canAccessFullCrm={canAccessFullCrm}
       role={authContext?.membership?.role}
       workspaceControl={workspaces.length > 0 && (
