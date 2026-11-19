@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom'
 import {useLanguage} from '../Language/LanguageProvider.jsx'
 import {supportPage} from '../../api/supportApi.js'
 import {supportText} from './supportMessages.js'
-import SupportPanel from './SupportPanel.jsx'
+import SupportWorkspace from './SupportWorkspace.jsx'
 import './Support.css'
 function AccountSupport({user,salon,page}){
  const {language}=useLanguage(),t=k=>supportText(language,k),titleId=useId(),dialog=useRef(null),trigger=useRef(null)
@@ -13,7 +13,7 @@ function AccountSupport({user,salon,page}){
  return <><button ref={trigger} type="button" className="support-launch" aria-haspopup="dialog" onClick={open}>{t('title')}</button>
   {createPortal(<dialog ref={dialog} className="support-dialog" aria-labelledby={titleId} onClose={()=>{setOpened(false);trigger.current?.focus()}}>
    <header className="support-header"><h2 id={titleId}>{t('title')}</h2><button type="button" onClick={()=>dialog.current.close()} aria-label={t('close')}>{t('close')}</button></header>
-   {visited&&<SupportPanel user={user} salon={salon} page={contextPage} active={opened} />}
+   {visited&&<SupportWorkspace user={user} salon={salon} page={contextPage} active={opened} />}
   </dialog>,document.body)}
  </>
 }

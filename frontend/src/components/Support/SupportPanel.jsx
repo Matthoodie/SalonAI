@@ -1,3 +1,4 @@
+import SupportConversation from './SupportConversation.jsx'
 import {useEffect,useId,useRef,useState} from 'react'
 import {useLanguage} from '../Language/LanguageProvider.jsx'
 import {supportApi} from '../../api/supportApi.js'
@@ -97,10 +98,10 @@ export default function SupportPanel({user,salon=null,page='other',active=true,a
    {readBusy&&<p role="status">{t('loading')}</p>}
    {readError&&<p role="alert" className="support-error">{supportErrorText(language,readError)}</p>}
    {detail?<article className="support-detail">
-    <h3 ref={detailHeading} tabIndex={-1}>{t('details')} #{detail.id}</h3><span className="support-status">{status(detail.status)}</span>
+    <h3 ref={detailHeading} tabIndex={-1}>{t('details')} #{detail.id}</h3>
     <h4>{detail.subject}</h4><p className="support-description">{detail.description}</p>
-    <dl><dt>{t('category')}</dt><dd>{t(detail.category)}</dd><dt>{t('date')}</dt><dd>{date(detail.created_at)}</dd><dt>{t('updated')}</dt><dd>{date(detail.updated_at)}</dd><dt>{t('context')}</dt><dd>{detail.salon_id?`${t('salonId')} #${detail.salon_id}`:t('account')}</dd><dt>{t('page')}</dt><dd>{t(detail.context.page)}</dd></dl>
-    <p className="support-muted">{t('readOnly')}</p>
+    <dl><dt>{t('category')}</dt><dd>{t(detail.category)}</dd><dt>{t('date')}</dt><dd>{date(detail.created_at)}</dd><dt>{t('context')}</dt><dd>{detail.salon_id?`${t('salonId')} #${detail.salon_id}`:t('account')}</dd><dt>{t('page')}</dt><dd>{t(detail.context.page)}</dd></dl>
+    <SupportConversation key={`${user.id}:${detail.id}`} user={user} ticketId={detail.id} active={active&&tab==='mine'} />
    </article>:<>
     {!readBusy&&!readError&&rows.length===0&&<p className="support-empty">{t('empty')}</p>}
     <ul className="support-list">{rows.map(row=><li key={row.id}><button type="button" onClick={()=>showDetail(row.id)} disabled={readBusy}><span className="support-list-title">#{row.id} · {row.subject}</span><span className="support-status">{status(row.status)}</span><small>{t(row.category)} · {date(row.created_at)}</small></button></li>)}</ul>

@@ -1,8 +1,8 @@
 # ZRIHTAN — roadmap do javne V1
 
 Ažurirano: 19. studenoga 2026.
-Potvrđena polazna verzija: development 25c2f00.
-Aktualni paket: Support S3B — API operaterske obrade. Lokalno 33 nova / 112 ukupnih izoliranih testova podrške; 12 DB scenarija čeka TEST prihvat.
+Potvrđena polazna verzija: development 9725dea.
+Aktualni paket: Support S3C — korisničko čitanje odgovora i operatorsko sučelje. Lokalno 24 nova frontend testa i React scenariji; čeka korisnički prihvat.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
 
@@ -107,7 +107,8 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Provjera pristupa veže ovlast uz lokalni ID i trenutačni Clerk identitet, uz zaključavanje do kraja transakcije.
 - Nema HTTP administracijskih ruta ni operatorskog prikaza u S3A; detalji SUPPORT_PHASE3A.md.
 
-### S3B — API obrade i odgovora (PRIPREMLJENO; čeka TEST/DEV prihvat)
+### S3B — API obrade i odgovora (ZAVRŠENO, 9725dea)
+- Potvrđeno: 12/12 PostgreSQL, 1121/1121 backend, migracije i commit/push.
 - Ovlast se provjerava u istoj transakciji kao pristup prijavi/odgovor/promjena statusa.
 - Audit operaterskih radnji, zaštita istodobnih izmjena i privatni odgovori autora.
 - GET pristup/popisi/detalj/poruke; POST odgovor ili status uz UUID i expected_revision.
@@ -116,7 +117,10 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Paginacija 20 prijava / 50 poruka; 32 KiB JSON, odgovor do 5000 znakova, 120 odgovora/sat/operater.
 - Nema novog UI-ja, korisničkih nastavaka razgovora ni e-maila u S3B. Detalji SUPPORT_PHASE3B.md.
 
-### S3C — sučelje operatera i razgovora (PLAN)
+### S3C — sučelje operatera i razgovora (PRIPREMLJENO; čeka prihvat)
+- Paket SUPPORT_PHASE3C.md: operatorski popis/odgovori/status i autorovo čitanje odgovora.
+- SessionStorage pokušaji, stabilan UUID, kontrola revizije, prekid zahtjeva i HR/EN.
+- Nema nove migracije ni e-maila; korisnički nastavci razgovora nisu implementirani.
 - Operater vidi red prijava; korisnik samo razgovore vlastitih prijava; HR/EN i teme.
 
 ### S3D — e-mail obavijesti (PLAN)
@@ -275,5 +279,5 @@ S1A → S1B → S2 → S3 → I1/L1/L2 → W0/W1/W2/W3 → M1/M2 → R1/R2 → p
 Domena, pravne odluke, landing sadržaj i plan billing-a mogu se pripremati paralelno.
 M3/store distribucija je zasebna grana nakon mobilne provjere i ne blokira web/PWA V1.
 
-Odmah: primijeniti S3B, potvrditi 112 izoliranih testova podrške, TEST migraciju, 12 DB scenarija i cijeli backend skup; zatim zasebna DEV migracija i commit/push.
-Zatim: S3C sučelje razgovora i operatera, S3D kontrolirane e-mail obavijesti. Potrebno prije pilota.
+Odmah: primijeniti S3C, potvrditi 45 ciljanih frontend testova, puni frontend i build; ručno autor/operator, odgovor/status, opoziv ovlasti, HR/EN i teme. Zatim commit/push.
+Zatim: S3D kontrolirane e-mail obavijesti uz izbor servisa i testnih primatelja. Potrebno prije pilota.
