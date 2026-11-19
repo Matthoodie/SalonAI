@@ -1,8 +1,8 @@
 # ZRIHTAN — roadmap do javne V1
 
 Ažurirano: 19. studenoga 2026.
-Potvrđena polazna verzija: development 1a96b01.
-Aktualni paket: Support S2 — HR/EN obrazac i vlastite prijave; 21 ciljani frontend test i lokalne provjere React sučelja. Čeka prihvat u aplikaciji.
+Potvrđena polazna verzija: development 3b71a1a.
+Aktualni paket: Support S3A — platformne ovlasti i audit. Lokalno 30 unit testova; 10 PostgreSQL scenarija čeka korisnički TEST prihvat.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
 
@@ -76,7 +76,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Greške podrške ne bilježe opis prijave ni SQL parametre. Nema UI-ja, privitaka, odgovora ni e-mail slanja u S1B.
 - Autor zadržava pristup svojim prijavama nakon prestanka članstva; novi salonski zahtjev zahtijeva aktivno članstvo.
 
-### S2 — HR/EN korisničko sučelje (PRIPREMLJENO; čeka prihvat)
+### S2 — HR/EN korisničko sučelje (ZAVRŠENO, 3b71a1a)
 - Pomoć i podrška u aplikaciji i početnom Welcome zaslonu.
 - Obrazac, objašnjenje da se ne unose lozinke/osjetljivi podaci, potvrda s brojem prijave.
 - Vlastite prijave i statusi; čuvanje istog request_id kod neizvjesnog ishoda.
@@ -94,6 +94,26 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Obavijest e-mailom nakon odabira servisa; spremljena prijava ne ovisi o uspjehu e-maila.
 - Praćenje novih prijava, radno vrijeme podrške i realno obećani rok odgovora.
 - Definirati rokove čuvanja i brisanje; sustav podrške nije trajni arhiv svih podataka.
+
+### S3A — platformne ovlasti i audit (PRIPREMLJENO; čeka TEST/DEV prihvat)
+- Posebna platform_support_access ovlast; salonske uloge ne dodjeljuju pristup.
+- Kontrolirani CLI: točan Clerk user ID, naziv baze, očekivana revizija, razlog;
+  pregled plana po zadanim postavkama, upis samo uz --apply.
+- Nijedna ovlast ne dodjeljuje se instalacijom ili migracijom.
+- Revizija sprečava prepisivanje tuđe novije promjene; grant i audit su jedna transakcija.
+- Audit bilježi DB ulogu izvršitelja, vrijeme, cilj, promjenu i razlog; nema izmjene/brisanja kroz aplikaciju.
+- Provjera pristupa veže ovlast uz lokalni ID i trenutačni Clerk identitet, uz zaključavanje do kraja transakcije.
+- Nema HTTP administracijskih ruta ni operatorskog prikaza u S3A; detalji SUPPORT_PHASE3A.md.
+
+### S3B — API obrade i odgovora (PLAN)
+- Ovlast se provjerava u istoj transakciji kao pristup prijavi/odgovor/promjena statusa.
+- Audit operaterskih radnji, zaštita istodobnih izmjena i privatni odgovori autora.
+
+### S3C — sučelje operatera i razgovora (PLAN)
+- Operater vidi red prijava; korisnik samo razgovore vlastitih prijava; HR/EN i teme.
+
+### S3D — e-mail obavijesti (PLAN)
+- Odabir pružatelja, outbox/ponavljanje i praćenje isporuke; neuspjeh e-maila ne gubi prijavu.
 
 ## 5. Domena, staging i javne stranice
 
@@ -248,5 +268,5 @@ S1A → S1B → S2 → S3 → I1/L1/L2 → W0/W1/W2/W3 → M1/M2 → R1/R2 → p
 Domena, pravne odluke, landing sadržaj i plan billing-a mogu se pripremati paralelno.
 M3/store distribucija je zasebna grana nakon mobilne provjere i ne blokira web/PWA V1.
 
-Odmah: primijeniti S2, pokrenuti sve frontend testove i build, potvrditi ručne scenarije HR/EN, vlastite prijave i ponavljanje slanja; zatim zaseban commit/push.
-Zatim: S3 operativna obrada podrške, platformne ovlasti, audit, odgovori i kontrolirane obavijesti. Potrebno prije pilota.
+Odmah: primijeniti S3A, potvrditi unit testove, TEST migraciju, 10 DB scenarija i cijeli backend skup; zatim zasebna DEV migracija i commit/push.
+Zatim: S3B API obrade, S3C sučelje razgovora, S3D kontrolirane e-mail obavijesti. Potrebno prije pilota.
