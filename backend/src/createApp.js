@@ -1,3 +1,4 @@
+import supportOperationsRoutes from './routes/supportOperationsRoutes.js'
 import supportTicketRoutes from './routes/supportTicketRoutes.js'
 import { supportNoStore, supportErrorHandler } from './middleware/supportErrorHandler.js'
 import capacityRoutes from './routes/capacityRoutes.js'
@@ -31,10 +32,12 @@ export function createApp({
   invitationRouter = invitationRoutes,
   onboardingRouter = salonOnboardingRoutes,
   supportRouter = supportTicketRoutes,
+  supportOperationsRouter = supportOperationsRoutes,
 } = {}) {
   const app = express()
 
   // Support owns its 32 KiB parser and error sanitization; mount before the global parser.
+  app.use('/api/support/operations', supportNoStore, ...authRouteMiddleware, supportOperationsRouter, supportErrorHandler)
   app.use('/api/support/tickets', supportNoStore, ...authRouteMiddleware, supportRouter, supportErrorHandler)
 
   app.use(express.json())
