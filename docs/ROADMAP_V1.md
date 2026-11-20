@@ -305,3 +305,15 @@ rok ponavljanja kraći od Resendova 24-satnog prozora, razrješenje neizvjesnih 
 provjeren primatelj i izričita granica aktivacije. Stari held događaji ostaju zadržani.
 Potom kontrolirano slanje jedne obavijesti iz DEV baze i odvojena potvrda dostave.
 Domena je kupljena, aplikacija još nije time objavljena.
+
+### S3D-B2 — trajna evidencija slanja (paket pripremljen)
+
+- S3D-B1 potvrđen: 19/19; commit ae3ed5b na development.
+- Nova migracija proširuje stanja outboxa te dodaje zamrznutu poruku i evidenciju pokušaja.
+- Interna obrada jednog događaja, uz provjeren kontakt, točnog autora i granicu aktivacije.
+- Zaključavanje, token pokušaja, 23-satni rok i najviše 3 pokušaja; samo 429 može ponovno nakon 5 minuta.
+- Neizvjestan ishod i istek leasea zaustavljaju slanje; nema automatskog ponavljanja.
+- Lokalno 166 izoliranih testova prolazi; PostgreSQL provjere korisnik tek treba izvršiti.
+- Slijedi TEST migracija, 17 novih + 10 postojećih outbox DB testova i cijeli backend.
+- Zatim odvojena DEV migracija i commit/push. Ovaj paket još ne uključuje slanje iz aplikacije.
+- S3D-B3: ograničena CLI integracija s Clerk provjerom i Resendom te jedna izričito odabrana DEV obavijest.
