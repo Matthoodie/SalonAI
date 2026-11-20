@@ -295,6 +295,13 @@ S1A → S1B → S2 → S3 → I1/L1/L2 → W0/W1/W2/W3 → M1/M2 → R1/R2 → p
 Domena, pravne odluke, landing sadržaj i plan billing-a mogu se pripremati paralelno.
 M3/store distribucija je zasebna grana nakon mobilne provjere i ne blokira web/PWA V1.
 
-Odmah: S3D-A --check/--apply, 127 izoliranih testova, TEST migracija, 10 DB testova i cijeli backend.
-Zatim zasebna DEV migracija, ručni prihvat odgovora i held pregleda, pa commit/push.
-Nakon toga S3D-B: odabir/verifikacija e-mail servisa i kontrolirani test isporuke. Domena je kupljena, aplikacija još nije time objavljena.
+S3D-A: korisnik potvrdio TEST/DEV migracije, testove i held događaj; commit 736b3ef.
+S3D-B: notify.zrihtan.com verificirana; ručni Resend test stigao u Gmail Inbox.
+S3D-B1 (ovaj paket): izolirani Resend transport, zadano isključen, jedan dopušteni
+primatelj, stabilan ključ koji dostavlja pozivatelj, sanitizirani ishodi i 19 testova.
+Transport još nije povezan s aplikacijom ni outboxom. Nema migracije.
+Slijedi S3D-B2: trajna evidencija pokušaja, zaključavanje/lease, zamrznuti payload,
+rok ponavljanja kraći od Resendova 24-satnog prozora, razrješenje neizvjesnih ishoda,
+provjeren primatelj i izričita granica aktivacije. Stari held događaji ostaju zadržani.
+Potom kontrolirano slanje jedne obavijesti iz DEV baze i odvojena potvrda dostave.
+Domena je kupljena, aplikacija još nije time objavljena.
