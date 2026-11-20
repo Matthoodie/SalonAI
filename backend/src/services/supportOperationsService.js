@@ -4,7 +4,8 @@ import { supportOperation, operationQuery, operationHash, operationError } from 
 import { requireSupportAccess } from './supportAccessService.js'
 import { lockSupportUser } from '../repositories/supportTicketRepository.js'
 import * as repository from '../repositories/supportOperationsRepository.js'
-export function createSupportOperationsService({dbPool=pool, repo=repository, authorize=requireSupportAccess, lockAuthor=lockSupportUser} = {}) {
+import {recordReplyNotification} from '../repositories/supportNotificationRepository.js'
+export function createSupportOperationsService({dbPool=pool, repo=repository, authorize=requireSupportAccess, lockAuthor=lockSupportUser, notifyReply=recordReplyNotification} = {}) {
   async function transact(userId, operator, write, run) {
     const id = supportId(userId), db = await dbPool.connect()
     try {
@@ -72,6 +73,7 @@ export function createSupportOperationsService({dbPool=pool, repo=repository, au
         const updated=await repo.updateTicket(db,tid,status)
         const result={ticket_id:tid,revision:updated.revision,status:updated.status,message_id:messageId,replayed:false}
         await repo.insertOperation(db,id,tid,draft,hash,result)
+        if (messageId !== null) await notifyReply(db,tid,messageId)
         await repo.audit(db,id,access.revision,draft.kind,ticket,result)
         return result
       })

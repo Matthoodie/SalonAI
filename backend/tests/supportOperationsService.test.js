@@ -12,13 +12,14 @@ function fixture(overrides={}){
  insertMessage:async()=>{calls.push('message');return '4'},updateTicket:async(_,tid,status)=>{calls.push('update');return {revision:2,status}},
  insertOperation:async()=>calls.push('receipt'),audit:async()=>calls.push('audit'),...overrides.repo}
  const service=createSupportOperationsService({dbPool:{connect:async()=>{calls.push('connect');return db}},repo,
+ notifyReply:overrides.notifyReply??(async()=>calls.push('notification')),
  authorize:overrides.authorize??(async()=>{calls.push('authorize');return {userId:'1',revision:3}}),
  lockAuthor:overrides.lockAuthor??(async()=>({active:true}))})
  return {service,calls,ticket}
 }
 test('operations service: reply and audit committed in same authorized transaction',async()=>{
  const {service,calls}=fixture();const result=await service.apply(1,8,draft());assert.equal(result.revision,2)
- assert.deepEqual(calls,['connect','BEGIN','actor lock','authorize',['ticket','8',null,true],'message','update','receipt','audit','COMMIT','release'])
+ assert.deepEqual(calls,['connect','BEGIN','actor lock','authorize',['ticket','8',null,true],'message','update','receipt','notification','audit','COMMIT','release'])
 })
 test('operations service: no operator grant prevents ticket reads and writes',async()=>{
  const {service,calls}=fixture({authorize:async()=>{throw Object.assign(Error(),{code:'SUPPORT_OPERATOR_FORBIDDEN'})}})
@@ -46,7 +47,7 @@ test('operations service: idempotent replay returns original result before stale
  const {service,calls,ticket}=fixture({repo:{findReplay:async()=>({ticket_id:'8',request_hash:hash,result_revision:2,result_status:'pending',message_id:'4'})}})
  ticket.revision=9
  assert.deepEqual(await service.apply(1,8,body),{ticket_id:'8',revision:2,status:'pending',message_id:'4',replayed:true})
- assert.ok(!calls.includes('message'));assert.ok(!calls.includes('audit'))
+ assert.ok(!calls.includes('message'));assert.ok(!calls.includes('audit'));assert.ok(!calls.includes('notification'))
 })
 test('operations service: altered replay is conflict',async()=>{
  const {service}=fixture({repo:{findReplay:async()=>({ticket_id:'9',request_hash:'bad'})}})
@@ -58,7 +59,7 @@ test('operations service: audit failure rolls back entire reply',async()=>{
 })
 test('operations service: status-only change creates no message',async()=>{
  const {service,calls}=fixture();await service.apply(1,8,{request_id:randomUUID(),expected_revision:1,kind:'status',status:'resolved'})
- assert.ok(!calls.includes('message'));assert.ok(calls.includes('audit'))
+ assert.ok(!calls.includes('message'));assert.ok(calls.includes('audit'));assert.ok(!calls.includes('notification'))
 })
 test('operations service: same status is explicit no-op conflict',async()=>{
  const {service,calls}=fixture();await assert.rejects(service.apply(1,8,{request_id:randomUUID(),expected_revision:1,kind:'status',status:'open'}),{code:'SUPPORT_STATUS_UNCHANGED'})
@@ -80,4 +81,16 @@ test('operations service: bounded pages expose next cursor only when needed',asy
  const {service}=fixture({repo:{listTickets:async()=>rows,listMessages:async()=>Array.from({length:51},(_,i)=>({id:String(i+1)}))}})
  const result=await service.list(1);assert.equal(result.tickets.length,20);assert.equal(result.next_before,'31')
  const messages=await service.messages(1,8);assert.equal(messages.messages.length,50);assert.equal(messages.next_after,'50')
+})
+
+test('operations service: notification failure rolls back reply and receipt',async()=>{
+ const {service,calls}=fixture({notifyReply:async()=>{throw Error('notification unavailable')}})
+ await assert.rejects(service.apply(1,8,draft()),/notification unavailable/)
+ assert.ok(calls.includes('ROLLBACK'));assert.ok(!calls.includes('COMMIT'));assert.ok(!calls.includes('audit'))
+})
+test('operations service: notification uses same database connection and persisted message',async()=>{
+ let seen
+ const {service,calls}=fixture({notifyReply:async(db,tid,mid)=>{seen={db,tid,mid};await db.query('notification write')}})
+ await service.apply(1,8,draft());assert.equal(seen.tid,'8');assert.equal(seen.mid,'4')
+ assert.ok(calls.indexOf('notification write')>calls.indexOf('receipt'));assert.ok(calls.indexOf('notification write')<calls.indexOf('COMMIT'))
 })

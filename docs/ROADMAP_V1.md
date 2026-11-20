@@ -1,8 +1,8 @@
 # ZRIHTAN — roadmap do javne V1
 
-Ažurirano: 19. studenoga 2026.
-Potvrđena polazna verzija: development 9725dea.
-Aktualni paket: Support S3C — korisničko čitanje odgovora i operatorsko sučelje. Lokalno 24 nova frontend testa i React scenariji; čeka korisnički prihvat.
+Ažurirano: 20. studenoga 2026.
+Potvrđena polazna verzija: development 325464e.
+Aktualni paket: Support S3D-A — held evidencija obavijesti bez slanja. Lokalno 127 izoliranih testova; 10 DB scenarija čeka TEST prihvat.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
 
@@ -40,9 +40,12 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 
 - Početni pružatelj usluge bit će drugi obrt; točan subjekt NIJE ODABRAN.
 - Kasniji prelazak na novi obrt planira se kao zaseban pravni i operativni projekt.
-- Domene još nisu potvrđene kao kupljene. Predloženo: zrihtan.com javna stranica,
+- zrihtan.com kupljena na Porkbunu 20.11.2026., rok 20.11.2027.; auto-renew, lock i privacy uključeni prema korisničkoj slici.
+  Predloženo: zrihtan.com javna stranica,
   app.zrihtan.com aplikacija, staging.zrihtan.com zaštićeni test, podrška pod /help.
-  zrihtan.hr opcionalno preusmjeravanje; druga domena nije nužna za landing.
+  zrihtan.hr, zrihtan.eu i zrihtan.com.hr planirane kasnije kao preusmjeravanja; kupnja nije potvrđena.
+  Druga domena nije nužna za landing; DNS i hosting još nisu povezani kroz projekt.
+  Postojeći URL forwarding ima nepoznato odredište; provjeriti prije spajanja hostinga.
 - Hosting, e-mail servis, naplatni servis, cijene i rokovi čuvanja još nisu odabrani.
 - WhatsApp produkcijski/pilot broj NIJE ODABRAN; ne povezivati privatni broj automatski.
 - Prvi razvoj WhatsAppa koristi testne resurse i dogovorene testne primatelje.
@@ -117,19 +120,32 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Paginacija 20 prijava / 50 poruka; 32 KiB JSON, odgovor do 5000 znakova, 120 odgovora/sat/operater.
 - Nema novog UI-ja, korisničkih nastavaka razgovora ni e-maila u S3B. Detalji SUPPORT_PHASE3B.md.
 
-### S3C — sučelje operatera i razgovora (PRIPREMLJENO; čeka prihvat)
+### S3C — sučelje operatera i razgovora (ZAVRŠENO, 325464e)
+- Korisnik potvrdio 45/45 ciljanih testova, ručni rad i čist commit/push.
 - Paket SUPPORT_PHASE3C.md: operatorski popis/odgovori/status i autorovo čitanje odgovora.
 - SessionStorage pokušaji, stabilan UUID, kontrola revizije, prekid zahtjeva i HR/EN.
 - Nema nove migracije ni e-maila; korisnički nastavci razgovora nisu implementirani.
 - Operater vidi red prijava; korisnik samo razgovore vlastitih prijava; HR/EN i teme.
 
-### S3D — e-mail obavijesti (PLAN)
-- Odabir pružatelja, outbox/ponavljanje i praćenje isporuke; neuspjeh e-maila ne gubi prijavu.
+### S3D-A — evidencija obavijesti (PRIPREMLJENO; čeka TEST/DEV prihvat)
+- Jedan held događaj za svaki novi odgovor operatera, u istoj transakciji s odgovorom i auditom.
+- Nema događaja za promjenu statusa; nema popunjavanja povijesnih poruka.
+- Minimalni identifikatori i HR/EN jezik prijave, bez kopije e-maila ili sadržaja razgovora.
+- Read-only lokalni CLI s eksplicitnim nazivom baze; nema HTTP outbox pristupa.
+- Nova migracija, bez novih ovisnosti, DNS/.env promjena, workera ili stvarnog slanja.
+- Detalji: SUPPORT_PHASE3DA.md; 127 izoliranih testova lokalno, 10 DB testova na korisničkom TEST-u.
+
+### S3D-B — servis i kontrolirana isporuka (PLAN)
+- Odabir pružatelja, verificiranje domene/pošiljatelja, testni primatelji i DNS prema servisu.
+- Worker, pokušaji/lease, idempotencija i neizvjestan ishod, praćenje isporuke.
+- Ponovno provjeriti aktualni potvrđeni kontakt autora prije slanja.
+- Ne slati automatski held događaje nastale prije aktivacije; izričit prag i pravila čuvanja.
+- Nedostupan vanjski e-mail servis ne gubi spremljenu prijavu niti odgovor.
 
 ## 5. Domena, staging i javne stranice
 
 ### I1 — infrastruktura za razvoj integracija (PLAN)
-- Kupnja domene, kontrola vlasništva/ovlaštenja, 2FA, obnova i DNS.
+- Kupnja zrihtan.com potvrđena; slijede provjera 2FA/oporavka, ovlaštenja, DNS i hosting.
 - HTTPS, zaštićeni staging bez indeksiranja, posebna baza i odvojene tajne.
 - Odabir API rasporeda /api ili api poddomene, CORS, dopuštene Clerk adrese/povratne rute.
 - Privremeni i produkcijski resursi ne dijele bazu, tokene ili stvarna plaćanja.
@@ -279,5 +295,6 @@ S1A → S1B → S2 → S3 → I1/L1/L2 → W0/W1/W2/W3 → M1/M2 → R1/R2 → p
 Domena, pravne odluke, landing sadržaj i plan billing-a mogu se pripremati paralelno.
 M3/store distribucija je zasebna grana nakon mobilne provjere i ne blokira web/PWA V1.
 
-Odmah: primijeniti S3C, potvrditi 45 ciljanih frontend testova, puni frontend i build; ručno autor/operator, odgovor/status, opoziv ovlasti, HR/EN i teme. Zatim commit/push.
-Zatim: S3D kontrolirane e-mail obavijesti uz izbor servisa i testnih primatelja. Potrebno prije pilota.
+Odmah: S3D-A --check/--apply, 127 izoliranih testova, TEST migracija, 10 DB testova i cijeli backend.
+Zatim zasebna DEV migracija, ručni prihvat odgovora i held pregleda, pa commit/push.
+Nakon toga S3D-B: odabir/verifikacija e-mail servisa i kontrolirani test isporuke. Domena je kupljena, aplikacija još nije time objavljena.
