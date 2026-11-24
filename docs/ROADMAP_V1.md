@@ -1,8 +1,9 @@
 # ZRIHTAN — roadmap do javne V1
 
-Ažurirano: 20. studenoga 2026.
-Potvrđena polazna verzija: development 325464e.
-Aktualni paket: Support S3D-A — held evidencija obavijesti bez slanja. Lokalno 127 izoliranih testova; 10 DB scenarija čeka TEST prihvat.
+Ažurirano: 24. studenoga 2026.
+Potvrđena polazna verzija: development b6d1478.
+Aktualni paket: Support S3D-B3 — završna kontrolirana DEV integracija (PRIPREMLJENO).
+S3D-B2 potvrđen i spremljen kao b6d1478. Nakon prihvata B3 slijedi I1.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
 
@@ -46,7 +47,8 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
   zrihtan.hr, zrihtan.eu i zrihtan.com.hr planirane kasnije kao preusmjeravanja; kupnja nije potvrđena.
   Druga domena nije nužna za landing; DNS i hosting još nisu povezani kroz projekt.
   Postojeći URL forwarding ima nepoznato odredište; provjeriti prije spajanja hostinga.
-- Hosting, e-mail servis, naplatni servis, cijene i rokovi čuvanja još nisu odabrani.
+- E-mail servis: Resend; notify.zrihtan.com verificirana, zaseban test dostave potvrđen.
+- Hosting, naplatni servis, cijene i rokovi čuvanja još nisu odabrani.
 - WhatsApp produkcijski/pilot broj NIJE ODABRAN; ne povezivati privatni broj automatski.
 - Prvi razvoj WhatsAppa koristi testne resurse i dogovorene testne primatelje.
 - Službeničke obveze i dopuštenost konkretnog poslovnog angažmana provjeriti zasebno;
@@ -89,7 +91,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Spremljeni pokušaj u sessionStorage odvojen po lokalnom korisniku; isti sadržaj i UUID do potvrde.
 - S2 ne dodaje migracije, ovisnosti, e-mailove ni platformne ovlasti. Detalji: SUPPORT_PHASE2.md.
 
-### S3 — operativna obrada i odgovor (PLAN; obavezno prije pilota)
+### S3 — operativna obrada i odgovor (UI/API završeni; e-mail integracija i operativni prihvat u tijeku)
 - Posebna platformna ovlast podrške, odvojena od owner/admin salona.
 - Kontrolirano dodjeljivanje i opoziv pristupa, audit radnji, bez impersonacije klijenta.
 - Pregled prijave, odgovor i promjena statusa s kontrolom istodobnih izmjena.
@@ -127,7 +129,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Nema nove migracije ni e-maila; korisnički nastavci razgovora nisu implementirani.
 - Operater vidi red prijava; korisnik samo razgovore vlastitih prijava; HR/EN i teme.
 
-### S3D-A — evidencija obavijesti (PRIPREMLJENO; čeka TEST/DEV prihvat)
+### S3D-A — evidencija obavijesti (ZAVRŠENO, 736b3ef)
 - Jedan held događaj za svaki novi odgovor operatera, u istoj transakciji s odgovorom i auditom.
 - Nema događaja za promjenu statusa; nema popunjavanja povijesnih poruka.
 - Minimalni identifikatori i HR/EN jezik prijave, bez kopije e-maila ili sadržaja razgovora.
@@ -135,7 +137,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Nova migracija, bez novih ovisnosti, DNS/.env promjena, workera ili stvarnog slanja.
 - Detalji: SUPPORT_PHASE3DA.md; 127 izoliranih testova lokalno, 10 DB testova na korisničkom TEST-u.
 
-### S3D-B — servis i kontrolirana isporuka (PLAN)
+### S3D-B — servis i kontrolirana isporuka (B1/B2 završeni; B3 čeka prihvat)
 - Odabir pružatelja, verificiranje domene/pošiljatelja, testni primatelji i DNS prema servisu.
 - Worker, pokušaji/lease, idempotencija i neizvjestan ishod, praćenje isporuke.
 - Ponovno provjeriti aktualni potvrđeni kontakt autora prije slanja.
@@ -295,25 +297,31 @@ S1A → S1B → S2 → S3 → I1/L1/L2 → W0/W1/W2/W3 → M1/M2 → R1/R2 → p
 Domena, pravne odluke, landing sadržaj i plan billing-a mogu se pripremati paralelno.
 M3/store distribucija je zasebna grana nakon mobilne provjere i ne blokira web/PWA V1.
 
-S3D-A: korisnik potvrdio TEST/DEV migracije, testove i held događaj; commit 736b3ef.
-S3D-B: notify.zrihtan.com verificirana; ručni Resend test stigao u Gmail Inbox.
-S3D-B1 (ovaj paket): izolirani Resend transport, zadano isključen, jedan dopušteni
-primatelj, stabilan ključ koji dostavlja pozivatelj, sanitizirani ishodi i 19 testova.
-Transport još nije povezan s aplikacijom ni outboxom. Nema migracije.
-Slijedi S3D-B2: trajna evidencija pokušaja, zaključavanje/lease, zamrznuti payload,
-rok ponavljanja kraći od Resendova 24-satnog prozora, razrješenje neizvjesnih ishoda,
-provjeren primatelj i izričita granica aktivacije. Stari held događaji ostaju zadržani.
-Potom kontrolirano slanje jedne obavijesti iz DEV baze i odvojena potvrda dostave.
-Domena je kupljena, aplikacija još nije time objavljena.
+S3D-A: korisnik potvrdio TEST/DEV migracije i held događaj; commit 736b3ef.
+S3D-B1: 19/19 testova, commit ae3ed5b; zasebna Resend testna poruka stigla u Gmail.
+S3D-B2: korisnik potvrdio 166 izoliranih, 17 novih + 10 outbox DB testova i puni
+backend s TEST bazom; commit/push b6d1478, radna kopija čista.
+B2 pohranjuje zamrznutu poruku/pokušaje, zaključavanje, lease i neizvjestan ishod.
+Još ne pokreće samostalno stvarno slanje iz aplikacije.
 
-### S3D-B2 — trajna evidencija slanja (paket pripremljen)
+### S3D-B3 — završna kontrolirana DEV integracija (PRIPREMLJENO)
 
-- S3D-B1 potvrđen: 19/19; commit ae3ed5b na development.
-- Nova migracija proširuje stanja outboxa te dodaje zamrznutu poruku i evidenciju pokušaja.
-- Interna obrada jednog događaja, uz provjeren kontakt, točnog autora i granicu aktivacije.
-- Zaključavanje, token pokušaja, 23-satni rok i najviše 3 pokušaja; samo 429 može ponovno nakon 5 minuta.
-- Neizvjestan ishod i istek leasea zaustavljaju slanje; nema automatskog ponavljanja.
-- Lokalno 166 izoliranih testova prolazi; PostgreSQL provjere korisnik tek treba izvršiti.
-- Slijedi TEST migracija, 17 novih + 10 postojećih outbox DB testova i cijeli backend.
-- Zatim odvojena DEV migracija i commit/push. Ovaj paket još ne uključuje slanje iz aplikacije.
-- S3D-B3: ograničena CLI integracija s Clerk provjerom i Resendom te jedna izričito odabrana DEV obavijest.
+- Jedna odabrana obavijest; aktualna potvrđena primarna Clerk adresa autora.
+- Read-only početak/popisi/pregled/status, odvojene naredbe pripreme i slanja.
+- Točan naziv DEV baze, Clerk TEST ključ, jedan primatelj i izričit ID događaja.
+- Postojeći transport B1 i trajna evidencija B2; nema masovnog slanja starog held reda.
+- Nema novih migracija, ovisnosti, UI-ja, javnog API-ja ni workera na startupu.
+- Lokalno 206 izoliranih testova; korisnički PostgreSQL i ručni end-to-end prihvat čekaju.
+- Detalji SUPPORT_PHASE3DB3.md. Nakon prihvata slijedi I1 — domena i hosting.
+
+### Otvoreni kriteriji aktivacije na hostingu (I1 / R1 / R2)
+
+- Automatsko izvršavanje obavijesti, izolirane tajne i odvojeni staging/produkcija.
+- Izričita granica aktivacije, monitoring te postupak za neizvjestan ishod.
+- Pouzdana provjera provider statusa; accepted nije delivered.
+- Pravila čuvanja/brisanja i operativni odgovori podrške prije stvarnog pilota.
+- Ne označavati produkcijsko e-mail slanje završenim samo na temelju DEV testa.
+
+Domena je kupljena; aplikacija još nije time objavljena. I1 je sljedeća kategorija,
+a ne novi niz funkcionalnih S paketa. L1/L2, W0–W3, M1/M2, R1/R2, pilot i billing
+ostaju u ranije dogovorenom redoslijedu.
