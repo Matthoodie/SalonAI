@@ -1,0 +1,177 @@
+{
+  "baseline": "abf6707",
+  "files": [
+    {
+      "file": "1787862853498_create-core-domain.js",
+      "sha256": "17f277a2694d987aeb91327fbce2fb9fdeb46db0db10354ff07483feb0ac4bd5"
+    },
+    {
+      "file": "1787863754077_create-services.js",
+      "sha256": "65832f18adaf44063996e51309116797f03abb4022c1c14e26f6d22a523c74f3"
+    },
+    {
+      "file": "1787864525058_create-clients.js",
+      "sha256": "7b11d84f0dac6980adc46ca73d81a53b61d8e869abb28b5da0c868429db72338"
+    },
+    {
+      "file": "1787865464831_create-employees.js",
+      "sha256": "dc231a228c50e870d3d2a18107faf87c01aad84e5b9c982f90c28c1d94625bb7"
+    },
+    {
+      "file": "1787865887293_create-employee-services.js",
+      "sha256": "ae2961dbff6d77d5b655a334d60f1333a69c4d5e352e86057ba4a66e0a100164"
+    },
+    {
+      "file": "1787866719028_create-employee-working-hours.js",
+      "sha256": "3729b7afa9bedd37aa1d17b7c37d59b1cb5dfe4c90607a350bae2b4bf1f97484"
+    },
+    {
+      "file": "1787867524976_create-employee-date-overrides.js",
+      "sha256": "0290c8636850f882dd3c4eb1b7ebbf7fbd6b652c04c830cd20781e9543021a4f"
+    },
+    {
+      "file": "1787867941863_create-employee-time-off.js",
+      "sha256": "fcf5ae637a2db1f53baddf3c2f82a397d5bbc7a40a5d1dc9d7250ea8c1fa37de"
+    },
+    {
+      "file": "1787868488535_create-employee-blocked-times.js",
+      "sha256": "7b053a706c4118ed7343379408dae2d6b2b039ead8e640d13d669abdf5ab477f"
+    },
+    {
+      "file": "1787868959046_create-appointments.js",
+      "sha256": "57fb1c4a8b4a4dad6bb6d85ae5e511faf8b3d9cea47db4158944d4df4588cc25"
+    },
+    {
+      "file": "1787870616002_enforce-appointment-tenant-integrity.js",
+      "sha256": "699fe9fbecee6df29cddc8d365b55d3cc01d17cf818ac7dc361384c83f5d70a4"
+    },
+    {
+      "file": "1787871484366_enforce-employee-services-tenant-integrity.js",
+      "sha256": "1917fac3ca867ee4ad46d84578aa24e2fccfc7976bfb5ffff887f20ef43098a2"
+    },
+    {
+      "file": "1787872220703_enforce-appointment-employee-service-integrity.js",
+      "sha256": "b9927a94742453c098658fafc2fee131c1c12b9add3e08b707de4ed36fbc8a67"
+    },
+    {
+      "file": "1787872675620_enforce-appointment-duration-integrity.js",
+      "sha256": "03ba8b218cf805d012596bfc2a0ebc1e708a6315e30377d03f9c77c65f8ac3f8"
+    },
+    {
+      "file": "1787873437588_prevent-appointment-overlaps.js",
+      "sha256": "58cdd13fd8318b02b8ed358e91ed95e18c31a80573c54b63dfcef8240521e1b8"
+    },
+    {
+      "file": "1787874459167_add-domain-indexes.js",
+      "sha256": "93e79d902d8f7e240f468a810551b647f7f5d29cf11ec2fb814d80667191d307"
+    },
+    {
+      "file": "1789497529506_add-type-to-employee-blocked-times.js",
+      "sha256": "76ea37e75538259866f602b72daf1f22e68d0c23bf8edc8a9e25a9a2c5d1ac9e"
+    },
+    {
+      "file": "1791314690129_create-auth-tenancy-core.js",
+      "sha256": "0872b43bb8dbdd489b0bb55194cde2c2a168162d765faa19a8728ea099d2d4f3"
+    },
+    {
+      "file": "1792089856037_link-memberships-to-employees.js",
+      "sha256": "13b5ed939d3795cb11622ff613684af2700a33f1e46a58c8880c271215b919bc"
+    },
+    {
+      "file": "1792177200000_create-salon-permission-overrides.js",
+      "sha256": "4833fb48f19e91403224a0980835c805cafc0d0eca9db208323684278b834821"
+    },
+    {
+      "file": "1792350000000_allow-occasional-clients-without-phone.js",
+      "sha256": "c4597650cb64d0d723c3794172e6ef497641b458fbc1b843b3004bbfddab7446"
+    },
+    {
+      "file": "1792692000000_create-salon-invitations.js",
+      "sha256": "ed8dfe1ef1b80968dd779d7cad636aef1c92a7e2d33de8e3c09d878f6c2532f9"
+    },
+    {
+      "file": "1792778400000_create-membership-change-audit.js",
+      "sha256": "a88553bdfb88ca6d6a02c516ac645b2e65a50500dd848ed97e31514d28148287"
+    },
+    {
+      "file": "1792864800000_create-member-permission-overrides.js",
+      "sha256": "8380ce8e66623a0a1a917fde1c2ac65232195f817f174b8bdd032b4880baa5eb"
+    },
+    {
+      "file": "1792951200000_create-permission-management-audit.js",
+      "sha256": "e1b48f7c0efa4e773e1e12bf1b0c3c4dbdfaf076b6e27e6eef4f500b123ae322"
+    },
+    {
+      "file": "1793037600000_create-employee-time-off-requests.js",
+      "sha256": "e0d0071c2d4a8ff2edb0bb3e3980f9506ca848551d3e9ae94a9cec70a2472840"
+    },
+    {
+      "file": "1793124000000_link-approved-time-off-requests.js",
+      "sha256": "5918e63caa316e33d77211b6eb26fec4fc02db62577aacbd6d5d7a2ae488a5f2"
+    },
+    {
+      "file": "1793210400000_cancel-approved-time-off-requests.js",
+      "sha256": "0560ace29da768c2748037e58580032ffda0fee493cd99bd8efb1f3a5a72f800"
+    },
+    {
+      "file": "1793296800000_create-blocked-time-requests.js",
+      "sha256": "8bd43c71849adeaacd3a6d894f57837c16bf5e693700fc943781ea613441dbfe"
+    },
+    {
+      "file": "1793383200000_create-appointment-items.js",
+      "sha256": "1a79e51bb2fa41ee3aa2400e0bad2c238df2e466aace5a6184989901fbdf5d7a"
+    },
+    {
+      "file": "1793469600000_create-service-import-receipts.js",
+      "sha256": "2279f1a48d513cf1c95d4233e9d2b0afe4d4a2268f2fab04d5b7f2c3215df53d"
+    },
+    {
+      "file": "1793556000000_create-pricelist-recognition-usage.js",
+      "sha256": "fbe15e4c64f76ad2fcd04079eee52f98cf4facf529dbb6f8d3b626356912d2d5"
+    },
+    {
+      "file": "1793642400000_create-salon-setup.js",
+      "sha256": "364613984ed334874cf5c27b9751f7dd7904a291a69b7841ddce20525c111837"
+    },
+    {
+      "file": "1793728800000_create-salon-onboarding.js",
+      "sha256": "97a0417ef62795451c0efe5ad52004b794f1f6412e5d7532396468e15b6e7c0c"
+    },
+    {
+      "file": "1793901600000_create-client-pets.js",
+      "sha256": "e41ecfc986662616d49119e5cb326cf5ad352bcf5d68d1677623d06ce74a5e0b"
+    },
+    {
+      "file": "1794333600000_link-appointment-pets.js",
+      "sha256": "67b2dd0723b78c6bd4065a3882e3129fbfb6c9bbd615ef7e12d01a07ae55b53f"
+    },
+    {
+      "file": "1794420000000_add-pet-photos.js",
+      "sha256": "a84f33da620ef707a7dfb9d9a4054740deef02aa59a36ab431c8ace68c455a78"
+    },
+    {
+      "file": "1794506400000_add-pet-measurements.js",
+      "sha256": "5714e00d624ea8648bbf9594191cd7e56614e5ed087851d9ff5f223cdff83e05"
+    },
+    {
+      "file": "1795003200000_create-support-tickets.js",
+      "sha256": "50763659afed239d140344053050ea0474f3fc91d6909288bde43e7e999eaaf7"
+    },
+    {
+      "file": "1795089600000_create-platform-support-access.js",
+      "sha256": "76d75b3323358064ab71201e3eee94e945df369eb42fafb50c1517865e7a99a7"
+    },
+    {
+      "file": "1795176000000_add-support-operations.js",
+      "sha256": "5cdc8ed8ad1e02789c9cdebf7b81db9dc1c9c924896c762ca881390c86f3094d"
+    },
+    {
+      "file": "1795262400000_add-support-notification-outbox.js",
+      "sha256": "31c14ec2673c56d8f99f1eca46021829c2f7e6c6a31b383ce4e0a9a5194d2212"
+    },
+    {
+      "file": "1795348800000_add-support-delivery-tracking.js",
+      "sha256": "c31da66c1afc358424998d1fe8e4a8e00cea9d4d02a7bf812e1c9190bfaf3ca6"
+    }
+  ]
+}

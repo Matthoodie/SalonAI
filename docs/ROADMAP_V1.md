@@ -1,8 +1,8 @@
 # ZRIHTAN — roadmap do javne V1
 
 Ažurirano: 25. studenoga 2026.
-Potvrđena polazna verzija: development 2e2cb56.
-Aktualni paket: I1 — staging backend runtime (PRIPREMLJENO).
+Potvrđena polazna verzija: development abf6707.
+Aktualni paket: I1 — kontrolirane staging migracije (PRIPREMLJENO).
 S3D-B3 spremljen kao 0d76fad; korisnik potvrdio primitak obavijesti u Gmailu. I1 započet.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
@@ -336,11 +336,11 @@ ostaju u ranije dogovorenom redoslijedu.
 - Lokalni PostgreSQL 18.6; frontend build uspješan na 0d76fad.
 - Budžet približno 30 EUR/mj., bez kupnje Pro workspacea.
 - HOSTING_I1_CONFIGURATION.md: ZAVRŠENO, 2e2cb56, korisnik potvrdio 42/42.
-- Zaseban staging server sada PRIPREMLJEN u HOSTING_I1_RUNTIME.md; lokalni dev ulaz ne mijenja se. Nema deploya ni migracije.
+- Zaseban staging server lokalno prihvaćen: abf6707, korisnik potvrdio 87/87. Nema deploya ni staging migracije.
 - Slijedi hosting entry point, gate svih API ruta, povezivanje frontenda,
   health/readiness, uredno gašenje i kontrolirana staging migracija/deploy.
 
-### I1 — staging runtime (PRIPREMLJENO)
+### I1 — staging runtime (ZAVRŠENO lokalno, abf6707)
 
 - Zaseban stagingServer.js: provjera konfiguracije prije importa aplikacije.
 - Clerk sesija + tester allowlist prije svih poslovnih ruta; /healthz jedina javna GET/HEAD provjera.
@@ -349,3 +349,13 @@ ostaju u ranije dogovorenom redoslijedu.
 - 45 novih izoliranih testova; ukupno s prethodnim konfiguracijskim testovima 87.
 - Nije provedena stvarna Clerk/Render integracija ni objava. Slijedi kontrolirana
   staging migracija i konfiguracija Web Service/Static Site u okviru I1.
+
+### I1 — kontrolirane staging migracije (PRIPREMLJENO)
+
+- HOSTING_I1_MIGRATIONS.md: read-only --check i eksplicitni --apply.
+- Stvarni naziv baze, PostgreSQL 18, prava, btree_gist i poznata povijest.
+- Manifest 43 postojećih migracija; nema novih domenskih migracija.
+- Provjereni client predaje se runneru, zaključavanje i transakcija migracija.
+- 49 novih izoliranih testova; s konfiguracijom/runtimeom ukupno 136.
+- Render baza nije migrirana ovim paketom. Slijede konfiguracija Web Servicea,
+  kontrolirani pre-deploy, frontend povezivanje i staging prihvat.
