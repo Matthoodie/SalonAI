@@ -1,9 +1,9 @@
 # ZRIHTAN — roadmap do javne V1
 
-Ažurirano: 24. studenoga 2026.
-Potvrđena polazna verzija: development b6d1478.
-Aktualni paket: Support S3D-B3 — završna kontrolirana DEV integracija (PRIPREMLJENO).
-S3D-B2 potvrđen i spremljen kao b6d1478. Nakon prihvata B3 slijedi I1.
+Ažurirano: 25. studenoga 2026.
+Potvrđena polazna verzija: development 0d76fad.
+Aktualni paket: I1 — konfiguracijska podloga za staging (PRIPREMLJENO).
+S3D-B3 spremljen kao 0d76fad; korisnik potvrdio primitak obavijesti u Gmailu. I1 započet.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
 
@@ -137,7 +137,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 - Nova migracija, bez novih ovisnosti, DNS/.env promjena, workera ili stvarnog slanja.
 - Detalji: SUPPORT_PHASE3DA.md; 127 izoliranih testova lokalno, 10 DB testova na korisničkom TEST-u.
 
-### S3D-B — servis i kontrolirana isporuka (B1/B2 završeni; B3 čeka prihvat)
+### S3D-B — servis i kontrolirana isporuka (B1/B2/B3 DEV prihvat završen)
 - Odabir pružatelja, verificiranje domene/pošiljatelja, testni primatelji i DNS prema servisu.
 - Worker, pokušaji/lease, idempotencija i neizvjestan ishod, praćenje isporuke.
 - Ponovno provjeriti aktualni potvrđeni kontakt autora prije slanja.
@@ -146,7 +146,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
 
 ## 5. Domena, staging i javne stranice
 
-### I1 — infrastruktura za razvoj integracija (PLAN)
+### I1 — infrastruktura za razvoj integracija (U TIJEKU)
 - Kupnja zrihtan.com potvrđena; slijede provjera 2FA/oporavka, ovlaštenja, DNS i hosting.
 - HTTPS, zaštićeni staging bez indeksiranja, posebna baza i odvojene tajne.
 - Odabir API rasporeda /api ili api poddomene, CORS, dopuštene Clerk adrese/povratne rute.
@@ -304,14 +304,16 @@ backend s TEST bazom; commit/push b6d1478, radna kopija čista.
 B2 pohranjuje zamrznutu poruku/pokušaje, zaključavanje, lease i neizvjestan ishod.
 Još ne pokreće samostalno stvarno slanje iz aplikacije.
 
-### S3D-B3 — završna kontrolirana DEV integracija (PRIPREMLJENO)
+### S3D-B3 — završna kontrolirana DEV integracija (ZAVRŠENO, 0d76fad)
 
 - Jedna odabrana obavijest; aktualna potvrđena primarna Clerk adresa autora.
 - Read-only početak/popisi/pregled/status, odvojene naredbe pripreme i slanja.
 - Točan naziv DEV baze, Clerk TEST ključ, jedan primatelj i izričit ID događaja.
 - Postojeći transport B1 i trajna evidencija B2; nema masovnog slanja starog held reda.
 - Nema novih migracija, ovisnosti, UI-ja, javnog API-ja ni workera na startupu.
-- Lokalno 206 izoliranih testova; korisnički PostgreSQL i ručni end-to-end prihvat čekaju.
+- Korisnik potvrdio 206 izoliranih, PostgreSQL 6 + 17 + 10 i puni backend; svi izlazni kodovi 0.
+- DEV događaj #2 / prijava #4: accepted, attempt_count=1; primitak u Gmailu potvrđen.
+- Zaseban terminalski rezultat ručnog replay testa nije dostavljen; ne navoditi ga kao potvrđen.
 - Detalji SUPPORT_PHASE3DB3.md. Nakon prihvata slijedi I1 — domena i hosting.
 
 ### Otvoreni kriteriji aktivacije na hostingu (I1 / R1 / R2)
@@ -325,3 +327,15 @@ Još ne pokreće samostalno stvarno slanje iz aplikacije.
 Domena je kupljena; aplikacija još nije time objavljena. I1 je sljedeća kategorija,
 a ne novi niz funkcionalnih S paketa. L1/L2, W0–W3, M1/M2, R1/R2, pilot i billing
 ostaju u ranije dogovorenom redoslijedu.
+
+### I1 — potvrđena infrastruktura i konfiguracijska podloga
+
+- Render projekt ZRIHTAN / Staging u Hobby workspaceu.
+- zrihtan-staging-db: PostgreSQL 18, Frankfurt, 1 GB, 256 MB RAM;
+  6.30 USD/mj. osnovica, vanjski pristup isključen prema korisničkoj potvrdi.
+- Lokalni PostgreSQL 18.6; frontend build uspješan na 0d76fad.
+- Budžet približno 30 EUR/mj., bez kupnje Pro workspacea.
+- HOSTING_I1_CONFIGURATION.md: offline konfiguracijski validator i testovi PRIPREMLJENI.
+- Validator još nije integriran u server. Nema deploya, migracije ni novih tajni.
+- Slijedi hosting entry point, gate svih API ruta, povezivanje frontenda,
+  health/readiness, uredno gašenje i kontrolirana staging migracija/deploy.
