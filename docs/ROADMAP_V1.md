@@ -1,8 +1,8 @@
 # ZRIHTAN — roadmap do javne V1
 
 Ažurirano: 25. studenoga 2026.
-Potvrđena polazna verzija: development 0d76fad.
-Aktualni paket: I1 — konfiguracijska podloga za staging (PRIPREMLJENO).
+Potvrđena polazna verzija: development 2e2cb56.
+Aktualni paket: I1 — staging backend runtime (PRIPREMLJENO).
 S3D-B3 spremljen kao 0d76fad; korisnik potvrdio primitak obavijesti u Gmailu. I1 započet.
 Statusi: ZAVRŠENO = korisnički potvrđeno; PRIPREMLJENO = paket čeka prihvat;
 PLAN = još nije implementirano. Ranija povijest ostaje u ROADMAP_HISTORY_20261118.md.
@@ -48,7 +48,7 @@ Javna pilot stranica nije obećanje da su sve planirane funkcije dostupne.
   Druga domena nije nužna za landing; DNS i hosting još nisu povezani kroz projekt.
   Postojeći URL forwarding ima nepoznato odredište; provjeriti prije spajanja hostinga.
 - E-mail servis: Resend; notify.zrihtan.com verificirana, zaseban test dostave potvrđen.
-- Hosting, naplatni servis, cijene i rokovi čuvanja još nisu odabrani.
+- Hosting: Render, projekt ZRIHTAN / Staging. Naplatni servis, cijene pretplate i rokovi čuvanja još nisu odabrani.
 - WhatsApp produkcijski/pilot broj NIJE ODABRAN; ne povezivati privatni broj automatski.
 - Prvi razvoj WhatsAppa koristi testne resurse i dogovorene testne primatelje.
 - Službeničke obveze i dopuštenost konkretnog poslovnog angažmana provjeriti zasebno;
@@ -335,7 +335,17 @@ ostaju u ranije dogovorenom redoslijedu.
   6.30 USD/mj. osnovica, vanjski pristup isključen prema korisničkoj potvrdi.
 - Lokalni PostgreSQL 18.6; frontend build uspješan na 0d76fad.
 - Budžet približno 30 EUR/mj., bez kupnje Pro workspacea.
-- HOSTING_I1_CONFIGURATION.md: offline konfiguracijski validator i testovi PRIPREMLJENI.
-- Validator još nije integriran u server. Nema deploya, migracije ni novih tajni.
+- HOSTING_I1_CONFIGURATION.md: ZAVRŠENO, 2e2cb56, korisnik potvrdio 42/42.
+- Zaseban staging server sada PRIPREMLJEN u HOSTING_I1_RUNTIME.md; lokalni dev ulaz ne mijenja se. Nema deploya ni migracije.
 - Slijedi hosting entry point, gate svih API ruta, povezivanje frontenda,
   health/readiness, uredno gašenje i kontrolirana staging migracija/deploy.
+
+### I1 — staging runtime (PRIPREMLJENO)
+
+- Zaseban stagingServer.js: provjera konfiguracije prije importa aplikacije.
+- Clerk sesija + tester allowlist prije svih poslovnih ruta; /healthz jedina javna GET/HEAD provjera.
+- Točan HTTPS origin, ograničeni CORS, no-store/noindex.
+- Provjera stvarnog naziva baze, HTTP port i uredno gašenje.
+- 45 novih izoliranih testova; ukupno s prethodnim konfiguracijskim testovima 87.
+- Nije provedena stvarna Clerk/Render integracija ni objava. Slijedi kontrolirana
+  staging migracija i konfiguracija Web Service/Static Site u okviru I1.
